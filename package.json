@@ -80,4 +80,13 @@
     "typescript": "^5",
     "worker-loader": "^3.0.8"
   }
+,"overrides": {
+  "@genkit-ai/next": {
+    "next": "$next"
+  }
+}
+
+
+
+
 }
