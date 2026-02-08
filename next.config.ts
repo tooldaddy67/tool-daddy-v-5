@@ -6,9 +6,8 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
+  // eslint config removed (deprecated in Next.js 16+)
+    turbopack: {}, // Added for Next.js 16+ compatibility
   
   // ✅ Performance Optimizations
   productionBrowserSourceMaps: false, // Disable source maps in production
@@ -82,21 +81,18 @@ const nextConfig: NextConfig = {
       },
     ];
   },
-  webpack: (config, { isServer }) => {
-    // This is to fix a bug with ffmpeg.wasm
-    config.resolve.fallback = { fs: false, path: false, crypto: false };
-
-    config.module.rules.push({
-      test: /\.wasm$/,
-      type: 'asset/resource',
-    });
-    
-    if (!isServer) {
-       config.output.publicPath = '/_next/';
-    }
-    
-    return config;
-  },
+  // Custom webpack config commented out for Turbopack compatibility
+  // webpack: (config, { isServer }) => {
+  //   config.resolve.fallback = { fs: false, path: false, crypto: false };
+  //   config.module.rules.push({
+  //     test: /\.wasm$/,
+  //     type: 'asset/resource',
+  //   });
+  //   if (!isServer) {
+  //      config.output.publicPath = '/_next/';
+  //   }
+  //   return config;
+  // },
 };
 
 export default nextConfig;

@@ -7,6 +7,7 @@ import AppSidebar from '@/components/app-sidebar';
 import { Toaster } from '@/components/ui/toaster';
 import PageHeader from '@/components/page-header';
 import { ThemeProvider } from '@/components/theme-provider';
+import { useEnforceMfaForUnstablegng } from '@/hooks/use-enforce-mfa';
 import { Inter, Space_Grotesk, Indie_Flower, Amatic_SC } from 'next/font/google';
 import AppFooter from '@/components/app-footer';
 import Script from 'next/script';
@@ -85,11 +86,13 @@ export const viewport: Viewport = {
   ],
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  // Enforce MFA for unstablegng role
+  if (typeof window !== 'undefined') {
+    // Only run on client
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    useEnforceMfaForUnstablegng();
+  }
   return (
     <html lang="en" suppressHydrationWarning className={`${inter.variable} ${spaceGrotesk.variable}`}>
       <body

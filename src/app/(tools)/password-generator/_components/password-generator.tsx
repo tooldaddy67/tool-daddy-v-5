@@ -42,6 +42,25 @@ export default function PasswordGenerator() {
     if (includeNumbers) charset += numbers;
     if (includeSymbols) charset += symbols;
 
+    // Enforce standard strong password policy
+    if (length < 8) {
+      toast({
+        title: 'Password Too Short',
+        description: 'Password must be at least 8 characters long.',
+        variant: 'destructive',
+      });
+      setPassword('');
+      return;
+    }
+    if (!includeUppercase || !includeLowercase || !includeNumbers || !includeSymbols) {
+      toast({
+        title: 'Weak Password',
+        description: 'Password must include uppercase, lowercase, number, and symbol.',
+        variant: 'destructive',
+      });
+      setPassword('');
+      return;
+    }
     if (!charset) {
       toast({
         title: 'Error',

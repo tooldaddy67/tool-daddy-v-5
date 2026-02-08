@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useAuthUserRole } from '@/hooks/use-auth-role';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Progress } from '@/components/ui/progress';
 import { Tv2 } from 'lucide-react';
@@ -18,6 +19,8 @@ export default function AdModal({ isOpen, onClose, onAdFinish, title, duration =
   const [adProgress, setAdProgress] = useState(0);
   const [countdown, setCountdown] = useState(duration);
   const [funFact, setFunFact] = useState('');
+  const userRole = useAuthUserRole();
+  if (userRole === 'unstablegng') return null;
 
   useEffect(() => {
     if (!isOpen) {
@@ -43,14 +46,12 @@ export default function AdModal({ isOpen, onClose, onAdFinish, title, duration =
       onAdFinish();
     }, duration * 1000);
 
-
     return () => {
       clearInterval(countdownTimer);
       clearTimeout(finishTimer);
       clearTimeout(animationTimer);
     };
   }, [isOpen, onAdFinish, duration]);
-
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose} modal={true}>
