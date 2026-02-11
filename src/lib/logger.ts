@@ -73,19 +73,19 @@ class Logger {
   }
 
   private sendToLoggingService(entry: LogEntry) {
-    // TODO: Integrate with your logging service
-    // Examples: Sentry, Google Cloud Logging, LogRocket, Datadog
-    //
-    // Example (Sentry):
-    // if (entry.level === 'error') {
-    //   Sentry.captureException(new Error(entry.message), {
-    //     extra: entry.context,
-    //     tags: { code: entry.code },
-    //   });
-    // }
-    //
-    // Example (Google Cloud Logging):
-    // logging.entry({ severity: entry.level }, entry.message, entry);
+    // Production fallback: structured JSON logging
+    // These logs are captured by hosting platforms (Vercel, GCP, etc.)
+    const output = JSON.stringify(entry);
+    switch (entry.level) {
+      case 'error':
+        console.error(output);
+        break;
+      case 'warn':
+        console.warn(output);
+        break;
+      default:
+        console.log(output);
+    }
   }
 }
 
