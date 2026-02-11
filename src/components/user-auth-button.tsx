@@ -20,42 +20,53 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useUser, useAuth } from '@/firebase';
+import { useUser, useAuth, useFirebase } from '@/firebase';
 import { signOut, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink } from 'firebase/auth';
-import { LogIn, LogOut, User as UserIcon, Settings, Loader2, Sparkles, UserPlus, Type, Palette, CheckCircle2, Layers, Maximize, Activity, Gauge, Image as ImageIcon } from 'lucide-react';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { LogIn, LogOut, User as UserIcon, Loader2, Sparkles, UserPlus, CheckCircle2, ShieldCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { cn } from '@/lib/utils';
-import { useSettings, type FontPair, type ColorTheme, type BlurIntensity, type BorderStyle, type UIDensity, type BGStyle } from '@/components/settings-provider';
+import { useSettings } from '@/components/settings-provider';
 import { updateProfile } from 'firebase/auth';
-// @ts-ignore
-import { motion, AnimatePresence } from 'framer-motion';
-import { Slider } from '@/components/ui/slider';
-import { ScrollArea } from '@/components/ui/scroll-area';
 
 export function UserAuthButton() {
     const { user, isUserLoading } = useUser();
     const auth = useAuth();
+    const { firestore } = useFirebase();
     const { toast } = useToast();
     const { settings, updateSettings } = useSettings();
     const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false);
-    const [showAllFonts, setShowAllFonts] = useState(false);
-    const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [magicLinkSent, setMagicLinkSent] = useState(false);
     const [magicLinkEmail, setMagicLinkEmail] = useState('');
+    const [isAdmin, setIsAdmin] = useState(false);
 
     // State for auth forms
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [authMode, setAuthMode] = useState<'login' | 'signup' | 'magic'>('login');
-    const [newDisplayName, setNewDisplayName] = useState('');
+
 
     useEffect(() => {
-        if (user?.displayName) {
-            setNewDisplayName(user.displayName);
+        if (user) {
+            checkAdminStatus();
+        } else {
+            setIsAdmin(false);
         }
     }, [user]);
+
+    const checkAdminStatus = async () => {
+        if (!user || !firestore) return;
+        try {
+            const docRef = doc(firestore, 'users', user.uid);
+            const snap = await getDoc(docRef);
+            if (snap.exists() && snap.data().isAdmin === true) {
+                setIsAdmin(true);
+            }
+        } catch (e) {
+            console.error("Error checking admin status", e);
+        }
+    };
 
     useEffect(() => {
         // Check for email link on load
@@ -198,11 +209,17 @@ export function UserAuthButton() {
                             </div>
                         </DropdownMenuLabel>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => setIsSettingsOpen(true)}>
-                            <Settings className="mr-2 h-4 w-4" />
-                            <span>Settings</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
+                        {isAdmin && (
+                            <>
+                                <Link href="/admin/dashboard" className="w-full cursor-pointer">
+                                    <DropdownMenuItem>
+                                        <ShieldCheck className="mr-2 h-4 w-4" />
+                                        <span>Admin</span>
+                                    </DropdownMenuItem>
+                                </Link>
+                                <DropdownMenuSeparator />
+                            </>
+                        )}
                         <DropdownMenuItem onClick={handleSignOut} className="text-red-500 focus:text-red-500">
                             <LogOut className="mr-2 h-4 w-4" />
                             <span>Log out</span>
@@ -350,264 +367,6 @@ export function UserAuthButton() {
                             )}
                         </TabsContent>
                     </Tabs>
-                </DialogContent>
-            </Dialog>
-
-            <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
-                <DialogContent className="sm:max-w-[550px] border-primary/20 bg-background/95 backdrop-blur-2xl">
-                    <DialogHeader>
-                        <DialogTitle className="flex items-center gap-2 text-2xl font-bold font-headline">
-                            <Settings className="h-6 w-6 text-primary" />
-                            Personalization
-                        </DialogTitle>
-                        <DialogDescription>
-                            Customize your Tool Daddy look and feel.
-                        </DialogDescription>
-                    </DialogHeader>
-
-                    <ScrollArea className="max-h-[60vh] pr-4">
-                        <div className="space-y-8 py-4">
-                            {/* Profile Section */}
-                            <div className="space-y-4">
-                                <div className="flex items-center gap-2 text-sm font-semibold opacity-70 uppercase tracking-wider">
-                                    <UserIcon className="w-4 h-4" />
-                                    <span>Profile</span>
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="display-name">Username</Label>
-                                    <div className="flex gap-2">
-                                        <Input
-                                            id="display-name"
-                                            placeholder="Your name"
-                                            value={newDisplayName}
-                                            onChange={(e) => setNewDisplayName(e.target.value)}
-                                            className="border-primary/20"
-                                        />
-                                        <Button
-                                            size="sm"
-                                            onClick={async () => {
-                                                if (user && !user.isAnonymous && auth.currentUser) {
-                                                    await updateProfile(auth.currentUser, { displayName: newDisplayName });
-                                                }
-                                                await updateSettings({ displayName: newDisplayName });
-                                                toast({ title: 'Profile Updated', description: "Username changed successfully." });
-                                                setIsSettingsOpen(false);
-                                            }}
-                                        >
-                                            Save
-                                        </Button>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Font Pairings Section */}
-                            <div className="space-y-4">
-                                <div className="flex items-center gap-2 text-sm font-semibold opacity-70 uppercase tracking-wider">
-                                    <Type className="w-4 h-4" />
-                                    <span>Typography</span>
-                                </div>
-                                <div className="grid grid-cols-2 gap-3">
-                                    {([
-                                        { id: 'tech', label: 'Tech Vanguard', headline: 'var(--font-space-grotesk)', body: 'var(--font-inter)' },
-                                        { id: 'modern', label: 'Modern Minimal', headline: 'var(--font-outfit)', body: 'var(--font-plus-jakarta-sans)' },
-                                        { id: 'classic', label: 'Classic Pro', headline: 'var(--font-inter)', body: 'var(--font-inter)' },
-                                        { id: 'friendly', label: 'Friendly', headline: 'var(--font-quicksand)', body: 'var(--font-nunito)' },
-                                        { id: 'elegant', label: 'Elegant', headline: 'var(--font-playfair-display)', body: 'var(--font-lora)' },
-                                        { id: 'futuristic', label: 'Futuristic', headline: 'var(--font-syne)', body: 'var(--font-inter)' },
-                                        { id: 'monospace', label: 'Monospace', headline: 'var(--font-jetbrains-mono)', body: 'var(--font-roboto-mono)' },
-                                        { id: 'playful', label: 'Playful', headline: 'var(--font-fredoka)', body: 'var(--font-quicksand)' },
-                                        { id: 'royal', label: 'Royal', headline: 'var(--font-cinzel)', body: 'var(--font-eb-garamond)' },
-                                    ] as { id: FontPair; label: string; headline: string; body: string }[]).slice(0, showAllFonts ? undefined : 4).map((f) => (
-                                        <button
-                                            key={f.id}
-                                            onClick={() => updateSettings({ fontPair: f.id })}
-                                            className={cn(
-                                                "flex flex-col items-start p-3 rounded-xl border text-left transition-all glow-card",
-                                                settings.fontPair === f.id
-                                                    ? "border-primary bg-primary/10 glow-sm"
-                                                    : "border-border/50 bg-muted/30 hover:bg-muted/50"
-                                            )}
-                                        >
-                                            <div className="flex justify-between w-full items-start mb-2">
-                                                <span className="text-[10px] font-bold opacity-70 uppercase tracking-tight">{f.label}</span>
-                                                {settings.fontPair === f.id && <CheckCircle2 className="w-3 h-3 text-primary" />}
-                                            </div>
-                                            <span className="text-lg font-bold block mb-1" style={{ fontFamily: f.headline }}>ABC</span>
-                                            <span className="text-xs opacity-80 leading-tight" style={{ fontFamily: f.body }}>Preview text.</span>
-                                        </button>
-                                    ))}
-                                </div>
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => setShowAllFonts(!showAllFonts)}
-                                    className="w-full text-xs font-bold opacity-60 hover:opacity-100 mt-2"
-                                >
-                                    {showAllFonts ? 'Show Less' : 'Show More Fonts'}
-                                </Button>
-                            </div>
-
-                            {/* Color Themes Section */}
-                            <div className="space-y-4">
-                                <div className="flex items-center gap-2 text-sm font-semibold opacity-70 uppercase tracking-wider">
-                                    <Palette className="w-4 h-4" />
-                                    <span>Color Themes</span>
-                                </div>
-                                <div className="flex flex-wrap gap-4 justify-between px-2">
-                                    {([
-                                        { id: 'purple', color: '#a855f7' },
-                                        { id: 'cyan', color: '#06b6d4' },
-                                        { id: 'green', color: '#10b981' },
-                                        { id: 'blue', color: '#3b82f6' },
-                                        { id: 'amber', color: '#f97316' },
-                                        { id: 'rose', color: '#fb7185' },
-                                        { id: 'indigo', color: '#818cf8' },
-                                        { id: 'emerald', color: '#34d399' },
-                                        { id: 'slate', color: '#94a3b8' },
-                                        { id: 'sunset', color: '#fb923c' }
-                                    ] as { id: ColorTheme; color: string }[]).map((c) => (
-                                        <button
-                                            key={c.id}
-                                            onClick={() => updateSettings({ colorTheme: c.id })}
-                                            className={cn(
-                                                "relative w-10 h-10 rounded-full border-2 transition-all flex items-center justify-center hover:scale-110",
-                                                settings.colorTheme === c.id ? "border-primary p-0.5" : "border-transparent"
-                                            )}
-                                        >
-                                            <div className="w-full h-full rounded-full shadow-inner" style={{ backgroundColor: c.color }} />
-                                            {settings.colorTheme === c.id && (
-                                                <div className="absolute inset-0 flex items-center justify-center bg-black/20 rounded-full">
-                                                    <CheckCircle2 className="w-5 h-5 text-white" />
-                                                </div>
-                                            )}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* Advanced Section - Desktop Only */}
-                            <div className="hidden lg:block space-y-6 pt-4 border-t border-border/50">
-                                <div className="flex items-center gap-2 text-sm font-semibold opacity-70 uppercase tracking-wider">
-                                    <Sparkles className="w-4 h-4" />
-                                    <span>Display & Feel</span>
-                                </div>
-
-                                {/* Blur */}
-                                <div className="space-y-3">
-                                    <Label className="flex items-center gap-2">
-                                        <Layers className="w-4 h-4 text-primary" />
-                                        Glass Intensity ({settings.blurIntensity})
-                                    </Label>
-                                    <div className="flex gap-2">
-                                        {(['low', 'medium', 'high'] as BlurIntensity[]).map((b) => (
-                                            <Button
-                                                key={b}
-                                                variant={settings.blurIntensity === b ? 'default' : 'outline'}
-                                                size="sm"
-                                                className="flex-1 text-[10px] uppercase font-bold"
-                                                onClick={() => updateSettings({ blurIntensity: b })}
-                                            >
-                                                {b}
-                                            </Button>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                {/* Corners */}
-                                <div className="space-y-3">
-                                    <Label className="flex items-center gap-2">
-                                        <Maximize className="w-4 h-4 text-primary" />
-                                        Corner Style ({settings.borderStyle})
-                                    </Label>
-                                    <div className="flex gap-2">
-                                        {(['sharp', 'smooth', 'round'] as BorderStyle[]).map((s) => (
-                                            <Button
-                                                key={s}
-                                                variant={settings.borderStyle === s ? 'default' : 'outline'}
-                                                size="sm"
-                                                className="flex-1 text-[10px] uppercase font-bold"
-                                                onClick={() => updateSettings({ borderStyle: s })}
-                                            >
-                                                {s}
-                                            </Button>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                {/* Density */}
-                                <div className="space-y-3">
-                                    <Label className="flex items-center gap-2">
-                                        <Activity className="w-4 h-4 text-primary" />
-                                        UI Density ({settings.uiDensity})
-                                    </Label>
-                                    <div className="flex gap-2">
-                                        {(['compact', 'standard', 'cozy'] as UIDensity[]).map((d) => (
-                                            <Button
-                                                key={d}
-                                                variant={settings.uiDensity === d ? 'default' : 'outline'}
-                                                size="sm"
-                                                className="flex-1 text-[10px] uppercase font-bold"
-                                                onClick={() => updateSettings({ uiDensity: d })}
-                                            >
-                                                {d}
-                                            </Button>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                {/* Animation Speed */}
-                                <div className="space-y-3">
-                                    <div className="flex justify-between">
-                                        <Label className="flex items-center gap-2">
-                                            <Gauge className="w-4 h-4 text-primary" />
-                                            Anim Speed
-                                        </Label>
-                                        <span className="text-[10px] font-bold opacity-50">{settings.animSpeed.toFixed(1)}x</span>
-                                    </div>
-                                    <Slider
-                                        value={[settings.animSpeed]}
-                                        min={0.5}
-                                        max={1.5}
-                                        step={0.1}
-                                        onValueChange={([v]) => updateSettings({ animSpeed: v })}
-                                    />
-                                </div>
-
-                                {/* Backgrounds */}
-                                <div className="space-y-3">
-                                    <Label className="flex items-center gap-2">
-                                        <ImageIcon className="w-4 h-4 text-primary" />
-                                        Background Style ({settings.bgStyle})
-                                    </Label>
-                                    <div className="flex gap-2">
-                                        {(['dark', 'mesh', 'pulse'] as BGStyle[]).map((bg) => (
-                                            <Button
-                                                key={bg}
-                                                variant={settings.bgStyle === bg ? 'default' : 'outline'}
-                                                size="sm"
-                                                className="flex-1 text-[10px] uppercase font-bold"
-                                                onClick={() => updateSettings({ bgStyle: bg })}
-                                            >
-                                                {bg}
-                                            </Button>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Mobile Only: Simple Banner */}
-                            <div className="lg:hidden p-4 rounded-xl bg-primary/5 border border-primary/20 text-center space-y-2 mb-4">
-                                <Sparkles className="w-6 h-6 text-primary mx-auto animate-pulse" />
-                                <p className="text-xs font-medium">Advanced personalization features are available on desktop for the best experience.</p>
-                            </div>
-                        </div>
-                    </ScrollArea>
-
-                    <DialogFooter>
-                        <Button className="w-full h-12 text-lg font-bold" onClick={() => setIsSettingsOpen(false)}>
-                            Done
-                        </Button>
-                    </DialogFooter>
                 </DialogContent>
             </Dialog>
         </>

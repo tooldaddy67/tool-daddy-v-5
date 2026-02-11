@@ -13,34 +13,7 @@ if (!getApps().length) {
   });
 }
 
-/**
- * Middleware to protect sensitive routes.
- * Checks for a valid Firebase Auth ID token in the Authorization header (Bearer token) or cookie.
- * If valid, allows request to proceed. Otherwise, returns 401 Unauthorized.
- */
-export async function requireAuth(request: NextRequest) {
-  const authHeader = request.headers.get('authorization');
-  let idToken = null;
 
-  if (authHeader && authHeader.startsWith('Bearer ')) {
-    idToken = authHeader.split('Bearer ')[1];
-  } else {
-    // Optionally, check for token in cookies (e.g., session)
-    idToken = request.cookies.get('token')?.value || null;
-  }
-
-  if (!idToken) {
-    return NextResponse.json({ error: 'Unauthorized: No token provided' }, { status: 401 });
-  }
-
-  try {
-    const decodedToken = await getAuth().verifyIdToken(idToken);
-    // Optionally, attach user info to request (not possible in Next.js middleware, but can be used in API handlers)
-    return null; // Authenticated, allow request to proceed
-  } catch (error) {
-    return NextResponse.json({ error: 'Unauthorized: Invalid token' }, { status: 401 });
-  }
-}
 /**
  * Middleware to protect sensitive routes and enforce RBAC.
  * Checks for a valid Firebase Auth ID token in the Authorization header (Bearer token) or cookie.

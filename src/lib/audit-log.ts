@@ -8,7 +8,14 @@ import { getFirestore, collection, addDoc, Timestamp } from 'firebase/firestore'
  * @param {string} params.target - The target of the action (e.g., userId, resourceId)
  * @param {object} [params.details] - Additional details
  */
-export async function logAuditEvent({ userId, action, target, details = {} }) {
+interface AuditEvent {
+  userId: string;
+  action: string;
+  target?: string;
+  details?: Record<string, any>;
+}
+
+export async function logAuditEvent({ userId, action, target, details = {} }: AuditEvent) {
   try {
     const db = getFirestore();
     await addDoc(collection(db, 'audit_logs'), {

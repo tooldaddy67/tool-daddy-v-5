@@ -4,11 +4,12 @@ import { useState, useMemo, useCallback, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ListTodo, Trash2, Plus, Copy, Download, Edit, MoreVertical, Loader2, Calendar as CalendarIcon, ChevronDown, Tv2 } from 'lucide-react';
 import { useFirebase, useCollection, useMemoFirebase, FirebaseClientProvider } from '@/firebase';
+import { useSettings } from '@/components/settings-provider';
 import { collection, query, orderBy, doc, serverTimestamp, writeBatch, Timestamp } from 'firebase/firestore';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { addDocumentNonBlocking, updateDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { addDocumentNonBlocking, updateDocumentNonBlocking, deleteDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
@@ -74,6 +75,7 @@ function combineDateAndTime(date: Date, time: string): Date {
 
 function TodoListManager() {
   const { firestore, user, isUserLoading } = useFirebase();
+  const { settings } = useSettings();
   const { addToHistory } = useHistory();
   const [newTaskText, setNewTaskText] = useState('');
   const [newTaskDueDate, setNewTaskDueDate] = useState<Date | undefined>();
@@ -119,9 +121,9 @@ function TodoListManager() {
 
   // Fetching Todo Lists from Firebase
   const listsCollectionPath = useMemo(() => {
-    if (!user || user.isAnonymous || !firestore) return null;
+    if (!user || user.isAnonymous || !firestore || !settings.dataPersistence) return null;
     return collection(firestore, 'users', user.uid, 'todolists');
-  }, [firestore, user]);
+  }, [firestore, user, settings.dataPersistence]);
 
   const listsQuery = useMemoFirebase(() => {
     if (!listsCollectionPath) return null;
@@ -132,13 +134,13 @@ function TodoListManager() {
 
   // Combine Lists
   const todoLists = useMemo(() => {
-    if (user && !user.isAnonymous) return cloudLists || [];
+    if (user && !user.isAnonymous && settings.dataPersistence) return cloudLists || [];
     return localLists;
-  }, [user, cloudLists, localLists]);
+  }, [user, cloudLists, localLists, settings.dataPersistence]);
 
   // Sync to Cloud on login
   useEffect(() => {
-    if (user && !user.isAnonymous && isLocalLoaded && localLists.length > 0 && listsCollectionPath) {
+    if (user && !user.isAnonymous && isLocalLoaded && localLists.length > 0 && listsCollectionPath && settings.dataPersistence) {
       const syncToCloud = async () => {
         try {
           const batch = writeBatch(firestore);
@@ -171,7 +173,7 @@ function TodoListManager() {
       };
       syncToCloud();
     }
-  }, [user, isLocalLoaded, firestore, listsCollectionPath, localLists, localTasks, toast]);
+  }, [user, isLocalLoaded, firestore, listsCollectionPath, localLists, localTasks, toast, settings.dataPersistence]);
 
   // Set initial active list
   useEffect(() => {
@@ -182,9 +184,9 @@ function TodoListManager() {
 
   // Fetching Tasks for the active list from Firebase
   const tasksCollectionPath = useMemo(() => {
-    if (!user || user.isAnonymous || !firestore || !activeListId) return null;
+    if (!user || user.isAnonymous || !firestore || !activeListId || !settings.dataPersistence) return null;
     return collection(firestore, 'users', user.uid, 'todolists', activeListId, 'tasks');
-  }, [firestore, user, activeListId]);
+  }, [firestore, user, activeListId, settings.dataPersistence]);
 
   const tasksQuery = useMemoFirebase(() => {
     if (!tasksCollectionPath) return null;
@@ -195,12 +197,12 @@ function TodoListManager() {
 
   // Combine Tasks
   const tasks = useMemo(() => {
-    if (user && !user.isAnonymous) return cloudTasks || [];
+    if (user && !user.isAnonymous && settings.dataPersistence) return cloudTasks || [];
     return localTasks[activeListId || ''] || [];
-  }, [user, cloudTasks, localTasks, activeListId]);
+  }, [user, cloudTasks, localTasks, activeListId, settings.dataPersistence]);
 
-  const areTasksLoading = (user && !user.isAnonymous) ? areCloudTasksLoading : !isLocalLoaded;
-  const areListsLoading = (user && !user.isAnonymous) ? areCloudListsLoading : !isLocalLoaded;
+  const areTasksLoading = (user && !user.isAnonymous && settings.dataPersistence) ? areCloudTasksLoading : !isLocalLoaded;
+  const areListsLoading = (user && !user.isAnonymous && settings.dataPersistence) ? areCloudListsLoading : !isLocalLoaded;
 
   // List Management
   const handleAddList = async () => {
@@ -215,10 +217,14 @@ function TodoListManager() {
 
     if (listsCollectionPath) {
       try {
-        await addDocumentNonBlocking(listsCollectionPath, {
-          ...newList,
+        const listDocRef = doc(listsCollectionPath, newListId);
+        const { name } = newList;
+
+        await setDocumentNonBlocking(listDocRef, {
+          name,
           createdAt: serverTimestamp()
-        });
+        }, { merge: true });
+
         toast({ title: "New list created!" });
       } catch (e) {
         toast({ title: "Error creating list", variant: "destructive" });
@@ -242,7 +248,7 @@ function TodoListManager() {
   };
 
   const handleDeleteList = useCallback(async (listId: string) => {
-    if (listsCollectionPath && user && !user.isAnonymous) {
+    if (listsCollectionPath && user && !user.isAnonymous && settings.dataPersistence) {
       const listDocRef = doc(firestore, 'users', user.uid, 'todolists', listId);
       await deleteDocumentNonBlocking(listDocRef);
     } else {
@@ -282,10 +288,16 @@ function TodoListManager() {
     };
 
     if (tasksCollectionPath) {
-      addDocumentNonBlocking(tasksCollectionPath, {
-        ...newTask,
+      const taskDocRef = doc(tasksCollectionPath, newTask.id);
+      const { text, completed, dueDate } = newTask; // Exclude ID
+
+      setDocumentNonBlocking(taskDocRef, {
+        text,
+        completed,
         createdAt: serverTimestamp(),
-      });
+        // Only include dueDate if it exists
+        ...(dueDate ? { dueDate } : {})
+      }, { merge: true });
     } else {
       const currentTasks = localTasks[activeListId] || [];
       const updatedTasks = [newTask, ...currentTasks];

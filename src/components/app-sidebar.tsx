@@ -12,13 +12,16 @@ import {
   SidebarGroupLabel,
   SidebarSeparator,
 } from '@/components/ui/sidebar';
-import { History } from 'lucide-react';
+import { History, BookOpen, LayoutDashboard } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { TOOL_CATEGORIES } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { UserAuthButton } from './user-auth-button';
+import { useFirebase } from '@/firebase';
+
+const BOOTSTRAP_ADMIN_EMAILS = ['admin@tooldaddy.com'];
 
 const Logo = () => (
   <svg
@@ -47,6 +50,22 @@ export default function AppSidebar() {
     ),
   })).filter(category => category.tools.length > 0);
 
+
+  const { user } = useFirebase();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    if (!user) { setIsAdmin(false); return; }
+    user.getIdTokenResult().then((result) => {
+      if (result.claims.admin === true) {
+        setIsAdmin(true);
+      } else if (BOOTSTRAP_ADMIN_EMAILS.includes(user.email || '')) {
+        setIsAdmin(true);
+      } else {
+        setIsAdmin(false);
+      }
+    }).catch(() => setIsAdmin(false));
+  }, [user]);
 
   return (
     <Sidebar
@@ -77,6 +96,23 @@ export default function AppSidebar() {
         <div className="mb-4">
           <UserAuthButton />
         </div>
+
+        {isAdmin && (
+          <SidebarMenu className="mb-4">
+            <SidebarMenuItem>
+              <Link href="/admin/dashboard" prefetch={true} className="w-full">
+                <SidebarMenuButton
+                  isActive={pathname.startsWith('/admin')}
+                  tooltip="Admin Dashboard"
+                  className="bg-destructive/10 text-destructive hover:bg-destructive/20 hover:text-destructive"
+                >
+                  <LayoutDashboard className="shrink-0" />
+                  <span>Admin Panel</span>
+                </SidebarMenuButton>
+              </Link>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        )}
 
         {filteredCategories.map((category) => (
           <SidebarGroup key={category.name}>
@@ -131,6 +167,17 @@ export default function AppSidebar() {
         <SidebarSeparator />
 
         <SidebarMenu className="mt-2">
+          <SidebarMenuItem>
+            <Link href="/blog" prefetch={true}>
+              <SidebarMenuButton
+                isActive={pathname.startsWith('/blog')}
+                tooltip="Blog"
+              >
+                <BookOpen />
+                <span>Blog</span>
+              </SidebarMenuButton>
+            </Link>
+          </SidebarMenuItem>
           <SidebarMenuItem>
             <Link href="/history" prefetch={true} className="w-full">
               <SidebarMenuButton

@@ -9,7 +9,7 @@ export function useAuthUserRole() {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
       if (user) {
         const token = await user.getIdTokenResult();
-        setRole(token.claims.role || null);
+        setRole((token.claims as any).role || null);
       } else {
         setRole(null);
       }

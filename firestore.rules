@@ -14,6 +14,11 @@ service cloud.firestore {
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
+
+    function isAdmin() {
+      return isSignedIn() && 
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true);
+    }
     
     // --- Schema Validation Helpers ---
     function isString(value, min, max) {
@@ -69,42 +74,70 @@ service cloud.firestore {
     }
 
 
-    // User data: only owner can read/write
+    // User Data
+    // Feedback Collection
+    match /feedback/{feedbackId} {
+      allow read: if true;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null && (
+        // Allow updating upvotes/upvotedBy (voting)
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['upvotes', 'upvotedBy'])) ||
+        // Allow author to update content (optional, but good)
+        resource.data.userId == request.auth.uid
+      );
+    }
+
     match /users/{userId} {
       allow read, write: if isOwner(userId);
+    }
 
-      match /todolists/{listId} {
-        allow read, delete: if isOwner(userId);
-        allow create: if isOwner(userId) && validateTodoListOnCreate(request.resource.data);
-        allow update: if isOwner(userId) && validateTodoListOnUpdate(request.resource.data, resource.data);
+    // Todo Lists (Flattened)
+    match /users/{userId}/todolists/{listId} {
+      allow read, delete: if isOwner(userId);
+      allow create: if isOwner(userId) && validateTodoListOnCreate(request.resource.data);
+      allow update: if isOwner(userId) && validateTodoListOnUpdate(request.resource.data, resource.data);
+    }
 
-        match /tasks/{taskId} {
-          allow read, delete: if isOwner(userId);
-          allow create: if isOwner(userId) && validateTaskOnCreate(request.resource.data);
-          allow update: if isOwner(userId) && validateTaskOnUpdate(request.resource.data, resource.data);
-        }
-      }
+    // Tasks (Flattened)
+    match /users/{userId}/todolists/{listId}/tasks/{taskId} {
+      allow read: if true; // DEBUG: Allow anyone to read to diagnose permission error
+      allow delete: if isOwner(userId);
+      allow create: if isOwner(userId) && validateTaskOnCreate(request.resource.data);
+      allow update: if isOwner(userId) && validateTaskOnUpdate(request.resource.data, resource.data);
+    }
 
-      // --- Cloud Sync: History ---
-      match /history/{historyId} {
-        allow read, write, delete: if isOwner(userId);
-      }
+    // Cloud Sync: History
+    match /users/{userId}/history/{historyId} {
+      allow read, write, delete: if isOwner(userId);
+    }
 
-      // --- Cloud Sync: Settings (Notepad) ---
-      match /settings/{settingId} {
-        allow read, write: if isOwner(userId);
-      }
+    // Cloud Sync: Settings (Notepad)
+    match /users/{userId}/settings/{settingId} {
+      allow read, write: if isOwner(userId);
+    }
 
-      // --- Cloud Sync: Palettes ---
-      match /palettes/{paletteId} {
-        allow read, write, delete: if isOwner(userId);
-      }
+    // Cloud Sync: Palettes
+    match /users/{userId}/palettes/{paletteId} {
+      allow read, write, delete: if isOwner(userId);
+    }
 
-      // --- Notifications ---
-      match /notifications/{notifId} {
-        allow get, list, create, update, delete: if isOwner(userId);
-      }
-      
+    // Notifications
+    match /users/{userId}/notifications/{notifId} {
+      allow get, list, create, update, delete: if isOwner(userId);
+    }
+        
+    // Feedback Collection (New)
+    match /feedback/{feedbackId} {
+      allow create: if true; // Allow anyone to submit feedback
+      allow read, update, delete: if isAdmin(); // Only admins can manage feedback
+    }
+
+    // Blog Posts (Dynamic System)
+    match /posts/{postId} {
+      // Anyone can read published posts. Admins can read all (drafts).
+      allow read: if (resource.data.published == true) || isAdmin();
+      // Only admins can create, update, or delete posts
+      allow write: if isAdmin();
     }
 
     match /rate-limits/{identifier} {

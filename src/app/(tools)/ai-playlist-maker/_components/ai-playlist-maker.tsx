@@ -98,6 +98,8 @@ export default function AiPlaylistMaker() {
         link: '/ai-playlist-maker'
       });
 
+    } catch (error: any) {
+      console.error('Playlist generation error:', error);
       toast({
         title: 'An Error Occurred',
         description: error.message || 'Failed to generate playlist. Please try again.',

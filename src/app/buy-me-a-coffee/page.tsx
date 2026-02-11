@@ -7,7 +7,7 @@ import { Loader2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import AdModal from '@/components/ad-modal';
 
-const EXTERNAL_URL = 'https://buymeacoffee.com/yunishb67w';
+const EXTERNAL_URL = 'https://buymeacoffee.com/tooldaddy';
 
 export default function BuyMeACoffeePage() {
   const router = useRouter();

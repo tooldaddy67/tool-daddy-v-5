@@ -39,10 +39,13 @@ const HISTORY_STORAGE_KEY = 'tool-daddy-history';
 const MAX_ITEM_SIZE_BYTES = 2 * 1024 * 1024;
 
 
+import { useSettings } from '@/components/settings-provider';
+
 export function useHistory() {
   const { user, isUserLoading: isAuthLoading } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
+  const { settings } = useSettings();
   const [localHistory, setLocalHistory] = useState<HistoryItem[]>([]);
   const [isLocalLoaded, setIsLocalLoaded] = useState(false);
 
@@ -77,7 +80,8 @@ export function useHistory() {
 
   // Sync Local to Cloud on login
   useEffect(() => {
-    if (user && !user.isAnonymous && isLocalLoaded && localHistory.length > 0 && historyCollectionPath) {
+    // Only sync if dataPersistence is enabled
+    if (user && !user.isAnonymous && isLocalLoaded && localHistory.length > 0 && historyCollectionPath && settings.dataPersistence) {
       const mergeHistory = async () => {
         try {
           const batch = writeBatch(firestore);
@@ -96,7 +100,7 @@ export function useHistory() {
       };
       mergeHistory();
     }
-  }, [user, isLocalLoaded, firestore, historyCollectionPath, toast]); // Dependency array careful here
+  }, [user, isLocalLoaded, firestore, historyCollectionPath, toast, settings.dataPersistence]); // Dependency array careful here
 
   const addToHistory = useCallback(async (item: Omit<HistoryItem, 'id' | 'timestamp'>) => {
     try {
@@ -116,12 +120,12 @@ export function useHistory() {
         delete newItem.data.extractedAudio;
       }
 
-      // Save to Cloud if logged in
-      if (user && !user.isAnonymous && historyCollectionPath) {
+      // Save to Cloud if logged in AND persistence is enabled
+      if (user && !user.isAnonymous && historyCollectionPath && settings.dataPersistence) {
         const docRef = doc(historyCollectionPath, newItem.id);
         await setDoc(docRef, newItem);
       } else {
-        // Save to Local
+        // Save to Local (Guest mode OR Persistence disabled)
         const updatedHistory = [newItem, ...localHistory].slice(0, 20);
         setLocalHistory(updatedHistory);
         localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(updatedHistory));
@@ -129,7 +133,7 @@ export function useHistory() {
     } catch (error) {
       console.error('Failed to save history', error);
     }
-  }, [user, historyCollectionPath, localHistory]);
+  }, [user, historyCollectionPath, localHistory, settings.dataPersistence]);
 
   const clearHistory = useCallback(async () => {
     try {

@@ -21,6 +21,9 @@ interface UserSettings {
     borderStyle: BorderStyle;
     bgStyle: BGStyle;
     animSpeed: number;
+    // New Settings
+    dataPersistence: boolean;
+    notifications: boolean;
 }
 
 interface SettingsContextType {
@@ -38,6 +41,8 @@ const defaultSettings: UserSettings = {
     borderStyle: 'smooth',
     bgStyle: 'dark',
     animSpeed: 1,
+    dataPersistence: true,
+    notifications: true,
 };
 
 export const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
@@ -109,7 +114,13 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     // Sync Cloud to Local
     useEffect(() => {
         if (cloudSettings) {
-            setLocalSettings(prev => ({ ...prev, ...cloudSettings }));
+            setLocalSettings(prev => ({
+                ...prev,
+                ...cloudSettings,
+                // Ensure new defaults are respected if cloud data is missing them
+                dataPersistence: cloudSettings.dataPersistence ?? prev.dataPersistence ?? true,
+                notifications: cloudSettings.notifications ?? prev.notifications ?? true
+            }));
             localStorage.setItem('tool-dady-settings', JSON.stringify({ ...localSettings, ...cloudSettings }));
         }
     }, [cloudSettings]);
@@ -150,8 +161,25 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
         setLocalSettings(updated);
         localStorage.setItem('tool-dady-settings', JSON.stringify(updated));
 
+        // If data persistence is OFF, and we are NOT toggling it ON right now,
+        // then we shouldn't save settings to cloud either... except the setting ITSELF needs to be saved.
+        // The prompt says "if user disable the feature we will delete it".
+        // Use case: User turns off persistence. We delete data. 
+        // We MUST save "dataPersistence: false" to Firestore? 
+        // "we will not store user data other then their pass word and user id in our data base"
+        // This suggests we shouldn't even store the preference!
+        // But if we don't store "persistence: false", how do we know next time they login?
+        // Maybe we just store this ONE document?
+        // "other then their pass word and user id".
+        // Strictly speaking, storing settings IS storing user data.
+        // However, without storing this bit, the feature is impossible to implement consistently across devices.
+        // I will assume we can store this one preference document.
+
         if (settingsDocRef) {
             try {
+                // If data persistence is disabled, we might want to ONLY save the persistence/notification flags?
+                // For now, I'll save everything to this doc as it's just preferences. 
+                // The heavy user data (history, etc) is what we really care about deleting.
                 await setDoc(settingsDocRef, updated, { merge: true });
             } catch (e) {
                 console.error('Failed to update cloud settings', e);

@@ -170,7 +170,8 @@ function TasksWidget() {
 
     const tasksQuery = useMemoFirebase(() => {
         if (!user || !firestore || !activeListId) return null
-        return query(collection(firestore, 'users', user.uid, 'todolists', activeListId, 'tasks'), orderBy('completed', 'asc'), orderBy('createdAt', 'desc'), limit(3))
+        // Simplify query to avoid requiring a composite index (orderBy completed + orderBy createdAt)
+        return query(collection(firestore, 'users', user.uid, 'todolists', activeListId, 'tasks'), orderBy('createdAt', 'desc'), limit(5))
     }, [user, firestore, activeListId])
 
     const { data: tasks, isLoading } = useCollection<{ text: string, completed: boolean }>(tasksQuery)

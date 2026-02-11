@@ -42,17 +42,20 @@ function timeAgo(date: Date): string {
     return `${days}d ago`;
 }
 
+import { useSettings } from '@/components/settings-provider';
+
 export function NotificationBell() {
     const { firestore, user, isUserLoading } = useFirebase();
+    const { settings } = useSettings();
     const [open, setOpen] = useState(false);
     const cleanupRan = useRef(false);
     const welcomeSent = useRef(false);
 
     // Query notifications for logged-in (non-anonymous) users
     const notifCollectionPath = useMemo(() => {
-        if (!user || user.isAnonymous || !firestore) return null;
+        if (!user || user.isAnonymous || !firestore || !settings.dataPersistence) return null;
         return collection(firestore, 'users', user.uid, 'notifications');
-    }, [firestore, user]);
+    }, [firestore, user, settings.dataPersistence]);
 
     const notifQuery = useMemoFirebase(() => {
         if (!notifCollectionPath) return null;
@@ -68,7 +71,7 @@ export function NotificationBell() {
 
     // Cleanup notifications older than 7 days (throttled to once per day)
     useEffect(() => {
-        if (!notifCollectionPath || !firestore || cleanupRan.current) return;
+        if (!notifCollectionPath || !firestore || cleanupRan.current || !settings.dataPersistence) return;
 
         const lastCleanup = localStorage.getItem('last-notif-cleanup');
         const now = Date.now();
@@ -93,7 +96,7 @@ export function NotificationBell() {
                 localStorage.setItem('last-notif-cleanup', String(now));
             });
         }).catch(console.error);
-    }, [notifCollectionPath, firestore]);
+    }, [notifCollectionPath, firestore, settings.dataPersistence]);
 
     // Send welcome notification if user has 0 notifications
     useEffect(() => {
@@ -101,7 +104,8 @@ export function NotificationBell() {
             !notifCollectionPath ||
             !notifications ||
             isLoading ||
-            welcomeSent.current
+            welcomeSent.current ||
+            !settings.notifications
         ) return;
 
         if (notifications.length === 0) {
@@ -113,7 +117,7 @@ export function NotificationBell() {
                 createdAt: serverTimestamp(),
             }).catch(console.error);
         }
-    }, [notifCollectionPath, notifications, isLoading]);
+    }, [notifCollectionPath, notifications, isLoading, settings.notifications]);
 
     // Mark all as read
     const handleMarkAllRead = useCallback(() => {
@@ -135,8 +139,8 @@ export function NotificationBell() {
         [user, firestore]
     );
 
-    // Don't show for anonymous/loading users
-    if (isUserLoading || !user || user.isAnonymous) return null;
+    // Don't show for anonymous/loading users OR if notifications are disabled
+    if (isUserLoading || !user || user.isAnonymous || !settings.notifications) return null;
 
     return (
         <Popover open={open} onOpenChange={setOpen}>

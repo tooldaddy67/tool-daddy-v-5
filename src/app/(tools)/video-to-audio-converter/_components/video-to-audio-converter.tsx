@@ -21,7 +21,7 @@ export default function VideoToAudioConverter() {
   const [audioSrc, setAudioSrc] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const { toast } = useToast();
+
   const { addToHistory } = useHistory();
   const { firestore, user } = useFirebase();
   const [isAdModalOpen, setIsAdModalOpen] = useState(false);
@@ -101,7 +101,7 @@ export default function VideoToAudioConverter() {
       await ffmpeg.exec(['-i', videoFile.name, '-q:a', '0', '-map', 'a', 'output.mp3']);
 
       const data = await ffmpeg.readFile('output.mp3');
-      const audioBlob = new Blob([data], { type: 'audio/mp3' });
+      const audioBlob = new Blob([data as any], { type: 'audio/mp3' });
       const audioUrl = URL.createObjectURL(audioBlob);
 
       setAudioSrc(audioUrl);

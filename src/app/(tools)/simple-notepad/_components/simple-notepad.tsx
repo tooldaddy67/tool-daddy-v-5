@@ -49,9 +49,12 @@ const FONT_LIST = [
   { name: 'Space Mono', value: '"Space Mono", monospace' },
 ];
 
+import { useSettings } from '@/components/settings-provider';
+
 export default function SimpleNotepad() {
   const { user, isUserLoading: isAuthLoading } = useUser();
   const firestore = useFirestore();
+  const { settings } = useSettings();
   const [content, setContent] = useState('');
   const [wordCount, setWordCount] = useState(0);
   const [charCount, setCharCount] = useState(0);
@@ -71,9 +74,9 @@ export default function SimpleNotepad() {
 
   // Firestore Ref
   const notepadDocRef = useMemo(() => {
-    if (!user || user.isAnonymous || !firestore) return null;
+    if (!user || user.isAnonymous || !firestore || !settings.dataPersistence) return null;
     return doc(firestore, 'users', user.uid, 'settings', 'notepad'); // Storing in settings/notepad for simplicity
-  }, [firestore, user]);
+  }, [firestore, user, settings.dataPersistence]);
 
   const { data: cloudData, isLoading: isCloudLoading } = useDoc(notepadDocRef);
 
@@ -81,7 +84,7 @@ export default function SimpleNotepad() {
   useEffect(() => {
     if (isAuthLoading) return;
 
-    if (user && !user.isAnonymous) {
+    if (user && !user.isAnonymous && settings.dataPersistence) {
       // If logged in and cloud data exists, use it
       if (!isCloudLoading && cloudData) {
         const cloudContent = (cloudData as any).content || '';
@@ -100,7 +103,7 @@ export default function SimpleNotepad() {
         }
       }
     } else {
-      // Guest mode
+      // Guest mode or Data Persistence Disabled
       const savedContent = localStorage.getItem(LOCAL_STORAGE_KEY);
       if (savedContent) {
         if (editorRef.current) editorRef.current.innerHTML = savedContent;
@@ -123,7 +126,7 @@ export default function SimpleNotepad() {
       document.removeEventListener('selectionchange', handleSelectionChange);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthLoading, isCloudLoading, !!cloudData, !!user]);
+  }, [isAuthLoading, isCloudLoading, !!cloudData, !!user, settings.dataPersistence]);
 
   const handlePaste = (event: ClipboardEvent) => {
     event.preventDefault();

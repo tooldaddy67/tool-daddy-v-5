@@ -25,76 +25,91 @@ const spaceGrotesk = Space_Grotesk({
   variable: '--font-space-grotesk',
 });
 
+// Non-default fonts: preload: false to avoid blocking initial render
+// They load on-demand when user switches theme
+
 const outfit = Outfit({
   subsets: ['latin'],
   display: 'swap',
   variable: '--font-outfit',
+  preload: false,
 });
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ['latin'],
   display: 'swap',
   variable: '--font-plus-jakarta-sans',
+  preload: false,
 });
 
 const quicksand = Quicksand({
   subsets: ['latin'],
   display: 'swap',
   variable: '--font-quicksand',
+  preload: false,
 });
 
 const nunito = Nunito({
   subsets: ['latin'],
   display: 'swap',
   variable: '--font-nunito',
+  preload: false,
 });
 
 const playfairDisplay = Playfair_Display({
   subsets: ['latin'],
   display: 'swap',
   variable: '--font-playfair-display',
+  preload: false,
 });
 
 const lora = Lora({
   subsets: ['latin'],
   display: 'swap',
   variable: '--font-lora',
+  preload: false,
 });
 
 const syne = Syne({
   subsets: ['latin'],
   display: 'swap',
   variable: '--font-syne',
+  preload: false,
 });
 
 const jetbrainsMono = JetBrains_Mono({
   subsets: ['latin'],
   display: 'swap',
   variable: '--font-jetbrains-mono',
+  preload: false,
 });
 
 const robotoMono = Roboto_Mono({
   subsets: ['latin'],
   display: 'swap',
   variable: '--font-roboto-mono',
+  preload: false,
 });
 
 const fredoka = Fredoka({
   subsets: ['latin'],
   display: 'swap',
   variable: '--font-fredoka',
+  preload: false,
 });
 
 const cinzel = Cinzel({
   subsets: ['latin'],
   display: 'swap',
   variable: '--font-cinzel',
+  preload: false,
 });
 
 const ebGaramond = EB_Garamond({
   subsets: ['latin'],
   display: 'swap',
   variable: '--font-eb-garamond',
+  preload: false,
 });
 
 
@@ -184,6 +199,11 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       cinzel.variable,
       ebGaramond.variable
     )}>
+      <head>
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <link rel="apple-touch-icon" href="/icon.png" />
+      </head>
       <body
         suppressHydrationWarning
         className={cn(
@@ -207,6 +227,26 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
                   <AppSidebar />
                   <main className="flex-1 flex flex-col min-h-screen">
                     <PageHeader />
+                    <script
+                      type="application/ld+json"
+                      dangerouslySetInnerHTML={{
+                        __html: JSON.stringify({
+                          '@context': 'https://schema.org',
+                          '@type': 'WebSite',
+                          name: 'Tool Daddy',
+                          description: 'The ultimate free online tool suite. Image compression, video conversion, AI tools, and more.',
+                          url: process.env.NEXT_PUBLIC_BASE_URL || 'https://tool-daddy.com',
+                          potentialAction: {
+                            '@type': 'SearchAction',
+                            target: {
+                              '@type': 'EntryPoint',
+                              urlTemplate: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://tool-daddy.com'}/?q={search_term_string}`,
+                            },
+                            'query-input': 'required name=search_term_string',
+                          },
+                        })
+                      }}
+                    />
                     <div className="flex-1">{children}</div>
                     <AppFooter />
                   </main>

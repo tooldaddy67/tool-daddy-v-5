@@ -10,7 +10,14 @@ import { logAuditEvent } from './audit-log';
  * @param {string} [params.ip] - The IP address
  * @param {object} [params.details] - Additional details
  */
-export async function logSuspiciousAuthAttempt({ userId = 'unknown', event, ip = '', details = {} }) {
+interface SuspiciousAuthParams {
+  userId?: string;
+  event: string;
+  ip?: string;
+  details?: Record<string, any>;
+}
+
+export async function logSuspiciousAuthAttempt({ userId = 'unknown', event, ip = '', details = {} }: SuspiciousAuthParams) {
   // Log to Firestore audit log
   await logAuditEvent({
     userId,

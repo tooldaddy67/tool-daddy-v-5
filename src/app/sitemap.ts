@@ -1,32 +1,11 @@
 import type { MetadataRoute } from 'next';
+import { TOOL_CATEGORIES } from '@/lib/constants';
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://tool-daddy.com';
 
-// Tool pages that should be in sitemap
-const TOOLS = [
-  'image-compressor',
-  'image-converter',
-  'video-to-audio-converter',
-  'video-compressor',
-  'qr-code-generator',
-  'todo-list',
-  'metadata-extractor',
-  'ai-text-humanizer',
-  'ai-playlist-maker',
-  'ai-image-enhancer',
-  'drawing-canvas',
-  'timer-stopwatch',
-  'color-palette-extractor',
-  'color-palette-generator',
-  'simple-notepad',
-  'youtube-downloader',
-  'youtube-to-audio',
-  'password-generator',
-];
-
 export default function sitemap(): MetadataRoute.Sitemap {
-  // Home page
   const routes: MetadataRoute.Sitemap = [
+    // Core Pages
     {
       url: BASE_URL,
       lastModified: new Date(),
@@ -39,15 +18,43 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'monthly',
       priority: 0.8,
     },
-  ];
-
-  // Add all tool pages
-  TOOLS.forEach((tool) => {
-    routes.push({
-      url: `${BASE_URL}/${tool}`,
+    {
+      url: `${BASE_URL}/blog`,
       lastModified: new Date(),
       changeFrequency: 'weekly',
-      priority: 0.7,
+      priority: 0.8,
+    },
+    {
+      url: `${BASE_URL}/feedback`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.5,
+    },
+    {
+      url: `${BASE_URL}/dashboard`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.4,
+    },
+    {
+      url: `${BASE_URL}/buy-me-a-coffee`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.3,
+    },
+  ];
+
+  // Dynamically add all tool pages from constants
+  TOOL_CATEGORIES.forEach((category) => {
+    category.tools.forEach((tool) => {
+      if (!tool.isExternal) {
+        routes.push({
+          url: `${BASE_URL}${tool.href}`,
+          lastModified: new Date(),
+          changeFrequency: 'weekly',
+          priority: 0.7,
+        });
+      }
     });
   });
 

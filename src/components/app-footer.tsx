@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { FeedbackModal } from '@/components/feedback-modal';
 
 const Logo = () => (
   <svg
@@ -48,6 +49,7 @@ export default function AppFooter() {
             <Link href="/buy-me-a-coffee" className="text-muted-foreground hover:text-foreground transition-colors whitespace-nowrap">
               Support Us
             </Link>
+            <FeedbackModal />
           </div>
           <p>
             This site is protected by reCAPTCHA and the Google{' '}

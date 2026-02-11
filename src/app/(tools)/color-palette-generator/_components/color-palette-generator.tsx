@@ -20,11 +20,14 @@ import { useFirebase, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy, serverTimestamp, doc, writeBatch } from 'firebase/firestore';
 import { useHistory } from '@/hooks/use-history';
 
+import { useSettings } from '@/components/settings-provider';
+
 const STORAGE_KEY = 'userColorPalettes';
 
 export default function ColorPaletteGenerator() {
   const { toast } = useToast();
   const { firestore, user, isUserLoading } = useFirebase();
+  const { settings } = useSettings();
   const { addToHistory } = useHistory();
   const [palettes, setPalettes] = useState<Palette[]>(mockPalettes);
   const [localPalettes, setLocalPalettes] = useState<Palette[]>([]);
@@ -49,9 +52,9 @@ export default function ColorPaletteGenerator() {
 
   // Firestore path
   const palettesCollectionPath = useMemo(() => {
-    if (!user || user.isAnonymous || !firestore) return null;
+    if (!user || user.isAnonymous || !firestore || !settings.dataPersistence) return null;
     return collection(firestore, 'users', user.uid, 'palettes');
-  }, [firestore, user]);
+  }, [firestore, user, settings.dataPersistence]);
 
   const palettesQuery = useMemoFirebase(() => {
     if (!palettesCollectionPath) return null;
@@ -63,13 +66,13 @@ export default function ColorPaletteGenerator() {
 
   // Combine Palettes
   const userPalettes = useMemo(() => {
-    if (user && !user.isAnonymous) return cloudPalettes || [];
+    if (user && !user.isAnonymous && settings.dataPersistence) return cloudPalettes || [];
     return localPalettes;
-  }, [user, cloudPalettes, localPalettes]);
+  }, [user, cloudPalettes, localPalettes, settings.dataPersistence]);
 
   // Sync to Cloud on login
   useEffect(() => {
-    if (user && !user.isAnonymous && isLocalLoaded && localPalettes.length > 0 && palettesCollectionPath) {
+    if (user && !user.isAnonymous && isLocalLoaded && localPalettes.length > 0 && palettesCollectionPath && settings.dataPersistence) {
       const syncToCloud = async () => {
         try {
           const batch = writeBatch(firestore);
@@ -90,7 +93,7 @@ export default function ColorPaletteGenerator() {
       };
       syncToCloud();
     }
-  }, [user, isLocalLoaded, firestore, palettesCollectionPath, localPalettes, toast]);
+  }, [user, isLocalLoaded, firestore, palettesCollectionPath, localPalettes, toast, settings.dataPersistence]);
 
   // Function to shuffle an array (Fisher-Yates shuffle)
   const shuffleArray = (array: any[]) => {
