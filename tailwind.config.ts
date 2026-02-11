@@ -1,4 +1,4 @@
-import type {Config} from 'tailwindcss';
+import type { Config } from 'tailwindcss';
 
 export default {
   darkMode: ['class'],
@@ -10,8 +10,8 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        body: ['var(--font-inter)', 'sans-serif'],
-        headline: ['var(--font-space-grotesk)', 'sans-serif'],
+        body: ['var(--font-body)', 'sans-serif'],
+        headline: ['var(--font-headline)', 'sans-serif'],
         code: ['monospace'],
       },
       colors: {
@@ -109,6 +109,15 @@ export default {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
         'shake': 'shake 0.82s cubic-bezier(.36,.07,.19,.97) both',
+      },
+      backdropBlur: {
+        md: 'calc(var(--glass-blur) / 2)',
+        lg: 'var(--glass-blur)',
+        xl: 'calc(var(--glass-blur) * 1.5)',
+        '2xl': 'calc(var(--glass-blur) * 2)',
+      },
+      transitionDuration: {
+        DEFAULT: 'calc(150ms * var(--anim-speed))',
       },
       boxShadow: {
         'blue-500/30': '0 4px 14px 0 rgba(59, 130, 246, 0.3)',

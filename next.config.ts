@@ -1,5 +1,5 @@
 
-import type {NextConfig} from 'next';
+import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
   /* config options here */
@@ -7,17 +7,17 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: true,
   },
   // eslint config removed (deprecated in Next.js 16+)
-    turbopack: {}, // Added for Next.js 16+ compatibility
-  
+  turbopack: {}, // Added for Next.js 16+ compatibility
+
   // ✅ Performance Optimizations
   productionBrowserSourceMaps: false, // Disable source maps in production
   compress: true, // Enable gzip compression
-  
+
   // ✅ Cache optimization
   experimental: {
     optimizePackageImports: ['@radix-ui/react-*', 'lucide-react'],
   },
-  
+
   images: {
     remotePatterns: [
       {
@@ -46,6 +46,12 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'https',
+        hostname: 'is*.mzstatic.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
         hostname: 'img.icons8.com',
         port: '',
         pathname: '/**',
@@ -61,10 +67,7 @@ const nextConfig: NextConfig = {
             key: 'X-Content-Type-Options',
             value: 'nosniff',
           },
-          {
-            key: 'X-Frame-Options',
-            value: 'SAMEORIGIN',
-          },
+
           {
             key: 'X-XSS-Protection',
             value: '1; mode=block',
@@ -75,7 +78,7 @@ const nextConfig: NextConfig = {
           },
           {
             key: 'Cross-Origin-Embedder-Policy',
-            value: 'require-corp',
+            value: 'unsafe-none', // Changed from credentialless to fix YouTube embed issues
           },
         ],
       },

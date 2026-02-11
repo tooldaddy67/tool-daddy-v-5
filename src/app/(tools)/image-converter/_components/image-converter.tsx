@@ -10,6 +10,8 @@ import { Download, Loader2, Replace } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { useHistory } from '@/hooks/use-history';
+import { useFirebase } from '@/firebase';
+import { sendNotification } from '@/lib/send-notification';
 
 type Format = 'png' | 'jpeg' | 'webp';
 
@@ -21,6 +23,7 @@ export default function ImageConverter() {
   const [originalFile, setOriginalFile] = useState<File | null>(null);
   const { toast } = useToast();
   const { addToHistory } = useHistory();
+  const { firestore, user } = useFirebase();
 
   const handleFileDrop = useCallback((files: File[]) => {
     const file = files[0];
@@ -75,6 +78,14 @@ export default function ImageConverter() {
         }
       })
 
+      // Send notification
+      sendNotification(firestore, user?.uid, {
+        title: 'Image Converted',
+        message: `Image successfully converted to ${targetFormat.toUpperCase()}`,
+        type: 'success',
+        link: '/image-converter'
+      });
+
     } catch (error) {
       console.error('Error converting image:', error);
       toast({
@@ -86,7 +97,7 @@ export default function ImageConverter() {
       setIsLoading(false);
     }
   };
-  
+
   const downloadImage = () => {
     if (!convertedImage) return;
     const link = document.createElement("a");
@@ -96,7 +107,7 @@ export default function ImageConverter() {
     link.click();
     document.body.removeChild(link);
   };
-  
+
   const handleClear = () => {
     setOriginalImage(null);
     setConvertedImage(null);
@@ -113,7 +124,7 @@ export default function ImageConverter() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          {!originalImage && <FileDropzone onFileDrop={handleFileDrop} variant="yellow"/>}
+          {!originalImage && <FileDropzone onFileDrop={handleFileDrop} variant="yellow" />}
 
           {originalImage && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
@@ -128,12 +139,12 @@ export default function ImageConverter() {
                   />
                 </div>
               </div>
-              
+
               <div className="flex flex-col items-center gap-2">
                 <h3 className="font-semibold">Converted</h3>
                 <div className="relative w-full aspect-square rounded-lg overflow-hidden border bg-muted/30 flex items-center justify-center">
-                  {isLoading && !convertedImage &&(
-                     <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                  {isLoading && !convertedImage && (
+                    <div className="flex flex-col items-center gap-2 text-muted-foreground">
                       <Loader2 className="animate-spin h-8 w-8" />
                       <span>Converting...</span>
                     </div>
@@ -150,33 +161,33 @@ export default function ImageConverter() {
               </div>
             </div>
           )}
-          
+
           {originalImage && (
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                   <div className="space-y-2">
-                      <Label htmlFor="format-select">Convert to:</Label>
-                      <Select onValueChange={(value: Format) => setTargetFormat(value)} defaultValue={targetFormat}>
-                          <SelectTrigger id="format-select" className="w-[180px]">
-                              <SelectValue placeholder="Select a format" />
-                          </SelectTrigger>
-                          <SelectContent>
-                              <SelectItem value="png">PNG</SelectItem>
-                              <SelectItem value="jpeg">JPEG</SelectItem>
-                              <SelectItem value="webp">WEBP</SelectItem>
-                          </SelectContent>
-                      </Select>
-                  </div>
-                  <Button onClick={handleConvert} disabled={isLoading} variant="yellow" className="self-end">
-                      <Replace className="mr-2 h-4 w-4" /> Convert
-                  </Button>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="format-select">Convert to:</Label>
+                <Select onValueChange={(value: Format) => setTargetFormat(value)} defaultValue={targetFormat}>
+                  <SelectTrigger id="format-select" className="w-[180px]">
+                    <SelectValue placeholder="Select a format" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="png">PNG</SelectItem>
+                    <SelectItem value="jpeg">JPEG</SelectItem>
+                    <SelectItem value="webp">WEBP</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
+              <Button onClick={handleConvert} disabled={isLoading} variant="yellow" className="self-end">
+                <Replace className="mr-2 h-4 w-4" /> Convert
+              </Button>
+            </div>
           )}
 
           <div className="flex justify-center gap-4">
             {convertedImage && (
-               <Button onClick={downloadImage} disabled={isLoading} variant="yellow">
-                 <Download className="mr-2 h-4 w-4" />
-                 Download
+              <Button onClick={downloadImage} disabled={isLoading} variant="yellow">
+                <Download className="mr-2 h-4 w-4" />
+                Download
               </Button>
             )}
             {originalImage && (

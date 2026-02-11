@@ -7,8 +7,9 @@ import AppSidebar from '@/components/app-sidebar';
 import { Toaster } from '@/components/ui/toaster';
 import PageHeader from '@/components/page-header';
 import { ThemeProvider } from '@/components/theme-provider';
+import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { useEnforceMfaForUnstablegng } from '@/hooks/use-enforce-mfa';
-import { Inter, Space_Grotesk, Indie_Flower, Amatic_SC } from 'next/font/google';
+import { Inter, Space_Grotesk, Outfit, Plus_Jakarta_Sans, Quicksand, Nunito, Playfair_Display, Lora, Syne, JetBrains_Mono, Roboto_Mono, Fredoka, Cinzel, EB_Garamond } from 'next/font/google';
 import AppFooter from '@/components/app-footer';
 import Script from 'next/script';
 
@@ -20,9 +21,80 @@ const inter = Inter({
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ['latin'],
-  weight: '700',
   display: 'swap',
   variable: '--font-space-grotesk',
+});
+
+const outfit = Outfit({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-outfit',
+});
+
+const plusJakartaSans = Plus_Jakarta_Sans({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-plus-jakarta-sans',
+});
+
+const quicksand = Quicksand({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-quicksand',
+});
+
+const nunito = Nunito({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-nunito',
+});
+
+const playfairDisplay = Playfair_Display({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-playfair-display',
+});
+
+const lora = Lora({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-lora',
+});
+
+const syne = Syne({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-syne',
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-jetbrains-mono',
+});
+
+const robotoMono = Roboto_Mono({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-roboto-mono',
+});
+
+const fredoka = Fredoka({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-fredoka',
+});
+
+const cinzel = Cinzel({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-cinzel',
+});
+
+const ebGaramond = EB_Garamond({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-eb-garamond',
 });
 
 
@@ -86,6 +158,8 @@ export const viewport: Viewport = {
   ],
 };
 
+import { SettingsProvider } from '@/components/settings-provider';
+
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   // Enforce MFA for unstablegng role
   if (typeof window !== 'undefined') {
@@ -94,7 +168,22 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     useEnforceMfaForUnstablegng();
   }
   return (
-    <html lang="en" suppressHydrationWarning className={`${inter.variable} ${spaceGrotesk.variable}`}>
+    <html lang="en" suppressHydrationWarning className={cn(
+      inter.variable,
+      spaceGrotesk.variable,
+      outfit.variable,
+      plusJakartaSans.variable,
+      quicksand.variable,
+      nunito.variable,
+      playfairDisplay.variable,
+      lora.variable,
+      syne.variable,
+      jetbrainsMono.variable,
+      robotoMono.variable,
+      fredoka.variable,
+      cinzel.variable,
+      ebGaramond.variable
+    )}>
       <body
         suppressHydrationWarning
         className={cn(
@@ -103,7 +192,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       >
         {/* Google Tag Manager (noscript) */}
         <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-P2725PBH"
-        height="0" width="0" style={{display:"none",visibility:"hidden"}}></iframe></noscript>
+          height="0" width="0" style={{ display: "none", visibility: "hidden" }}></iframe></noscript>
         {/* End Google Tag Manager (noscript) */}
         <ThemeProvider
           attribute="class"
@@ -111,16 +200,20 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           enableSystem
           disableTransitionOnChange
         >
-          <SidebarProvider>
-            <div className="flex w-full">
-              <AppSidebar />
-              <main className="flex-1 flex flex-col min-h-screen">
-                <PageHeader />
-                <div className="flex-1">{children}</div>
-                <AppFooter />
-              </main>
-            </div>
-          </SidebarProvider>
+          <FirebaseClientProvider>
+            <SettingsProvider>
+              <SidebarProvider>
+                <div className="flex w-full">
+                  <AppSidebar />
+                  <main className="flex-1 flex flex-col min-h-screen">
+                    <PageHeader />
+                    <div className="flex-1">{children}</div>
+                    <AppFooter />
+                  </main>
+                </div>
+              </SidebarProvider>
+            </SettingsProvider>
+          </FirebaseClientProvider>
           <Toaster />
         </ThemeProvider>
         {/* Google Tag Manager */}
@@ -136,27 +229,30 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         {/* End Google Tag Manager */}
 
         {/* Google Analytics 4 */}
-        {process.env.NEXT_PUBLIC_GA_ID && (
-          <>
-            <Script
-              src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_ID}`}
-              strategy="afterInteractive"
-            />
-            <Script id="google-analytics" strategy="afterInteractive">
-              {`
-                window.dataLayer = window.dataLayer || [];
-                function gtag(){dataLayer.push(arguments);}
-                gtag('js', new Date());
-                gtag('config', '${process.env.NEXT_PUBLIC_GA_ID}', {
-                  page_path: window.location.pathname,
-                  anonymize_ip: true,
-                  cookie_flags: 'SameSite=None;Secure'
-                });
-              `}
-            </Script>
-          </>
-        )}
+        <Script
+          src={`https://www.googletagmanager.com/gtag/js?id=G-95Z6VMSH51`}
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-95Z6VMSH51', {
+              page_path: window.location.pathname,
+              anonymize_ip: true,
+              cookie_flags: 'SameSite=None;Secure'
+            });
+          `}
+        </Script>
         {/* End Google Analytics 4 */}
+
+        {/* Google reCAPTCHA v3 */}
+        <Script
+          src="https://www.google.com/recaptcha/api.js?render=6Lfe02YsAAAAADPOetn7_P0L2oW2xhLgDVmYZgbF"
+          strategy="afterInteractive"
+        />
+        {/* End Google reCAPTCHA v3 */}
       </body>
     </html>
   );

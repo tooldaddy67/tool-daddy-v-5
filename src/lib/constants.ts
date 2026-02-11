@@ -42,24 +42,24 @@ export const TOOL_CATEGORIES: ToolCategory[] = [
   {
     name: 'Productivity',
     tools: [
-       {
-            name: 'Simple Notepad',
-            description: 'A simple notepad for quick notes with rich text support.',
-            href: '/simple-notepad',
-            icon: Notebook,
-        },
-        {
-            name: 'Timer & Stopwatch',
-            description: 'A simple timer and stopwatch for tracking time.',
-            href: '/timer-stopwatch',
-            icon: Timer,
-        },
-        {
-          name: 'To-Do List',
-          description: 'A minimalist to-do list to keep you on track.',
-          href: '/todo-list',
-          icon: ListTodo,
-        }
+      {
+        name: 'Simple Notepad',
+        description: 'A simple notepad for quick notes with rich text support.',
+        href: '/simple-notepad',
+        icon: Notebook,
+      },
+      {
+        name: 'Timer & Stopwatch',
+        description: 'A simple timer and stopwatch for tracking time.',
+        href: '/timer-stopwatch',
+        icon: Timer,
+      },
+      {
+        name: 'To-Do List',
+        description: 'A minimalist to-do list to keep you on track.',
+        href: '/todo-list',
+        icon: ListTodo,
+      }
     ]
   },
   {
@@ -133,7 +133,7 @@ export const TOOL_CATEGORIES: ToolCategory[] = [
         icon: Download,
         isExternal: false,
       },
-       {
+      {
         name: 'YouTube to Audio',
         description: 'Convert YouTube videos to audio via an external service.',
         href: '/youtube-to-audio',
@@ -145,46 +145,41 @@ export const TOOL_CATEGORIES: ToolCategory[] = [
   {
     name: 'Creative',
     tools: [
-        {
-            name: 'Drawing Canvas',
-            description: 'A minimalist canvas for quick sketches and notes.',
-            href: '/drawing-canvas',
-            icon: Pencil,
-        },
-        {
-            name: 'Color Palette Generator',
-            description: 'Discover, create, and save beautiful color palettes for your projects.',
-            href: '/color-palette-generator',
-            icon: Paintbrush,
-        },
+      {
+        name: 'Drawing Canvas',
+        description: 'A minimalist canvas for quick sketches and notes.',
+        href: '/drawing-canvas',
+        icon: Pencil,
+      },
+      {
+        name: 'Color Palette Generator',
+        description: 'Discover, create, and save beautiful color palettes for your projects.',
+        href: '/color-palette-generator',
+        icon: Paintbrush,
+      },
     ]
   },
   {
     name: 'General Tools',
     tools: [
-        {
-            name: 'QR Code Generator',
-            description: 'Create and customize QR codes for URLs, text, and more.',
-            href: '/qr-code-generator',
-            icon: QrCode,
-        },
-        {
-            name: 'Password Generator',
-            description: 'Create strong, secure, and random passwords.',
-            href: '/password-generator',
-            icon: KeyRound,
-        },
+      {
+        name: 'QR Code Generator',
+        description: 'Create and customize QR codes for URLs, text, and more.',
+        href: '/qr-code-generator',
+        icon: QrCode,
+      },
+      {
+        name: 'Password Generator',
+        description: 'Create strong, secure, and random passwords.',
+        href: '/password-generator',
+        icon: KeyRound,
+      },
     ]
   },
   {
     name: 'Support',
     tools: [
-      {
-        name: 'System Status',
-        description: 'Check the operational status of our services.',
-        href: '/status',
-        icon: Signal,
-      },
+
       {
         name: 'About Us',
         description: 'Learn more about the team behind Tool Daddy.',

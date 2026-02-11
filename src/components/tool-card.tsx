@@ -12,58 +12,41 @@ interface ToolCardProps {
   variantIndex?: number;
 }
 
-const iconBgVariants = [
-    'bg-blue-500/10 border-blue-500/20 text-blue-500',
-    'bg-green-500/10 border-green-500/20 text-green-500',
-    'bg-yellow-500/10 border-yellow-500/20 text-yellow-500',
-    'bg-purple-500/10 border-purple-500/20 text-purple-500',
-    'bg-pink-500/10 border-pink-500/20 text-pink-500',
-    'bg-indigo-500/10 border-indigo-500/20 text-indigo-500',
-    'bg-red-500/10 border-red-500/20 text-red-500',
-    'bg-cyan-500/10 border-cyan-500/20 text-cyan-500',
-    'bg-orange-500/10 border-orange-500/20 text-orange-500',
-]
-
-const hoverShadowVariants = [
-    'group-hover:shadow-blue-500/30',
-    'group-hover:shadow-green-500/30',
-    'group-hover:shadow-yellow-500/30',
-    'group-hover:shadow-purple-500/30',
-    'group-hover:shadow-pink-500/30',
-    'group-hover:shadow-indigo-500/30',
-    'group-hover:shadow-red-500/30',
-    'group-hover:shadow-cyan-500/30',
-    'group-hover:shadow-orange-500/30',
-]
-
-const hoverBorderVariants = [
-    'group-hover:border-blue-500/50',
-    'group-hover:border-green-500/50',
-    'group-hover:border-yellow-500/50',
-    'group-hover:border-purple-500/50',
-    'group-hover:border-pink-500/50',
-    'group-hover:border-indigo-500/50',
-    'group-hover:border-red-500/50',
-    'group-hover:border-cyan-500/50',
-    'group-hover:border-orange-500/50',
-]
+const ICON_VARIANTS = [
+  { bg: 'bg-blue-500/10', border: 'border-blue-500/20', text: 'text-blue-400', glow: 'rgba(59, 130, 246, 0.5)' },
+  { bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', text: 'text-emerald-400', glow: 'rgba(16, 185, 129, 0.5)' },
+  { bg: 'bg-amber-500/10', border: 'border-amber-500/20', text: 'text-amber-400', glow: 'rgba(245, 158, 11, 0.5)' },
+  { bg: 'bg-purple-500/10', border: 'border-purple-500/20', text: 'text-purple-400', glow: 'rgba(168, 85, 247, 0.5)' },
+  { bg: 'bg-rose-500/10', border: 'border-rose-500/20', text: 'text-rose-400', glow: 'rgba(244, 63, 94, 0.5)' },
+  { bg: 'bg-indigo-500/10', border: 'border-indigo-500/20', text: 'text-indigo-400', glow: 'rgba(79, 70, 229, 0.5)' },
+  { bg: 'bg-red-500/10', border: 'border-red-500/20', text: 'text-red-400', glow: 'rgba(239, 68, 68, 0.5)' },
+  { bg: 'bg-cyan-500/10', border: 'border-cyan-500/20', text: 'text-cyan-400', glow: 'rgba(6, 182, 212, 0.5)' },
+  { bg: 'bg-orange-500/10', border: 'border-orange-500/20', text: 'text-orange-400', glow: 'rgba(249, 115, 22, 0.5)' },
+];
 
 export default function ToolCard({ href, name, description, icon: Icon, isExternal, variantIndex = 0 }: ToolCardProps) {
-  const variantClass = iconBgVariants[variantIndex % iconBgVariants.length];
-  const shadowClass = hoverShadowVariants[variantIndex % hoverShadowVariants.length];
-  const borderClass = hoverBorderVariants[variantIndex % hoverBorderVariants.length];
+  const variant = ICON_VARIANTS[variantIndex % ICON_VARIANTS.length];
 
   const cardContent = (
-     <Card className={cn(
-        "h-full bg-card/50 backdrop-blur-lg border-border/20 shadow-lg transition-all duration-300 group-hover:scale-[1.02]",
-        shadowClass,
-        borderClass
-    )}>
-      <CardHeader className="flex flex-row items-center gap-4 space-y-0">
-        <div className={cn("p-3 rounded-lg border", variantClass)}>
-          <Icon className={cn("h-6 w-6")} />
+    <Card
+      className={cn(
+        "h-full glass-panel tool-island transition-all duration-300",
+        "border-border/20 shadow-lg"
+      )}
+      style={{ '--glow-color': variant.glow } as React.CSSProperties}
+    >
+      <CardHeader className="flex flex-row items-start gap-4 space-y-0">
+        <div
+          className={cn(
+            "p-3 rounded-lg border shrink-0 transition-all duration-300",
+            variant.bg, variant.border, variant.text
+          )}
+        >
+          <Icon className="h-6 w-6" />
         </div>
-        <CardTitle className="font-headline">{name}</CardTitle>
+        <div className="pt-1 flex-1 min-w-0">
+          <CardTitle className="font-headline text-lg sm:text-xl leading-tight line-clamp-2">{name}</CardTitle>
+        </div>
       </CardHeader>
       <CardContent>
         <p className="text-sm text-muted-foreground">{description}</p>
@@ -73,9 +56,9 @@ export default function ToolCard({ href, name, description, icon: Icon, isExtern
 
   if (isExternal) {
     return (
-        <a href={href} target="_blank" rel="noopener noreferrer" className="group h-full">
-            {cardContent}
-        </a>
+      <a href={href} target="_blank" rel="noopener noreferrer" className="group h-full">
+        {cardContent}
+      </a>
     )
   }
 

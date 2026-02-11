@@ -1,6 +1,8 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useUser, useFirestore, useDoc } from '@/firebase';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -23,31 +25,33 @@ import '../styles.css';
 const LOCAL_STORAGE_KEY = 'rich-notepad-content';
 
 const FONT_LIST = [
-    { name: 'Default', value: 'sans-serif' },
-    { name: 'Anonymous Pro', value: '"Anonymous Pro", monospace' },
-    { name: 'Bebas Neue', value: '"Bebas Neue", cursive' },
-    { name: 'Caveat', value: 'Caveat, cursive' },
-    { name: 'EB Garamond', value: '"EB Garamond", serif' },
-    { name: 'Inconsolata', value: 'Inconsolata, monospace' },
-    { name: 'Lato', value: 'Lato, sans-serif' },
-    { name: 'Lobster', value: 'Lobster, cursive' },
-    { name: 'Lora', value: 'Lora, serif' },
-    { name: 'Merriweather', value: 'Merriweather, serif' },
-    { name: 'Montserrat', value: 'Montserrat, sans-serif' },
-    { name: 'Nunito', value: 'Nunito, sans-serif' },
-    { name: 'Open Sans', value: '"Open Sans", sans-serif' },
-    { name: 'Oswald', value: 'Oswald, sans-serif' },
-    { name: 'PT Serif', value: '"PT Serif", serif' },
-    { name: 'Pacifico', value: 'Pacifico, cursive' },
-    { name: 'Playfair Display', value: '"Playfair Display", serif' },
-    { name: 'Poppins', value: 'Poppins, sans-serif' },
-    { name: 'Raleway', value: 'Raleway, sans-serif' },
-    { name: 'Roboto', value: 'Roboto, sans-serif' },
-    { name: 'Source Code Pro', value: '"Source Code Pro", monospace' },
-    { name: 'Space Mono', value: '"Space Mono", monospace' },
+  { name: 'Default', value: 'sans-serif' },
+  { name: 'Anonymous Pro', value: '"Anonymous Pro", monospace' },
+  { name: 'Bebas Neue', value: '"Bebas Neue", cursive' },
+  { name: 'Caveat', value: 'Caveat, cursive' },
+  { name: 'EB Garamond', value: '"EB Garamond", serif' },
+  { name: 'Inconsolata', value: 'Inconsolata, monospace' },
+  { name: 'Lato', value: 'Lato, sans-serif' },
+  { name: 'Lobster', value: 'Lobster, cursive' },
+  { name: 'Lora', value: 'Lora, serif' },
+  { name: 'Merriweather', value: 'Merriweather, serif' },
+  { name: 'Montserrat', value: 'Montserrat, sans-serif' },
+  { name: 'Nunito', value: 'Nunito, sans-serif' },
+  { name: 'Open Sans', value: '"Open Sans", sans-serif' },
+  { name: 'Oswald', value: 'Oswald, sans-serif' },
+  { name: 'PT Serif', value: '"PT Serif", serif' },
+  { name: 'Pacifico', value: 'Pacifico, cursive' },
+  { name: 'Playfair Display', value: '"Playfair Display", serif' },
+  { name: 'Poppins', value: 'Poppins, sans-serif' },
+  { name: 'Raleway', value: 'Raleway, sans-serif' },
+  { name: 'Roboto', value: 'Roboto, sans-serif' },
+  { name: 'Source Code Pro', value: '"Source Code Pro", monospace' },
+  { name: 'Space Mono', value: '"Space Mono", monospace' },
 ];
 
 export default function SimpleNotepad() {
+  const { user, isUserLoading: isAuthLoading } = useUser();
+  const firestore = useFirestore();
   const [content, setContent] = useState('');
   const [wordCount, setWordCount] = useState(0);
   const [charCount, setCharCount] = useState(0);
@@ -65,41 +69,61 @@ export default function SimpleNotepad() {
   const [toolbar, setToolbar] = useState({ visible: false, top: 0, left: 0 });
   const [activeStyle, setActiveStyle] = useState('Paragraph');
 
+  // Firestore Ref
+  const notepadDocRef = useMemo(() => {
+    if (!user || user.isAnonymous || !firestore) return null;
+    return doc(firestore, 'users', user.uid, 'settings', 'notepad'); // Storing in settings/notepad for simplicity
+  }, [firestore, user]);
 
-   const handleAdFinish = () => {
-    setIsAdModalOpen(false);
-    if (downloadType === 'pdf') {
-      setIsPdfDialogOpen(true);
-    } else if (downloadType === 'txt') {
-      setIsTxtDialogOpen(true);
-    }
-  };
+  const { data: cloudData, isLoading: isCloudLoading } = useDoc(notepadDocRef);
 
+  // Load Initial Content (Local -> Cloud strategy)
   useEffect(() => {
-    const savedContent = localStorage.getItem(LOCAL_STORAGE_KEY);
-    if (savedContent) {
-      if (editorRef.current) {
-        editorRef.current.innerHTML = savedContent;
+    if (isAuthLoading) return;
+
+    if (user && !user.isAnonymous) {
+      // If logged in and cloud data exists, use it
+      if (!isCloudLoading && cloudData) {
+        const cloudContent = (cloudData as any).content || '';
+        if (editorRef.current) editorRef.current.innerHTML = cloudContent;
+        setContent(cloudContent);
+        updateCounts(cloudContent);
+      } else if (!isCloudLoading && !cloudData) {
+        // New user or no cloud data, try loading local
+        const savedContent = localStorage.getItem(LOCAL_STORAGE_KEY);
+        if (savedContent) {
+          if (editorRef.current) editorRef.current.innerHTML = savedContent;
+          setContent(savedContent);
+          updateCounts(savedContent);
+          // Prompt sync or just save to cloud
+          if (notepadDocRef) setDoc(notepadDocRef, { content: savedContent, updatedAt: serverTimestamp() });
+        }
       }
-      setContent(savedContent); 
-      updateCounts(savedContent);
+    } else {
+      // Guest mode
+      const savedContent = localStorage.getItem(LOCAL_STORAGE_KEY);
+      if (savedContent) {
+        if (editorRef.current) editorRef.current.innerHTML = savedContent;
+        setContent(savedContent);
+        updateCounts(savedContent);
+      }
     }
 
     const editor = editorRef.current;
     if (editor) {
-        editor.addEventListener('paste', handlePaste);
+      editor.addEventListener('paste', handlePaste);
     }
-    
+
     document.addEventListener('selectionchange', handleSelectionChange);
 
     return () => {
-        if (editor) {
-            editor.removeEventListener('paste', handlePaste);
-        }
-        document.removeEventListener('selectionchange', handleSelectionChange);
+      if (editor) {
+        editor.removeEventListener('paste', handlePaste);
+      }
+      document.removeEventListener('selectionchange', handleSelectionChange);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthLoading, isCloudLoading, !!cloudData, !!user]);
 
   const handlePaste = (event: ClipboardEvent) => {
     event.preventDefault();
@@ -117,98 +141,115 @@ export default function SimpleNotepad() {
     setWordCount(words.length === 1 && words[0] === '' ? 0 : words.length);
   }
 
+  const handleAdFinish = () => {
+    setIsAdModalOpen(false);
+    if (downloadType === 'pdf') {
+      setIsPdfDialogOpen(true);
+    } else if (downloadType === 'txt') {
+      setIsTxtDialogOpen(true);
+    }
+  };
+
   const handleInput = (e: React.FormEvent<HTMLDivElement>) => {
     const newContent = e.currentTarget.innerHTML;
     setContent(newContent);
     localStorage.setItem(LOCAL_STORAGE_KEY, newContent);
     updateCounts(newContent);
+
+    // Save to Cloud (Debounced ideally, but direct for now for simplicity)
+    if (notepadDocRef) {
+      setDoc(notepadDocRef, { content: newContent, updatedAt: serverTimestamp() }, { merge: true });
+    }
   };
-  
+
   const handleClear = () => {
     setContent('');
     if (editorRef.current) {
-        editorRef.current.innerHTML = '';
+      editorRef.current.innerHTML = '';
     }
     localStorage.removeItem(LOCAL_STORAGE_KEY);
+    if (notepadDocRef) {
+      setDoc(notepadDocRef, { content: '', updatedAt: serverTimestamp() }, { merge: true });
+    }
     updateCounts('');
     toast({ title: 'Notepad Cleared' });
   }
 
-    const handleDownloadPdf = async () => {
-        if (!editorRef.current || !content.trim()) {
-            toast({ title: "Notepad is empty", description: "Write something before downloading.", variant: 'destructive' });
-            return;
-        }
+  const handleDownloadPdf = async () => {
+    if (!editorRef.current || !content.trim()) {
+      toast({ title: "Notepad is empty", description: "Write something before downloading.", variant: 'destructive' });
+      return;
+    }
 
-        setIsDownloading(true);
-        setIsPdfDialogOpen(false);
-        toast({ title: "Generating PDF..." });
+    setIsDownloading(true);
+    setIsPdfDialogOpen(false);
+    toast({ title: "Generating PDF..." });
 
-        try {
-            const editor = editorRef.current;
-            const pdf = new jsPDF({
-                orientation: 'p',
-                unit: 'pt',
-                format: 'a4'
-            });
-            
-            await pdf.html(editor, {
-                callback: function (doc) {
-                    doc.save(`${fileName}.pdf`);
-                },
-                x: 15,
-                y: 15,
-                width: 550,
-                windowWidth: editor.scrollWidth,
-            });
+    try {
+      const editor = editorRef.current;
+      const pdf = new jsPDF({
+        orientation: 'p',
+        unit: 'pt',
+        format: 'a4'
+      });
+
+      await pdf.html(editor, {
+        callback: function (doc) {
+          doc.save(`${fileName}.pdf`);
+        },
+        x: 15,
+        y: 15,
+        width: 550,
+        windowWidth: editor.scrollWidth,
+      });
 
 
-            toast({ title: "PDF Downloaded!", description: "Your notes have been saved as a PDF."});
-        } catch (error) {
-            console.error("Failed to generate PDF", error);
-            toast({ title: "Error", description: "Could not generate PDF.", variant: 'destructive'});
-        } finally {
-            setIsDownloading(false);
-        }
-    };
-    
-    const handleDownloadTxt = () => {
-        if (!editorRef.current || !content.trim()) {
-            toast({ title: "Notepad is empty", description: "Write something before downloading.", variant: 'destructive' });
-            return;
-        }
-        setIsTxtDialogOpen(false);
-        const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = content;
-        const plainText = tempDiv.textContent || tempDiv.innerText || '';
+      toast({ title: "PDF Downloaded!", description: "Your notes have been saved as a PDF." });
+    } catch (error) {
+      console.error("Failed to generate PDF", error);
+      toast({ title: "Error", description: "Could not generate PDF.", variant: 'destructive' });
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
-        const blob = new Blob([plainText], { type: 'text/plain' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `${fileName}.txt`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-        toast({ title: "TXT Downloaded!", description: "Your notes have been saved as a text file."});
-    };
+  const handleDownloadTxt = () => {
+    if (!editorRef.current || !content.trim()) {
+      toast({ title: "Notepad is empty", description: "Write something before downloading.", variant: 'destructive' });
+      return;
+    }
+    setIsTxtDialogOpen(false);
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = content;
+    const plainText = tempDiv.textContent || tempDiv.innerText || '';
 
-    const triggerAdForDownload = (type: 'pdf' | 'txt') => {
-        if (!content.trim()) {
-            toast({ title: "Notepad is empty", description: "Write something before downloading.", variant: 'destructive' });
-            return;
-        }
-        setDownloadType(type);
-        setIsAdModalOpen(true);
-    };
+    const blob = new Blob([plainText], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${fileName}.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    toast({ title: "TXT Downloaded!", description: "Your notes have been saved as a text file." });
+  };
+
+  const triggerAdForDownload = (type: 'pdf' | 'txt') => {
+    if (!content.trim()) {
+      toast({ title: "Notepad is empty", description: "Write something before downloading.", variant: 'destructive' });
+      return;
+    }
+    setDownloadType(type);
+    setIsAdModalOpen(true);
+  };
 
   const applyFormat = (command: string, value?: string) => {
     document.execCommand(command, false, value);
     editorRef.current?.focus();
     handleSelectionChange(); // Re-check style after applying
   };
-  
+
   const applyBlockFormat = (tag: string) => {
     document.execCommand('formatBlock', false, tag);
     editorRef.current?.focus();
@@ -226,7 +267,7 @@ export default function SimpleNotepad() {
 
       // If selection is collapsed, hide toolbar.
       if (range.collapsed) {
-        if (toolbar.visible) setToolbar(t => ({...t, visible: false}));
+        if (toolbar.visible) setToolbar(t => ({ ...t, visible: false }));
         return;
       }
 
@@ -242,7 +283,7 @@ export default function SimpleNotepad() {
 
       const rect = range.getBoundingClientRect();
       const editorContainerRect = editor.parentElement!.getBoundingClientRect();
-      
+
       const TOOLBAR_HEIGHT = 42;
       const TOOLBAR_OFFSET = 8;
       const halfToolbarWidth = 200; // Approximate half width of the toolbar
@@ -252,15 +293,15 @@ export default function SimpleNotepad() {
 
       // If toolbar would be off-screen at the top, show it below
       if (top < 0) {
-          top = rect.bottom - editorContainerRect.top + TOOLBAR_OFFSET;
+        top = rect.bottom - editorContainerRect.top + TOOLBAR_OFFSET;
       }
-      
+
       // Clamp left position to stay within the editor bounds
       if (left < halfToolbarWidth) {
-          left = halfToolbarWidth;
+        left = halfToolbarWidth;
       }
       if (left > editorContainerRect.width - halfToolbarWidth) {
-          left = editorContainerRect.width - halfToolbarWidth;
+        left = editorContainerRect.width - halfToolbarWidth;
       }
 
       setToolbar({
@@ -270,15 +311,15 @@ export default function SimpleNotepad() {
       });
 
     } else {
-        if (toolbar.visible) setToolbar(t => ({...t, visible: false}));
+      if (toolbar.visible) setToolbar(t => ({ ...t, visible: false }));
     }
   }, [toolbar.visible]);
 
 
   useEffect(() => {
     const handleMouseUp = () => {
-        // Use a small timeout to allow the selection to update before we check it
-        setTimeout(handleSelectionChange, 1);
+      // Use a small timeout to allow the selection to update before we check it
+      setTimeout(handleSelectionChange, 1);
     };
     document.addEventListener('mouseup', handleMouseUp);
     return () => document.removeEventListener('mouseup', handleMouseUp);
@@ -286,80 +327,80 @@ export default function SimpleNotepad() {
 
   const ToolbarComponent = () => {
     const handleToolbarMouseDown = (e: React.MouseEvent) => {
-        e.preventDefault();
+      e.preventDefault();
     };
 
     return (
-    <div
-      data-toolbar="true"
-      className={cn(
-        "absolute z-10 flex items-center gap-1 rounded-lg border bg-background/80 p-1 shadow-lg backdrop-blur-sm transition-all duration-150",
-        toolbar.visible ? "visible opacity-100" : "invisible opacity-0"
-      )}
-      style={{
-        top: `${toolbar.top}px`,
-        left: `${toolbar.left}px`,
-        transform: 'translateX(-50%)',
-      }}
-      onMouseDown={handleToolbarMouseDown}
-    >
-      <DropdownMenu>
+      <div
+        data-toolbar="true"
+        className={cn(
+          "absolute z-10 flex items-center gap-1 rounded-lg border bg-background/80 p-1 shadow-lg backdrop-blur-sm transition-all duration-150",
+          toolbar.visible ? "visible opacity-100" : "invisible opacity-0"
+        )}
+        style={{
+          top: `${toolbar.top}px`,
+          left: `${toolbar.left}px`,
+          transform: 'translateX(-50%)',
+        }}
+        onMouseDown={handleToolbarMouseDown}
+      >
+        <DropdownMenu>
           <DropdownMenuTrigger asChild>
-              <Button size="sm" variant="ghost" className="w-24 justify-between pr-2" title="Font">
-                  <span>Font</span>
-                  <ChevronDown className="h-4 w-4 opacity-50" />
-              </Button>
+            <Button size="sm" variant="ghost" className="w-24 justify-between pr-2" title="Font">
+              <span>Font</span>
+              <ChevronDown className="h-4 w-4 opacity-50" />
+            </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent onFocusOutside={e => e.preventDefault()} className="max-h-60 overflow-y-auto">
-              {FONT_LIST.map(font => (
-                  <DropdownMenuItem 
-                      key={font.name} 
-                      onSelect={() => applyFormat('fontName', font.value)}
-                      style={{fontFamily: font.value}}
-                  >
-                      {font.name}
-                  </DropdownMenuItem>
-              ))}
+            {FONT_LIST.map(font => (
+              <DropdownMenuItem
+                key={font.name}
+                onSelect={() => applyFormat('fontName', font.value)}
+                style={{ fontFamily: font.value }}
+              >
+                {font.name}
+              </DropdownMenuItem>
+            ))}
           </DropdownMenuContent>
-      </DropdownMenu>
-      
+        </DropdownMenu>
+
         <div className="w-[1px] h-6 bg-border mx-1"></div>
 
-      <DropdownMenu>
+        <DropdownMenu>
           <DropdownMenuTrigger asChild>
-              <Button size="sm" variant="ghost" className="w-32 justify-between pr-2" title="Text Styles">
-                  <span className="truncate">{activeStyle}</span>
-                  <ChevronDown className="h-4 w-4 opacity-50" />
-              </Button>
+            <Button size="sm" variant="ghost" className="w-32 justify-between pr-2" title="Text Styles">
+              <span className="truncate">{activeStyle}</span>
+              <ChevronDown className="h-4 w-4 opacity-50" />
+            </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent onFocusOutside={e => e.preventDefault()}>
-              <DropdownMenuItem onSelect={() => applyBlockFormat('p')}>
-                  <Pilcrow className="h-4 w-4 mr-2"/> Paragraph
-              </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => applyBlockFormat('h1')}>
-                  <Heading1 className="h-4 w-4 mr-2"/> Heading 1
-              </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => applyBlockFormat('h2')}>
-                  <Heading2 className="h-4 w-4 mr-2"/> Heading 2
-              </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => applyBlockFormat('h3')}>
-                  <Heading3 className="h-4 w-4 mr-2"/> Heading 3
-              </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => applyBlockFormat('p')}>
+              <Pilcrow className="h-4 w-4 mr-2" /> Paragraph
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => applyBlockFormat('h1')}>
+              <Heading1 className="h-4 w-4 mr-2" /> Heading 1
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => applyBlockFormat('h2')}>
+              <Heading2 className="h-4 w-4 mr-2" /> Heading 2
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => applyBlockFormat('h3')}>
+              <Heading3 className="h-4 w-4 mr-2" /> Heading 3
+            </DropdownMenuItem>
           </DropdownMenuContent>
-      </DropdownMenu>
+        </DropdownMenu>
 
-      <div className="w-[1px] h-6 bg-border mx-1"></div>
+        <div className="w-[1px] h-6 bg-border mx-1"></div>
 
-      <Button size="icon" className="h-8 w-8" variant="ghost" onClick={() => applyFormat('bold')} title="Bold">
+        <Button size="icon" className="h-8 w-8" variant="ghost" onClick={() => applyFormat('bold')} title="Bold">
           <Bold className="h-4 w-4" />
-      </Button>
-      <Button size="icon" className="h-8 w-8" variant="ghost" onClick={() => applyFormat('italic')} title="Italic">
+        </Button>
+        <Button size="icon" className="h-8 w-8" variant="ghost" onClick={() => applyFormat('italic')} title="Italic">
           <Italic className="h-4 w-4" />
-      </Button>
-      
-      <div className="w-[1px] h-6 bg-border mx-1"></div>
-      
-      <DropdownMenu>
+        </Button>
+
+        <div className="w-[1px] h-6 bg-border mx-1"></div>
+
+        <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button size="icon" className="h-8 w-8" variant="ghost" title="Highlight color">
               <Paintbrush className="h-4 w-4" />
@@ -369,19 +410,19 @@ export default function SimpleNotepad() {
             <DropdownMenuItem onSelect={() => applyFormat('hiliteColor', '#ca8a0480')}>
               <Highlighter className="h-4 w-4 mr-2 text-yellow-400" /> Yellow
             </DropdownMenuItem>
-             <DropdownMenuItem onSelect={() => applyFormat('hiliteColor', '#22c55e80')}>
+            <DropdownMenuItem onSelect={() => applyFormat('hiliteColor', '#22c55e80')}>
               <Highlighter className="h-4 w-4 mr-2 text-green-400" /> Green
             </DropdownMenuItem>
-             <DropdownMenuItem onSelect={() => applyFormat('hiliteColor', '#ec489980')}>
+            <DropdownMenuItem onSelect={() => applyFormat('hiliteColor', '#ec489980')}>
               <Highlighter className="h-4 w-4 mr-2 text-pink-400" /> Pink
             </DropdownMenuItem>
-             <DropdownMenuItem onSelect={() => applyFormat('hiliteColor', '#f9731680')}>
+            <DropdownMenuItem onSelect={() => applyFormat('hiliteColor', '#f9731680')}>
               <Highlighter className="h-4 w-4 mr-2 text-orange-400" /> Orange
             </DropdownMenuItem>
-             <DropdownMenuItem onSelect={() => applyFormat('hiliteColor', '#3b82f680')}>
+            <DropdownMenuItem onSelect={() => applyFormat('hiliteColor', '#3b82f680')}>
               <Highlighter className="h-4 w-4 mr-2 text-blue-400" /> Blue
             </DropdownMenuItem>
-             <DropdownMenuItem onSelect={() => applyFormat('hiliteColor', '#a855f780')}>
+            <DropdownMenuItem onSelect={() => applyFormat('hiliteColor', '#a855f780')}>
               <Highlighter className="h-4 w-4 mr-2 text-purple-400" /> Purple
             </DropdownMenuItem>
             <DropdownMenuSeparator />
@@ -389,11 +430,11 @@ export default function SimpleNotepad() {
               <Brush className="h-4 w-4 mr-2" /> Remove
             </DropdownMenuItem>
           </DropdownMenuContent>
-      </DropdownMenu>
+        </DropdownMenu>
 
-      <div className="w-[1px] h-6 bg-border mx-1"></div>
-      
-       <DropdownMenu>
+        <div className="w-[1px] h-6 bg-border mx-1"></div>
+
+        <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button size="icon" className="h-8 w-8" variant="ghost" title="Lists">
               <List className="h-4 w-4" />
@@ -401,120 +442,121 @@ export default function SimpleNotepad() {
           </DropdownMenuTrigger>
           <DropdownMenuContent onFocusOutside={e => e.preventDefault()}>
             <DropdownMenuItem onSelect={() => applyFormat('insertUnorderedList')}>
-                <List className="h-4 w-4 mr-2" /> Bulleted List
+              <List className="h-4 w-4 mr-2" /> Bulleted List
             </DropdownMenuItem>
             <DropdownMenuItem onSelect={() => applyFormat('insertOrderedList')}>
               <ListOrdered className="h-4 w-4 mr-2" /> Numbered List
             </DropdownMenuItem>
           </DropdownMenuContent>
-      </DropdownMenu>
-    </div>
-  )};
+        </DropdownMenu>
+      </div>
+    )
+  };
 
   return (
     <>
-    <div className={cn("w-full h-full p-4 md:p-6", isFullScreen && "p-0 md:p-0")}>
-      <Card className={cn(
+      <div className={cn("w-full h-full p-4 md:p-6", isFullScreen && "p-0 md:p-0")}>
+        <Card className={cn(
           "w-full h-full flex flex-col bg-card/50 backdrop-blur-lg border-border/20 transition-all duration-300",
           isFullScreen && "fixed inset-0 z-40 rounded-none border-none"
         )}>
-        <CardHeader className="flex flex-row justify-between items-start">
+          <CardHeader className="flex flex-row justify-between items-start">
             <div>
-                <CardTitle className="flex items-center gap-2"><Notebook /> Simple Notepad</CardTitle>
-                <CardDescription>Your notes are automatically saved. Download them as you wish.</CardDescription>
+              <CardTitle className="flex items-center gap-2"><Notebook /> Simple Notepad</CardTitle>
+              <CardDescription>Your notes are automatically saved. Download them as you wish.</CardDescription>
             </div>
             <div className="flex flex-col items-end gap-2">
-                <div className="flex items-center gap-2">
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="outline" disabled={isDownloading} title="Download notes">
-                                {isDownloading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
-                                Download
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent>
-                            <DropdownMenuItem onSelect={() => triggerAdForDownload('pdf')} title="Download as PDF">As PDF</DropdownMenuItem>
-                            <DropdownMenuItem onSelect={() => triggerAdForDownload('txt')} title="Download as Text">As Plain Text (.txt)</DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-
-                    <Dialog open={isPdfDialogOpen} onOpenChange={setIsPdfDialogOpen}>
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>Download as PDF</DialogTitle>
-                        </DialogHeader>
-                        <div className="grid gap-4 py-4">
-                            <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="filename-pdf" className="text-right">Filename</Label>
-                                <Input id="filename-pdf" value={fileName} onChange={(e) => setFileName(e.target.value)} className="col-span-3" onKeyDown={(e) => {if (e.key === 'Enter') handleDownloadPdf()}} />
-                            </div>
-                        </div>
-                        <DialogFooter>
-                            <Button onClick={handleDownloadPdf} disabled={isDownloading}>
-                                {isDownloading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
-                                Download
-                            </Button>
-                        </DialogFooter>
-                    </DialogContent>
-                    </Dialog>
-
-                    <Dialog open={isTxtDialogOpen} onOpenChange={setIsTxtDialogOpen}>
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>Download as Plain Text</DialogTitle>
-                        </DialogHeader>
-                        <div className="grid gap-4 py-4">
-                            <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="filename-txt" className="text-right">Filename</Label>
-                                <Input id="filename-txt" value={fileName} onChange={(e) => setFileName(e.target.value)} className="col-span-3" onKeyDown={(e) => {if (e.key === 'Enter') handleDownloadTxt()}}/>
-                            </div>
-                        </div>
-                        <DialogFooter>
-                            <Button onClick={handleDownloadTxt}>
-                                <Download className="mr-2 h-4 w-4" />
-                                Download
-                            </Button>
-                        </DialogFooter>
-                    </DialogContent>
-                    </Dialog>
-
-                    <Button variant="outline" onClick={handleClear} title="Clear all notes">
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    Clear
+              <div className="flex items-center gap-2">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" disabled={isDownloading} title="Download notes">
+                      {isDownloading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+                      Download
                     </Button>
-                </div>
-                 <div className="flex gap-4 text-sm text-muted-foreground">
-                    <span>{wordCount} words</span>
-                    <span>{charCount} characters</span>
-                </div>
-            </div>
-        </CardHeader>
-        <CardContent className="flex-grow flex flex-col gap-4">
-            <div className="border border-input rounded-md flex-grow relative min-h-[70vh]">
-                <ToolbarComponent />
-                <div
-                    ref={editorRef}
-                    contentEditable={true}
-                    onInput={handleInput}
-                    suppressContentEditableWarning={true}
-                    className="prose prose-sm dark:prose-invert max-w-none p-4 bg-background focus:outline-none absolute inset-0 overflow-y-auto"
-                    data-placeholder="Start typing..."
-                />
-                 <Button variant="ghost" size="icon" onClick={() => setIsFullScreen(!isFullScreen)} className="absolute bottom-3 right-3 z-10" title={isFullScreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}>
-                    {isFullScreen ? <Minimize /> : <Maximize />}
-                    <span className="sr-only">{isFullScreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}</span>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <DropdownMenuItem onSelect={() => triggerAdForDownload('pdf')} title="Download as PDF">As PDF</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => triggerAdForDownload('txt')} title="Download as Text">As Plain Text (.txt)</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                <Dialog open={isPdfDialogOpen} onOpenChange={setIsPdfDialogOpen}>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Download as PDF</DialogTitle>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="filename-pdf" className="text-right">Filename</Label>
+                        <Input id="filename-pdf" value={fileName} onChange={(e) => setFileName(e.target.value)} className="col-span-3" onKeyDown={(e) => { if (e.key === 'Enter') handleDownloadPdf() }} />
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <Button onClick={handleDownloadPdf} disabled={isDownloading}>
+                        {isDownloading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+                        Download
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+
+                <Dialog open={isTxtDialogOpen} onOpenChange={setIsTxtDialogOpen}>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Download as Plain Text</DialogTitle>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="filename-txt" className="text-right">Filename</Label>
+                        <Input id="filename-txt" value={fileName} onChange={(e) => setFileName(e.target.value)} className="col-span-3" onKeyDown={(e) => { if (e.key === 'Enter') handleDownloadTxt() }} />
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <Button onClick={handleDownloadTxt}>
+                        <Download className="mr-2 h-4 w-4" />
+                        Download
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+
+                <Button variant="outline" onClick={handleClear} title="Clear all notes">
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Clear
                 </Button>
+              </div>
+              <div className="flex gap-4 text-sm text-muted-foreground">
+                <span>{wordCount} words</span>
+                <span>{charCount} characters</span>
+              </div>
             </div>
-        </CardContent>
-      </Card>
-    </div>
-    <AdModal
-      isOpen={isAdModalOpen}
-      onClose={() => setIsAdModalOpen(false)}
-      onAdFinish={handleAdFinish}
-      title="Preparing your download..."
-      duration={10}
-    />
+          </CardHeader>
+          <CardContent className="flex-grow flex flex-col gap-4">
+            <div className="border border-input rounded-md flex-grow relative min-h-[70vh]">
+              <ToolbarComponent />
+              <div
+                ref={editorRef}
+                contentEditable={true}
+                onInput={handleInput}
+                suppressContentEditableWarning={true}
+                className="prose prose-sm dark:prose-invert max-w-none p-4 bg-background focus:outline-none absolute inset-0 overflow-y-auto"
+                data-placeholder="Start typing..."
+              />
+              <Button variant="ghost" size="icon" onClick={() => setIsFullScreen(!isFullScreen)} className="absolute bottom-3 right-3 z-10" title={isFullScreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}>
+                {isFullScreen ? <Minimize /> : <Maximize />}
+                <span className="sr-only">{isFullScreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}</span>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+      <AdModal
+        isOpen={isAdModalOpen}
+        onClose={() => setIsAdModalOpen(false)}
+        onAdFinish={handleAdFinish}
+        title="Preparing your download..."
+        duration={10}
+      />
     </>
   );
 }

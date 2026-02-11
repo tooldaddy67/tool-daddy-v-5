@@ -11,6 +11,8 @@ import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
 import { formatBytes } from '@/lib/utils';
 import { useHistory } from '@/hooks/use-history';
+import { useFirebase } from '@/firebase';
+import { sendNotification } from '@/lib/send-notification';
 
 export default function ImageCompressor() {
   const [originalImage, setOriginalImage] = useState<string | null>(null);
@@ -22,6 +24,7 @@ export default function ImageCompressor() {
   const [originalFile, setOriginalFile] = useState<File | null>(null);
   const { toast } = useToast();
   const { addToHistory } = useHistory();
+  const { firestore, user } = useFirebase();
 
   const handleFileDrop = useCallback((files: File[]) => {
     const file = files[0];
@@ -58,9 +61,9 @@ export default function ImageCompressor() {
     try {
       const img = document.createElement('img');
       img.src = image;
-      await new Promise((resolve, reject) => { 
-          img.onload = resolve;
-          img.onerror = reject;
+      await new Promise((resolve, reject) => {
+        img.onload = resolve;
+        img.onerror = reject;
       });
 
       const canvas = document.createElement('canvas');
@@ -79,14 +82,22 @@ export default function ImageCompressor() {
       setCompressedSize(newSize);
 
       addToHistory({
-          tool: 'Image Compressor',
-          data: {
-              compressedImage: compressedDataUrl,
-              originalSize: originalSize || (await fetch(image).then(r=>r.blob()).then(b=>b.size)),
-              compressedSize: newSize,
-              fileType: mimeType,
-          }
+        tool: 'Image Compressor',
+        data: {
+          compressedImage: compressedDataUrl,
+          originalSize: originalSize || (await fetch(image).then(r => r.blob()).then(b => b.size)),
+          compressedSize: newSize,
+          fileType: mimeType,
+        }
       })
+
+      // Send notification
+      sendNotification(firestore, user?.uid, {
+        title: 'Image Compressed',
+        message: `Image compressed from ${formatBytes(originalSize)} to ${formatBytes(newSize)}`,
+        type: 'success',
+        link: '/image-compressor'
+      });
 
     } catch (error) {
       console.error('Error compressing image:', error);
@@ -99,14 +110,14 @@ export default function ImageCompressor() {
       setIsLoading(false);
     }
   };
-  
+
   const handleQualityChange = (value: number[]) => {
-      setQuality(value[0]);
-      if (originalImage && originalFile) {
-        handleCompress(originalImage, value[0], originalFile.type);
-      }
+    setQuality(value[0]);
+    if (originalImage && originalFile) {
+      handleCompress(originalImage, value[0], originalFile.type);
+    }
   }
-  
+
   const downloadImage = () => {
     if (!compressedImage) return;
     const link = document.createElement("a");
@@ -143,12 +154,12 @@ export default function ImageCompressor() {
                   />
                 </div>
               </div>
-              
+
               <div className="flex flex-col items-center gap-2">
                 <h3 className="font-semibold">Compressed ({formatBytes(compressedSize)})</h3>
                 <div className="relative w-full aspect-square rounded-lg overflow-hidden border bg-muted/30 flex items-center justify-center">
                   {isLoading && (
-                     <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                    <div className="flex flex-col items-center gap-2 text-muted-foreground">
                       <Loader2 className="animate-spin h-8 w-8" />
                       <span>Compressing...</span>
                     </div>
@@ -166,28 +177,28 @@ export default function ImageCompressor() {
             </div>
           )}
           {originalImage && (
-              <div className="space-y-4">
-                  <div className="flex justify-between">
-                      <Label htmlFor="quality">Quality: {quality}</Label>
-                      <span className="text-sm text-muted-foreground">~{formatBytes(compressedSize)}</span>
-                  </div>
-                  <Slider
-                      id="quality"
-                      min={0}
-                      max={100}
-                      step={5}
-                      value={[quality]}
-                      onValueChange={handleQualityChange}
-                      disabled={isLoading}
-                      variant="green"
-                  />
+            <div className="space-y-4">
+              <div className="flex justify-between">
+                <Label htmlFor="quality">Quality: {quality}</Label>
+                <span className="text-sm text-muted-foreground">~{formatBytes(compressedSize)}</span>
               </div>
+              <Slider
+                id="quality"
+                min={0}
+                max={100}
+                step={5}
+                value={[quality]}
+                onValueChange={handleQualityChange}
+                disabled={isLoading}
+                variant="green"
+              />
+            </div>
           )}
           <div className="flex justify-center gap-4">
             {compressedImage && (
-               <Button onClick={downloadImage} disabled={isLoading} variant="green">
-                 <Download className="mr-2 h-4 w-4" />
-                 Download
+              <Button onClick={downloadImage} disabled={isLoading} variant="green">
+                <Download className="mr-2 h-4 w-4" />
+                Download
               </Button>
             )}
           </div>

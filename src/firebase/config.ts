@@ -10,12 +10,12 @@ const firebaseConfigFromEnv = {
 
 // Fallback to hardcoded defaults if env vars not set (for backward compatibility during migration)
 const hardcodedDefaults = {
-  projectId: "tooldaddy-1-04475293-a5fef",
-  appId: "1:987172589038:web:5211ddefd13ab9fcefd2ff",
-  apiKey: "AIzaSyBL5MT0y0ZgThKMts1ShtkNPykV7jHHL84",
-  authDomain: "tooldaddy-1-04475293-a5fef.firebaseapp.com",
-  measurementId: "",
-  messagingSenderId: "987172589038"
+  projectId: "tool-daddy-v-5",
+  appId: "1:233526439835:web:3cfbfa379c9b6c55edfb3e",
+  apiKey: "AIzaSyC-u05z1pDo5xNwCphY9Nt6DsvgZ6jHVPU",
+  authDomain: "tool-daddy-v-5.firebaseapp.com",
+  measurementId: "G-SPWZ25MGLC",
+  messagingSenderId: "233526439835"
 };
 
 // Use env vars if available, fallback to hardcoded defaults

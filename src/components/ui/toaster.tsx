@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useRef } from "react"
 import { useToast } from "@/hooks/use-toast"
 import {
   Toast,
@@ -12,6 +13,15 @@ import {
 
 export function Toaster() {
   const { toasts } = useToast()
+  const lastToastCount = useRef(toasts.length)
+
+  useEffect(() => {
+    if (toasts.length > lastToastCount.current) {
+      const audio = new Audio('/noty.mp3')
+      audio.play().catch(err => console.log('Audio playback failed:', err))
+    }
+    lastToastCount.current = toasts.length
+  }, [toasts])
 
   return (
     <ToastProvider>

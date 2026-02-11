@@ -84,6 +84,27 @@ service cloud.firestore {
           allow update: if isOwner(userId) && validateTaskOnUpdate(request.resource.data, resource.data);
         }
       }
+
+      // --- Cloud Sync: History ---
+      match /history/{historyId} {
+        allow read, write, delete: if isOwner(userId);
+      }
+
+      // --- Cloud Sync: Settings (Notepad) ---
+      match /settings/{settingId} {
+        allow read, write: if isOwner(userId);
+      }
+
+      // --- Cloud Sync: Palettes ---
+      match /palettes/{paletteId} {
+        allow read, write, delete: if isOwner(userId);
+      }
+
+      // --- Notifications ---
+      match /notifications/{notifId} {
+        allow get, list, create, update, delete: if isOwner(userId);
+      }
+      
     }
 
     match /rate-limits/{identifier} {

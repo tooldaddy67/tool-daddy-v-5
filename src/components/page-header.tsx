@@ -15,6 +15,7 @@ import { ALL_TOOLS } from '@/lib/constants';
 import { Fragment } from 'react';
 import { HomeIcon } from 'lucide-react';
 import { ThemeToggle } from './theme-toggle';
+import { NotificationBell } from './notification-bell';
 
 export default function PageHeader() {
   const pathname = usePathname();
@@ -30,41 +31,44 @@ export default function PageHeader() {
       </div>
       {!authRoutes.includes(pathname) && (
         <Breadcrumb>
-            <BreadcrumbList>
-                {!isHome && (
-                    <>
-                    <BreadcrumbItem>
-                        <BreadcrumbLink asChild>
-                        <Link href="/"><HomeIcon className="w-4 h-4" /></Link>
-                        </BreadcrumbLink>
-                    </BreadcrumbItem>
-                    <BreadcrumbSeparator />
-                    </>
-                )}
+          <BreadcrumbList>
+            {!isHome && (
+              <>
+                <BreadcrumbItem>
+                  <BreadcrumbLink asChild>
+                    <Link href="/"><HomeIcon className="w-4 h-4" /></Link>
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+              </>
+            )}
             <BreadcrumbItem>
-                {isHome ? <BreadcrumbPage>Home</BreadcrumbPage> : <BreadcrumbLink asChild><Link href="/#tools">Tools</Link></BreadcrumbLink>}
+              {isHome ? <BreadcrumbPage>Home</BreadcrumbPage> : <BreadcrumbLink asChild><Link href="/#tools">Tools</Link></BreadcrumbLink>}
             </BreadcrumbItem>
             {currentTool && (
-                <Fragment>
+              <Fragment>
                 <BreadcrumbSeparator />
                 <BreadcrumbItem>
-                    <BreadcrumbPage>{currentTool.name}</BreadcrumbPage>
+                  <BreadcrumbPage>{currentTool.name}</BreadcrumbPage>
                 </BreadcrumbItem>
-                </Fragment>
+              </Fragment>
             )}
             {pathname === '/history' && (
-                <Fragment>
+              <Fragment>
                 <BreadcrumbSeparator />
                 <BreadcrumbItem>
-                    <BreadcrumbPage>History</BreadcrumbPage>
+                  <BreadcrumbPage>History</BreadcrumbPage>
                 </BreadcrumbItem>
-                </Fragment>
+              </Fragment>
             )}
-            </BreadcrumbList>
+          </BreadcrumbList>
         </Breadcrumb>
       )}
       <div className="flex-1"></div>
-      <ThemeToggle />
+      <div className="flex items-center gap-1">
+        <NotificationBell />
+        <ThemeToggle />
+      </div>
     </header>
   );
 }

@@ -9,6 +9,8 @@ import { Download, Loader2, Music, Info } from 'lucide-react';
 import { useHistory } from '@/hooks/use-history';
 import { formatBytes } from '@/lib/utils';
 import AdModal from '@/components/ad-modal';
+import { useFirebase } from '@/firebase';
+import { sendNotification } from '@/lib/send-notification';
 import { FFmpeg } from '@ffmpeg/ffmpeg';
 import { fetchFile } from '@ffmpeg/util';
 import { Progress } from '@/components/ui/progress';
@@ -19,7 +21,9 @@ export default function VideoToAudioConverter() {
   const [audioSrc, setAudioSrc] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { toast } = useToast();
   const { addToHistory } = useHistory();
+  const { firestore, user } = useFirebase();
   const [isAdModalOpen, setIsAdModalOpen] = useState(false);
   const [progress, setProgress] = useState(0);
 
@@ -31,7 +35,7 @@ export default function VideoToAudioConverter() {
       try {
         await ffmpeg.load();
         ffmpeg.on('progress', ({ progress, time }) => {
-            setProgress(progress * 100);
+          setProgress(progress * 100);
         });
       } catch (error) {
         console.error('Failed to load ffmpeg', error);
@@ -62,7 +66,7 @@ export default function VideoToAudioConverter() {
     setAudioSrc(null);
     setProgress(0);
   }, [isLoading, toast]);
-  
+
   const handleConvertClick = () => {
     if (!videoFile) return;
     setIsAdModalOpen(true);
@@ -93,7 +97,7 @@ export default function VideoToAudioConverter() {
 
       const ffmpeg = ffmpegRef.current;
       await ffmpeg.writeFile(videoFile.name, await fetchFile(videoFile));
-      
+
       await ffmpeg.exec(['-i', videoFile.name, '-q:a', '0', '-map', 'a', 'output.mp3']);
 
       const data = await ffmpeg.readFile('output.mp3');
@@ -101,13 +105,21 @@ export default function VideoToAudioConverter() {
       const audioUrl = URL.createObjectURL(audioBlob);
 
       setAudioSrc(audioUrl);
-      
+
       addToHistory({
         tool: 'Video to Audio Converter',
         data: {
           videoFileName: videoFile.name,
           videoFileSize: videoFile.size,
         },
+      });
+
+      // Send notification
+      sendNotification(firestore, user?.uid, {
+        title: 'Audio Extracted',
+        message: `Successfully extracted audio from ${videoFile.name}`,
+        type: 'success',
+        link: '/video-to-audio-converter'
       });
 
       toast({
@@ -126,7 +138,7 @@ export default function VideoToAudioConverter() {
     setIsAdModalOpen(false);
     await performConvert();
   };
-  
+
   const downloadAudio = () => {
     if (!audioSrc || !videoFile) return;
     const link = document.createElement("a");
@@ -137,11 +149,11 @@ export default function VideoToAudioConverter() {
     link.click();
     document.body.removeChild(link);
   };
-  
+
   const handleClear = () => {
     setVideoFile(null);
-    if(audioSrc) {
-        URL.revokeObjectURL(audioSrc);
+    if (audioSrc) {
+      URL.revokeObjectURL(audioSrc);
     }
     setAudioSrc(null);
     setProgress(0);
@@ -149,68 +161,68 @@ export default function VideoToAudioConverter() {
 
   return (
     <>
-    <div className="w-full">
-      <Card className="w-full bg-card/50 backdrop-blur-lg border-border/20">
-        <CardHeader>
-          <CardTitle>Video to Audio Converter</CardTitle>
-          <CardDescription>
-            Extract audio from your video files and save as MP3.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {!videoFile && <FileDropzone onFileDrop={handleFileDrop} variant="pink" accept="video/*" />}
+      <div className="w-full">
+        <Card className="w-full bg-card/50 backdrop-blur-lg border-border/20">
+          <CardHeader>
+            <CardTitle>Video to Audio Converter</CardTitle>
+            <CardDescription>
+              Extract audio from your video files and save as MP3.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {!videoFile && <FileDropzone onFileDrop={handleFileDrop} variant="pink" accept="video/*" />}
 
-          {videoFile && (
-             <div className="p-4 border rounded-lg text-center space-y-4">
-              <p>Ready to convert: <strong>{videoFile.name}</strong> ({formatBytes(videoFile.size)})</p>
-              {!audioSrc && !isLoading && (
+            {videoFile && (
+              <div className="p-4 border rounded-lg text-center space-y-4">
+                <p>Ready to convert: <strong>{videoFile.name}</strong> ({formatBytes(videoFile.size)})</p>
+                {!audioSrc && !isLoading && (
                   <Button onClick={handleConvertClick} disabled={isLoading} variant="pink">
-                      <Music className="mr-2 h-4 w-4" />
-                      Convert to MP3
+                    <Music className="mr-2 h-4 w-4" />
+                    Convert to MP3
                   </Button>
-              )}
-             </div>
-          )}
-          
-          {isLoading && !audioSrc && (
-             <div className="space-y-4">
+                )}
+              </div>
+            )}
+
+            {isLoading && !audioSrc && (
+              <div className="space-y-4">
                 <Progress value={progress} className="w-full" />
                 <div className="text-center text-sm text-muted-foreground">{Math.round(progress)}% Complete</div>
-                 <Alert>
-                    <Info className="h-4 w-4" />
-                    <AlertTitle>Heads up!</AlertTitle>
-                    <AlertDescription>
-                        Audio extraction happens right in your browser. It can be slow for large files. Please be patient.
-                    </AlertDescription>
+                <Alert>
+                  <Info className="h-4 w-4" />
+                  <AlertTitle>Heads up!</AlertTitle>
+                  <AlertDescription>
+                    Audio extraction happens right in your browser. It can be slow for large files. Please be patient.
+                  </AlertDescription>
                 </Alert>
-            </div>
-          )}
-
-          {audioSrc && (
-            <div className="flex flex-col items-center gap-4">
-               <audio controls src={audioSrc} className="w-full">
-                  Your browser does not support the audio element.
-              </audio>
-              <div className="flex gap-4">
-                <Button onClick={downloadAudio} variant="pink">
-                  <Download className="mr-2 h-4 w-4" /> Download MP3
-                </Button>
-                 <Button variant="outline" onClick={handleClear} disabled={isLoading}>
-                  Convert Another
-                </Button>
               </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
-    <AdModal
-      isOpen={isAdModalOpen}
-      onClose={() => setIsAdModalOpen(false)}
-      onAdFinish={handleAdFinish}
-      title="Converting your video..."
-      duration={10}
-    />
+            )}
+
+            {audioSrc && (
+              <div className="flex flex-col items-center gap-4">
+                <audio controls src={audioSrc} className="w-full">
+                  Your browser does not support the audio element.
+                </audio>
+                <div className="flex gap-4">
+                  <Button onClick={downloadAudio} variant="pink">
+                    <Download className="mr-2 h-4 w-4" /> Download MP3
+                  </Button>
+                  <Button variant="outline" onClick={handleClear} disabled={isLoading}>
+                    Convert Another
+                  </Button>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+      <AdModal
+        isOpen={isAdModalOpen}
+        onClose={() => setIsAdModalOpen(false)}
+        onAdFinish={handleAdFinish}
+        title="Converting your video..."
+        duration={10}
+      />
     </>
   );
 }

@@ -16,6 +16,8 @@ import { QrCode, Download } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
 import { useHistory } from '@/hooks/use-history';
+import { useFirebase } from '@/firebase';
+import { sendNotification } from '@/lib/send-notification';
 
 
 export default function QrCodeGenerator() {
@@ -23,6 +25,7 @@ export default function QrCodeGenerator() {
   const [qrCode, setQrCode] = useState('');
   const { toast } = useToast();
   const { addToHistory } = useHistory();
+  const { firestore, user } = useFirebase();
 
   const generateQrCode = () => {
     if (!text.trim()) {
@@ -45,6 +48,14 @@ export default function QrCodeGenerator() {
         qrCodeText: text,
         qrCodeImage: qrApiUrl,
       },
+    });
+
+    // Send notification
+    sendNotification(firestore, user?.uid, {
+      title: 'QR Code Generated',
+      message: 'Your QR code has been successfully created.',
+      type: 'success',
+      link: '/qr-code-generator'
     });
   };
 
@@ -94,7 +105,7 @@ export default function QrCodeGenerator() {
                 value={text}
                 onChange={(e) => setText(e.target.value)}
                 placeholder="e.g., https://example.com"
-                onKeyDown={(e) => {if (e.key === 'Enter') generateQrCode()}}
+                onKeyDown={(e) => { if (e.key === 'Enter') generateQrCode() }}
               />
               <Button onClick={generateQrCode} variant="green">
                 <QrCode className="mr-2 h-4 w-4" /> Generate

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import PaletteCard from '@/components/palette-card';
 import { mockPalettes, type Palette } from '@/lib/palettes';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,13 +16,19 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
+import { useFirebase, useCollection, useMemoFirebase } from '@/firebase';
+import { collection, query, orderBy, serverTimestamp, doc, writeBatch } from 'firebase/firestore';
+import { useHistory } from '@/hooks/use-history';
 
 const STORAGE_KEY = 'userColorPalettes';
 
 export default function ColorPaletteGenerator() {
   const { toast } = useToast();
+  const { firestore, user, isUserLoading } = useFirebase();
+  const { addToHistory } = useHistory();
   const [palettes, setPalettes] = useState<Palette[]>(mockPalettes);
-  const [userPalettes, setUserPalettes] = useState<Palette[]>([]);
+  const [localPalettes, setLocalPalettes] = useState<Palette[]>([]);
+  const [isLocalLoaded, setIsLocalLoaded] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isYourPalettesDialogOpen, setIsYourPalettesDialogOpen] = useState(false);
   const [colors, setColors] = useState<[string, string, string, string]>(['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A']);
@@ -32,12 +38,59 @@ export default function ColorPaletteGenerator() {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
-        setUserPalettes(JSON.parse(stored));
+        setLocalPalettes(JSON.parse(stored));
       }
     } catch (error) {
       console.error('Failed to load palettes from localStorage:', error);
+    } finally {
+      setIsLocalLoaded(true);
     }
   }, []);
+
+  // Firestore path
+  const palettesCollectionPath = useMemo(() => {
+    if (!user || user.isAnonymous || !firestore) return null;
+    return collection(firestore, 'users', user.uid, 'palettes');
+  }, [firestore, user]);
+
+  const palettesQuery = useMemoFirebase(() => {
+    if (!palettesCollectionPath) return null;
+    return query(palettesCollectionPath, orderBy('createdAt', 'desc'));
+  }, [palettesCollectionPath]);
+
+  // Real-time Cloud Palettes
+  const { data: cloudPalettes, isLoading: isCloudLoading } = useCollection<Palette>(palettesQuery);
+
+  // Combine Palettes
+  const userPalettes = useMemo(() => {
+    if (user && !user.isAnonymous) return cloudPalettes || [];
+    return localPalettes;
+  }, [user, cloudPalettes, localPalettes]);
+
+  // Sync to Cloud on login
+  useEffect(() => {
+    if (user && !user.isAnonymous && isLocalLoaded && localPalettes.length > 0 && palettesCollectionPath) {
+      const syncToCloud = async () => {
+        try {
+          const batch = writeBatch(firestore);
+          localPalettes.forEach((palette) => {
+            const docRef = doc(palettesCollectionPath, palette.id);
+            batch.set(docRef, {
+              ...palette,
+              createdAt: serverTimestamp() // Ensure server timestamp on cloud
+            });
+          });
+          await batch.commit();
+          setLocalPalettes([]);
+          localStorage.removeItem(STORAGE_KEY);
+          toast({ title: "Palettes synced!", description: "Your guest palettes have been moved to your account." });
+        } catch (e) {
+          console.error("Failed to sync palettes to cloud", e);
+        }
+      };
+      syncToCloud();
+    }
+  }, [user, isLocalLoaded, firestore, palettesCollectionPath, localPalettes, toast]);
 
   // Function to shuffle an array (Fisher-Yates shuffle)
   const shuffleArray = (array: any[]) => {
@@ -77,22 +130,40 @@ export default function ColorPaletteGenerator() {
   };
 
   // Save the palette
-  const handleSavePalette = () => {
+  const handleSavePalette = async () => {
+    const paletteId = Date.now().toString();
     const newPalette: Palette = {
-      id: Date.now().toString(),
+      id: paletteId,
       colors: colors,
       likes: 0,
       createdAt: new Date().toISOString(),
     };
 
-    const updated = [newPalette, ...userPalettes];
-    setUserPalettes(updated);
-    
-    try {
+    if (palettesCollectionPath) {
+      try {
+        const docRef = doc(palettesCollectionPath, paletteId);
+        const batch = writeBatch(firestore);
+        batch.set(docRef, {
+          ...newPalette,
+          createdAt: serverTimestamp()
+        });
+        await batch.commit();
+        toast({ title: "Palette saved to cloud!" });
+      } catch (error) {
+        toast({ title: "Error saving palette", variant: "destructive" });
+        return;
+      }
+    } else {
+      const updated = [newPalette, ...localPalettes];
+      setLocalPalettes(updated);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-    } catch (error) {
-      console.error('Failed to save palette to localStorage:', error);
+      toast({ title: "Palette saved locally" });
     }
+
+    addToHistory({
+      tool: 'Color Palette',
+      data: { details: `Saved new color palette: ${colors.join(', ')}` }
+    });
 
     // Reset form and close dialog
     setColors(['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A']);
@@ -100,14 +171,22 @@ export default function ColorPaletteGenerator() {
   };
 
   // Delete user palette
-  const handleDeletePalette = (id: string) => {
-    const updated = userPalettes.filter(p => p.id !== id);
-    setUserPalettes(updated);
-    
-    try {
+  const handleDeletePalette = async (id: string) => {
+    if (palettesCollectionPath) {
+      try {
+        const docRef = doc(palettesCollectionPath, id);
+        const batch = writeBatch(firestore);
+        batch.delete(docRef);
+        await batch.commit();
+        toast({ title: "Palette deleted from cloud" });
+      } catch (error) {
+        toast({ title: "Error deleting palette", variant: "destructive" });
+      }
+    } else {
+      const updated = localPalettes.filter(p => p.id !== id);
+      setLocalPalettes(updated);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-    } catch (error) {
-      console.error('Failed to update localStorage:', error);
+      toast({ title: "Palette deleted locally" });
     }
   };
 

@@ -1,6 +1,6 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
 
 @layer base {
   :root {
@@ -10,13 +10,15 @@
     --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-    --primary: 190 80% 50%; /* Adjusted for better visibility on light bg */
+    --primary: 190 80% 50%;
+    /* Adjusted for better visibility on light bg */
     --primary-foreground: 210 40% 98%;
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 190 80% 90%; /* Lighter accent for light mode */
+    --accent: 190 80% 90%;
+    /* Lighter accent for light mode */
     --accent-foreground: 222.2 47.4% 11.2%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
@@ -24,7 +26,7 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 190 80% 50%;
     --radius: 0.8rem;
-    
+
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 222.2 84% 4.9%;
     --sidebar-primary: 190 80% 50%;
@@ -33,6 +35,16 @@
     --sidebar-accent-foreground: 222.2 47.4% 11.2%;
     --sidebar-border: 214.3 31.8% 91.4%;
     --sidebar-ring: 190 80% 50%;
+
+    /* Advanced Customization Defaults */
+    --glass-blur: 12px;
+    --radius: 0.8rem;
+    --spacing-multiplier: 1;
+    --anim-speed: 1;
+  }
+
+  html {
+    font-size: calc(100% * var(--spacing-multiplier, 1));
   }
 
   .dark {
@@ -55,7 +67,7 @@
     --border: 217 33% 17%;
     --input: 217 33% 17%;
     --ring: 190 80% 60%;
-    
+
     --sidebar-background: 222 83% 6%;
     --sidebar-foreground: 210 40% 98%;
     --sidebar-primary: 190 80% 60%;
@@ -69,24 +81,212 @@
 
 @layer base {
   * {
-    @apply border-border;
+    border-color: hsl(var(--border));
   }
+
   body {
-    @apply bg-background text-foreground;
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
   }
+
   /* Custom Scrollbar Styles */
   ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
   }
+
   ::-webkit-scrollbar-track {
     background: hsl(var(--background));
   }
+
   ::-webkit-scrollbar-thumb {
     background: hsl(var(--muted));
     border-radius: 10px;
   }
+
   ::-webkit-scrollbar-thumb:hover {
     background: hsl(var(--secondary));
+  }
+}
+
+/* Customize reCAPTCHA Badge Size - HIDDEN */
+.grecaptcha-badge {
+  visibility: hidden;
+}
+
+/* Personalization Utilities */
+.glass {
+  backdrop-filter: blur(var(--glass-blur, 12px)) !important;
+  background: hsla(var(--background), 0.4) !important;
+  border: 1px solid hsla(var(--primary), 0.1) !important;
+}
+
+.glass-panel {
+  backdrop-filter: blur(var(--glass-blur, 12px)) !important;
+  background: hsla(var(--background), 0.2) !important;
+  border: 1px solid hsla(var(--primary), 0.1) !important;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3), 0 0 10px 0 hsla(var(--primary), 0.05) !important;
+  transition: all 0.3s ease;
+}
+
+.glow-sm {
+  box-shadow: 0 0 15px hsla(var(--primary), 0.2) !important;
+}
+
+.glow-md {
+  box-shadow: 0 0 25px hsla(var(--primary), 0.3) !important;
+}
+
+.glow-lg {
+  box-shadow: 0 0 40px hsla(var(--primary), 0.4) !important;
+}
+
+/* --- THE GLOW SYSTEM --- */
+.glow-card {
+  transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+/* Generalized card glow is disabled in favor of Pure Island Glow */
+.glow-card:hover {
+  border-color: hsla(var(--primary), 0.3) !important;
+  transform: translateY(-2px);
+}
+
+.glow-button:hover {
+  box-shadow: 0 0 20px 2px hsla(var(--primary), 0.4);
+  filter: brightness(1.1);
+}
+
+.glow-text {
+  text-shadow: 0 0 15px hsla(var(--primary), 0.5);
+}
+
+.glow-island {
+  transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+  will-change: box-shadow, transform;
+}
+
+.glow-island>* {
+  /* Prevent icon from glowing */
+  filter: none !important;
+  text-shadow: none !important;
+}
+
+.group:hover .glow-island {
+  animation: island-breathe 2.5s ease-in-out infinite;
+  border-color: var(--glow-color, hsla(var(--primary), 0.7)) !important;
+  background: var(--glow-color, hsla(var(--primary), 0.15));
+}
+
+@keyframes island-breathe {
+
+  0%,
+  100% {
+    transform: scale(1.1);
+    box-shadow: 0 0 45px 8px var(--glow-color, hsla(var(--primary), 0.5));
+  }
+
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 0 30px 4px var(--glow-color, hsla(var(--primary), 0.3));
+  }
+}
+
+/* --- TOOL ISLAND GLOW (whole card) --- */
+.tool-island {
+  --_glow: var(--glow-color, hsla(var(--primary), 0.5));
+  position: relative;
+  overflow: visible;
+}
+
+/* Glow layer behind the card */
+.tool-island::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  opacity: 0;
+  pointer-events: none;
+  z-index: -1;
+  box-shadow: 0 0 15px 4px var(--_glow);
+  transition: opacity 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.group:hover .tool-island,
+.tool-island.group:hover {
+  border-color: var(--_glow) !important;
+  transform: translateY(-4px) scale(1.01);
+}
+
+.group:hover .tool-island::before,
+.tool-island.group:hover::before {
+  opacity: 0.7;
+  animation: tool-island-breathe 3s ease-in-out infinite;
+}
+
+@keyframes tool-island-breathe {
+
+  0%,
+  100% {
+    opacity: 0.7;
+    box-shadow: 0 0 15px 4px var(--_glow);
+  }
+
+  50% {
+    opacity: 0.4;
+    box-shadow: 0 0 25px 8px var(--_glow);
+  }
+}
+
+/* ELITE MESH BACKGROUND */
+.mesh-bg {
+  background-color: hsl(var(--background));
+  background-image:
+    radial-gradient(at 0% 0%, hsla(var(--primary), 0.15) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, hsla(var(--accent), 0.15) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, hsla(var(--primary), 0.15) 0px, transparent 50%),
+    radial-gradient(at 0% 100%, hsla(var(--accent), 0.15) 0px, transparent 50%),
+    radial-gradient(at 50% 50%, hsla(var(--primary), 0.1) 0px, transparent 50%);
+  background-size: 200% 200%;
+  animation: mesh-advanced 20s ease infinite;
+}
+
+@keyframes mesh-advanced {
+  0% {
+    background-position: 0% 0%;
+  }
+
+  25% {
+    background-position: 100% 0%;
+  }
+
+  50% {
+    background-position: 100% 100%;
+  }
+
+  75% {
+    background-position: 0% 100%;
+  }
+
+  100% {
+    background-position: 0% 0%;
+  }
+}
+
+.pulse-bg {
+  animation: pulse-bg 8s ease-in-out infinite;
+}
+
+@keyframes pulse-bg {
+
+  0%,
+  100% {
+    opacity: 0.8;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.4;
+    transform: scale(1.05);
   }
 }

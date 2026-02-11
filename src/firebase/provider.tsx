@@ -79,18 +79,17 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
     const unsubscribe = onAuthStateChanged(
       auth,
       async (firebaseUser) => { // Mark as async
+
         if (firebaseUser) {
-            setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null });
+          setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null });
         } else {
-            // If no user, sign in anonymously and wait for it to complete
-            try {
-                await signInAnonymously(auth);
-                // onAuthStateChanged will be triggered again with the new user,
-                // so we don't need to set state here. We just keep loading.
-            } catch (error) {
-                 console.error("Anonymous sign-in failed:", error);
-                 setUserAuthState({ user: null, isUserLoading: false, userError: error as Error });
-            }
+
+          try {
+            await signInAnonymously(auth);
+          } catch (error) {
+            console.error("Anonymous sign-in failed:", error);
+            setUserAuthState({ user: null, isUserLoading: false, userError: error as Error });
+          }
         }
       },
       (error) => { // Auth listener error
@@ -166,14 +165,14 @@ export const useFirebaseApp = (): FirebaseApp => {
   return firebaseApp;
 };
 
-type MemoFirebase <T> = T & {__memo?: boolean};
+type MemoFirebase<T> = T & { __memo?: boolean };
 
 export function useMemoFirebase<T>(factory: () => T, deps: DependencyList): T | (MemoFirebase<T>) {
   const memoized = useMemo(factory, deps);
-  
-  if(typeof memoized !== 'object' || memoized === null) return memoized;
+
+  if (typeof memoized !== 'object' || memoized === null) return memoized;
   (memoized as MemoFirebase<T>).__memo = true;
-  
+
   return memoized;
 }
 
