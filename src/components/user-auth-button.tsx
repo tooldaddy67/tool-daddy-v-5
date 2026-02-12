@@ -58,6 +58,14 @@ export function UserAuthButton() {
         }
     }, [user]);
 
+    // Reset OTP state when dialog closes
+    useEffect(() => {
+        if (!isAuthDialogOpen) {
+            setOtpSent(false);
+            setOtpCode('');
+        }
+    }, [isAuthDialogOpen]);
+
     const checkAdminStatus = async () => {
         if (!user || !firestore) return;
         try {
@@ -172,13 +180,12 @@ export function UserAuthButton() {
     const handleAuth = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (authMode === 'signup' && !otpSent) {
-            await handleSendOtp();
-            return;
-        }
-
-        if (authMode === 'signup' && otpSent) {
-            await handleVerifyAndSignup(e);
+        if (authMode === 'signup') {
+            if (!otpSent) {
+                await handleSendOtp();
+            } else {
+                await handleVerifyAndSignup(e);
+            }
             return;
         }
 

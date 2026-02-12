@@ -46,3 +46,4 @@ firestore-debug.log
 
 # Local AI API keys (do not commit secrets)
 src/ai/api-keys.json
+.vercel
