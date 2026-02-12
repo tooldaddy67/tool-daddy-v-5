@@ -9,13 +9,6 @@ import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { Inter, Space_Grotesk, Outfit, Plus_Jakarta_Sans, Quicksand, Nunito, Playfair_Display, Lora, Syne, JetBrains_Mono, Roboto_Mono, Fredoka, Cinzel, EB_Garamond } from 'next/font/google';
 import AppFooter from '@/components/app-footer';
 import Script from 'next/script';
-import dynamic from 'next/dynamic';
-
-// Lazy load non-critical browser-only components to reduce main bundle and TBT
-const CursorTrail = dynamic(() => import('@/components/cursor-trail').then(mod => mod.CursorTrail), { ssr: false });
-const UISound = dynamic(() => import('@/components/ui-sound').then(mod => mod.UISound), { ssr: false });
-const GrainOverlay = dynamic(() => import('@/components/grain-overlay').then(mod => mod.GrainOverlay), { ssr: false });
-const ScrollIndicator = dynamic(() => import('@/components/scroll-indicator').then(mod => mod.ScrollIndicator), { ssr: false });
 
 const inter = Inter({
   subsets: ['latin'],
@@ -81,6 +74,7 @@ export const viewport: Viewport = {
 
 import { SettingsProvider } from '@/components/settings-provider';
 import { SidebarProviderWrapper } from '@/components/sidebar-provider-wrapper';
+import { ClientOnlyExtras } from '@/components/client-only-extras';
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
@@ -111,10 +105,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
           <FirebaseClientProvider>
             <SettingsProvider>
-              <CursorTrail />
-              <UISound />
-              <GrainOverlay />
-              <ScrollIndicator />
+              <ClientOnlyExtras />
               <SidebarProviderWrapper>
                 <div className="flex w-full">
                   <AppSidebar />
