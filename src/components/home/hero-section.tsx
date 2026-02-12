@@ -13,12 +13,7 @@ export function HeroSection() {
 
             <div className="container px-4 md:px-6 relative z-10">
                 <div className="flex flex-col items-center space-y-4 text-center">
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.5 }}
-                        className="space-y-2"
-                    >
+                    <div className="space-y-2">
                         <div className="inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-sm font-medium text-primary backdrop-blur-sm mb-4">
                             <Sparkles className="mr-2 h-3.5 w-3.5" />
                             <span>New Features Available</span>
@@ -29,7 +24,7 @@ export function HeroSection() {
                         <p className="mx-auto max-w-[700px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
                             Your ultimate digital toolkit. Simplify your workflow with our collection of powerful, easy-to-use tools designed for creators and developers.
                         </p>
-                    </motion.div>
+                    </div>
 
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}

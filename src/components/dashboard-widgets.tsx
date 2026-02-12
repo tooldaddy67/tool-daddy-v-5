@@ -14,30 +14,31 @@ import { motion } from 'framer-motion'
 import { useState, useEffect } from 'react'
 
 export function DashboardWidgets() {
-    const { user, firestore, isUserLoading } = useFirebase()
-
-    if (isUserLoading) {
-        return (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-7xl mx-auto px-4">
-                {[1, 2, 3].map((i) => (
-                    <Card key={i} className="bg-muted/30 border-dashed animate-pulse h-[200px]">
-                        <CardContent className="h-full flex items-center justify-center">
-                            <Loader2 className="h-6 w-6 text-muted-foreground animate-spin" />
-                        </CardContent>
-                    </Card>
-                ))}
-            </div>
-        )
-    }
-
-    if (!user) return null
+    const { user, isUserLoading } = useFirebase()
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-7xl mx-auto px-4">
-            <HistoryWidget />
-            <NotesWidget />
-            {/* Tasks are only cloud-synced for now, so we only show them for real accounts */}
-            {!user.isAnonymous && <TasksWidget />}
+        <div className="min-h-[200px] w-full">
+            {isUserLoading ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-7xl mx-auto px-4">
+                    {[1, 2, 3].map((i) => (
+                        <Card key={i} className="bg-muted/30 border-dashed animate-pulse h-[200px]">
+                            <CardContent className="h-full flex items-center justify-center">
+                                <Loader2 className="h-6 w-6 text-muted-foreground animate-spin" />
+                            </CardContent>
+                        </Card>
+                    ))}
+                </div>
+            ) : user ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-7xl mx-auto px-4">
+                    <HistoryWidget />
+                    <NotesWidget />
+                    {!user.isAnonymous && <TasksWidget />}
+                </div>
+            ) : (
+                <div className="flex items-center justify-center py-12 text-muted-foreground text-sm italic">
+                    Log in to see your personalized dashboard activity.
+                </div>
+            )}
         </div>
     )
 }
@@ -48,7 +49,7 @@ function HistoryWidget() {
 
     return (
         <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
         >
@@ -63,7 +64,7 @@ function HistoryWidget() {
                         Recent Activity
                     </CardTitle>
                     <Link href="/history">
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground glow-button">
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground glow-button" aria-label="View history">
                             <ArrowRight className="h-4 w-4" />
                         </Button>
                     </Link>
@@ -119,7 +120,7 @@ function NotesWidget() {
 
     return (
         <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.1 }}
         >
@@ -134,7 +135,7 @@ function NotesWidget() {
                         Latest Note
                     </CardTitle>
                     <Link href="/simple-notepad">
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground glow-button">
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground glow-button" aria-label="Open notepad">
                             <ArrowRight className="h-4 w-4" />
                         </Button>
                     </Link>
@@ -178,7 +179,7 @@ function TasksWidget() {
 
     return (
         <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.2 }}
         >
@@ -193,7 +194,7 @@ function TasksWidget() {
                         Top Tasks
                     </CardTitle>
                     <Link href="/todo-list">
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground glow-button">
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground glow-button" aria-label="Go to task list">
                             <ArrowRight className="h-4 w-4" />
                         </Button>
                     </Link>

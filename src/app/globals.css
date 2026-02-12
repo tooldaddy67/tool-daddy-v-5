@@ -183,12 +183,12 @@
   0%,
   100% {
     transform: scale(1.1);
-    box-shadow: 0 0 45px 8px var(--glow-color, hsla(var(--primary), 0.5));
+    opacity: 1;
   }
 
   50% {
     transform: scale(1.05);
-    box-shadow: 0 0 30px 4px var(--glow-color, hsla(var(--primary), 0.3));
+    opacity: 0.8;
   }
 }
 
@@ -234,12 +234,12 @@
   0%,
   100% {
     opacity: 0.7;
-    box-shadow: 0 0 15px 4px var(--_glow);
+    transform: scale(1.01);
   }
 
   50% {
     opacity: 0.4;
-    box-shadow: 0 0 25px 8px var(--_glow);
+    transform: scale(1);
   }
 }
 
@@ -280,7 +280,7 @@
     radial-gradient(at 0% 100%, hsla(var(--accent), 0.15) 0px, transparent 50%),
     radial-gradient(at 50% 50%, hsla(var(--primary), 0.1) 0px, transparent 50%);
   background-size: 200% 200%;
-  animation: mesh-advanced calc(20s / var(--anim-speed, 1)) ease infinite;
+  /* Mesh animation removed to stay composited only and reduce main-worker load */
 }
 
 @keyframes mesh-advanced {

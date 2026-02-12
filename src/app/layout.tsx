@@ -1,17 +1,21 @@
-
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { cn } from '@/lib/utils';
-import { SidebarProvider } from '@/components/ui/sidebar';
 import AppSidebar from '@/components/app-sidebar';
 import { Toaster } from '@/components/ui/toaster';
 import PageHeader from '@/components/page-header';
 import { ThemeProvider } from '@/components/theme-provider';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
-import { useEnforceMfaForUnstablegng } from '@/hooks/use-enforce-mfa';
 import { Inter, Space_Grotesk, Outfit, Plus_Jakarta_Sans, Quicksand, Nunito, Playfair_Display, Lora, Syne, JetBrains_Mono, Roboto_Mono, Fredoka, Cinzel, EB_Garamond } from 'next/font/google';
 import AppFooter from '@/components/app-footer';
 import Script from 'next/script';
+import dynamic from 'next/dynamic';
+
+// Lazy load non-critical browser-only components to reduce main bundle and TBT
+const CursorTrail = dynamic(() => import('@/components/cursor-trail').then(mod => mod.CursorTrail), { ssr: false });
+const UISound = dynamic(() => import('@/components/ui-sound').then(mod => mod.UISound), { ssr: false });
+const GrainOverlay = dynamic(() => import('@/components/grain-overlay').then(mod => mod.GrainOverlay), { ssr: false });
+const ScrollIndicator = dynamic(() => import('@/components/scroll-indicator').then(mod => mod.ScrollIndicator), { ssr: false });
 
 const inter = Inter({
   subsets: ['latin'],
@@ -26,108 +30,23 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 // Non-default fonts: preload: false to avoid blocking initial render
-// They load on-demand when user switches theme
-
-const outfit = Outfit({
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-outfit',
-  preload: false,
-});
-
-const plusJakartaSans = Plus_Jakarta_Sans({
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-plus-jakarta-sans',
-  preload: false,
-});
-
-const quicksand = Quicksand({
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-quicksand',
-  preload: false,
-});
-
-const nunito = Nunito({
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-nunito',
-  preload: false,
-});
-
-const playfairDisplay = Playfair_Display({
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-playfair-display',
-  preload: false,
-});
-
-const lora = Lora({
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-lora',
-  preload: false,
-});
-
-const syne = Syne({
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-syne',
-  preload: false,
-});
-
-const jetbrainsMono = JetBrains_Mono({
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-jetbrains-mono',
-  preload: false,
-});
-
-const robotoMono = Roboto_Mono({
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-roboto-mono',
-  preload: false,
-});
-
-const fredoka = Fredoka({
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-fredoka',
-  preload: false,
-});
-
-const cinzel = Cinzel({
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-cinzel',
-  preload: false,
-});
-
-const ebGaramond = EB_Garamond({
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-eb-garamond',
-  preload: false,
-});
-
+const outfit = Outfit({ subsets: ['latin'], display: 'swap', variable: '--font-outfit', preload: false });
+const plusJakartaSans = Plus_Jakarta_Sans({ subsets: ['latin'], display: 'swap', variable: '--font-plus-jakarta-sans', preload: false });
+const quicksand = Quicksand({ subsets: ['latin'], display: 'swap', variable: '--font-quicksand', preload: false });
+const nunito = Nunito({ subsets: ['latin'], display: 'swap', variable: '--font-nunito', preload: false });
+const playfairDisplay = Playfair_Display({ subsets: ['latin'], display: 'swap', variable: '--font-playfair-display', preload: false });
+const lora = Lora({ subsets: ['latin'], display: 'swap', variable: '--font-lora', preload: false });
+const syne = Syne({ subsets: ['latin'], display: 'swap', variable: '--font-syne', preload: false });
+const jetbrainsMono = JetBrains_Mono({ subsets: ['latin'], display: 'swap', variable: '--font-jetbrains-mono', preload: false });
+const robotoMono = Roboto_Mono({ subsets: ['latin'], display: 'swap', variable: '--font-roboto-mono', preload: false });
+const fredoka = Fredoka({ subsets: ['latin'], display: 'swap', variable: '--font-fredoka', preload: false });
+const cinzel = Cinzel({ subsets: ['latin'], display: 'swap', variable: '--font-cinzel', preload: false });
+const ebGaramond = EB_Garamond({ subsets: ['latin'], display: 'swap', variable: '--font-eb-garamond', preload: false });
 
 export const metadata: Metadata = {
   title: 'Tool Daddy - Your Ultimate Suite of Online Tools',
-  description:
-    'Your complete suite for media manipulation. Convert, download, enhance, and more. All in one place.',
-  keywords: [
-    'image converter',
-    'video converter',
-    'online tools',
-    'image compressor',
-    'QR code generator',
-    'metadata extractor',
-    'audio converter',
-    'file converter',
-    'free online tools',
-  ],
+  description: 'Your complete suite for media manipulation. Convert, download, enhance, and more. All in one place.',
+  keywords: ['image converter', 'video converter', 'online tools', 'image compressor', 'QR code generator', 'metadata extractor', 'audio converter', 'file converter', 'free online tools'],
   authors: [{ name: 'Tool Daddy Team' }],
   creator: 'Tool Daddy',
   publisher: 'Tool Daddy',
@@ -138,14 +57,7 @@ export const metadata: Metadata = {
     siteName: 'Tool Daddy',
     title: 'Tool Daddy - Your Ultimate Suite of Online Tools',
     description: 'Your complete suite for media manipulation. Convert, download, enhance, and more.',
-    images: [
-      {
-        url: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://tool-daddy.com'}/og-image.png`,
-        width: 1200,
-        height: 630,
-        alt: 'Tool Daddy',
-      },
-    ],
+    images: [{ url: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://tool-daddy.com'}/og-image.png`, width: 1200, height: 630, alt: 'Tool Daddy' }],
   },
   twitter: {
     card: 'summary_large_image',
@@ -156,13 +68,7 @@ export const metadata: Metadata = {
   robots: {
     index: true,
     follow: true,
-    googleBot: {
-      index: true,
-      follow: true,
-      'max-video-preview': -1,
-      'max-image-preview': 'large',
-      'max-snippet': -1,
-    },
+    googleBot: { index: true, follow: true, 'max-video-preview': -1, 'max-image-preview': 'large', 'max-snippet': -1 },
   },
 };
 
@@ -174,19 +80,9 @@ export const viewport: Viewport = {
 };
 
 import { SettingsProvider } from '@/components/settings-provider';
-import { CursorTrail } from '@/components/cursor-trail';
-import { UISound } from '@/components/ui-sound';
-import { GrainOverlay } from '@/components/grain-overlay';
-import { ScrollIndicator } from '@/components/scroll-indicator';
 import { SidebarProviderWrapper } from '@/components/sidebar-provider-wrapper';
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  // Enforce MFA for unstablegng role
-  if (typeof window !== 'undefined') {
-    // Only run on client
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    useEnforceMfaForUnstablegng();
-  }
   return (
     <html lang="en" suppressHydrationWarning className={cn(
       inter.variable,
@@ -209,22 +105,10 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <link rel="apple-touch-icon" href="/icon.png" />
       </head>
-      <body
-        suppressHydrationWarning
-        className={cn(
-          'min-h-screen bg-background font-body antialiased'
-        )}
-      >
-        {/* Google Tag Manager (noscript) */}
+      <body suppressHydrationWarning className="min-h-screen bg-background font-body antialiased">
         <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-P2725PBH"
-          height="0" width="0" style={{ display: "none", visibility: "hidden" }}></iframe></noscript>
-        {/* End Google Tag Manager (noscript) */}
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="dark"
-          enableSystem
-          disableTransitionOnChange
-        >
+          height="0" width="0" style={{ display: "none", visibility: "hidden" }} title="gtm"></iframe></noscript>
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
           <FirebaseClientProvider>
             <SettingsProvider>
               <CursorTrail />
@@ -265,7 +149,6 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           </FirebaseClientProvider>
           <Toaster />
         </ThemeProvider>
-        {/* Google Tag Manager */}
         <Script id="google-tag-manager" strategy="afterInteractive">
           {`
             (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
@@ -275,13 +158,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
             })(window,document,'script','dataLayer','GTM-P2725PBH');
           `}
         </Script>
-        {/* End Google Tag Manager */}
-
-        {/* Google Analytics 4 */}
-        <Script
-          src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_ID || 'G-95Z6VMSH51'}`}
-          strategy="afterInteractive"
-        />
+        <Script src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_ID || 'G-95Z6VMSH51'}`} strategy="afterInteractive" />
         <Script id="google-analytics" strategy="afterInteractive">
           {`
             window.dataLayer = window.dataLayer || [];
@@ -294,14 +171,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
             });
           `}
         </Script>
-        {/* End Google Analytics 4 */}
-
-        {/* Google reCAPTCHA v3 */}
-        <Script
-          src="https://www.google.com/recaptcha/api.js?render=6Lfe02YsAAAAADPOetn7_P0L2oW2xhLgDVmYZgbF"
-          strategy="afterInteractive"
-        />
-        {/* End Google reCAPTCHA v3 */}
+        <Script src="https://www.google.com/recaptcha/api.js?render=6Lfe02YsAAAAADPOetn7_P0L2oW2xhLgDVmYZgbF" strategy="afterInteractive" />
       </body>
     </html>
   );

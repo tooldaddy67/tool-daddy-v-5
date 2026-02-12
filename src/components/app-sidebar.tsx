@@ -31,7 +31,10 @@ const Logo = ({ className }: { className?: string }) => (
     fill="none"
     xmlns="http://www.w3.org/2000/svg"
     className={cn("w-8 h-8 transition-all duration-300", className)}
+    aria-label="Tool Daddy Logo"
+    role="img"
   >
+    <title>Tool Daddy Logo</title>
     <path d="M128 341.333C128 304.6 154.6 278 181.333 278H234.667C261.4 278 288 304.6 288 341.333V341.333C288 378.067 261.4 404.667 234.667 404.667H181.333C154.6 404.667 128 378.067 128 341.333V341.333Z" fill="#F87171" />
     <path d="M288 170.667C288 133.933 314.6 107.333 341.333 107.333H384V404.667H341.333C314.6 404.667 288 378.067 288 341.333V170.667Z" fill="#F87171" />
     <path d="M150 256C183.5 204 250 204 282 256C314 308 380.5 308 414 256" stroke="white" strokeWidth="20" strokeLinecap="round" strokeLinejoin="round" />
