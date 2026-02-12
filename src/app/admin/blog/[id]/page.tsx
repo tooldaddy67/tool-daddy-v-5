@@ -10,13 +10,14 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
     Loader2, ArrowLeft, Image as ImageIcon, Globe, Hash, Eye,
-    Send, FileText, Calendar, Clock
+    Send, FileText, Calendar, Clock, Sparkles
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { RichTextEditor } from '@/components/RichTextEditor';
 import { AdminPasswordGate } from '@/components/admin-password-gate';
+import { SEOAnalyzer } from '@/components/admin/SEOAnalyzer';
 import {
     Dialog,
     DialogContent,
@@ -47,6 +48,7 @@ export default function BlogPostEditor({ params }: BlogPostEditorProps) {
         slug: '',
         excerpt: '',
         content: '',
+        focusKeyword: '',
         published: false,
         tags: [],
         coverImage: '',
@@ -111,6 +113,7 @@ export default function BlogPostEditor({ params }: BlogPostEditorProps) {
             slug: formData.slug || '',
             excerpt: formData.excerpt || '',
             content: formData.content || '',
+            focusKeyword: formData.focusKeyword || '',
             published: formData.published || false,
             tags: formData.tags || [],
             coverImage: formData.coverImage || '',
@@ -263,82 +266,122 @@ export default function BlogPostEditor({ params }: BlogPostEditorProps) {
                         </Button>
                     </div>
                 </div>
-
-                <div className="space-y-6">
-                    <Card>
-                        <CardContent className="pt-6 space-y-4">
-                            <div>
-                                <Label>Title</Label>
-                                <Input
-                                    value={formData.title}
-                                    onChange={e => setFormData({ ...formData, title: e.target.value })}
-                                    onBlur={isNew ? handleSlugify : undefined}
-                                    placeholder="Your amazing blog post title"
-                                    className="text-lg"
-                                />
-                            </div>
-                            <div>
-                                <Label>Slug</Label>
-                                <Input
-                                    value={formData.slug}
-                                    onChange={e => setFormData({ ...formData, slug: e.target.value })}
-                                    placeholder="your-post-slug"
-                                />
-                                <p className="text-xs text-muted-foreground mt-1 text-primary">/blog/{formData.slug || 'your-slug-here'}</p>
-                            </div>
-                            <div>
-                                <Label>Excerpt</Label>
-                                <Textarea
-                                    value={formData.excerpt}
-                                    onChange={e => setFormData({ ...formData, excerpt: e.target.value })}
-                                    rows={2}
-                                    maxLength={160}
-                                    placeholder="Brief description for search engines (max 160 chars)"
-                                />
-                                <p className={`text-xs mt-1 ${(formData.excerpt?.length || 0) > 155 ? 'text-orange-400' : 'text-muted-foreground'}`}>
-                                    {formData.excerpt?.length || 0}/160 characters
-                                </p>
-                            </div>
-                            <div>
-                                <Label className="flex items-center gap-1"><Hash className="h-3 w-3" /> Tags</Label>
-                                <Input
-                                    value={tagsInput}
-                                    onChange={e => {
-                                        setTagsInput(e.target.value);
-                                        setFormData({
-                                            ...formData,
-                                            tags: e.target.value.split(',').map(t => t.trim()).filter(Boolean)
-                                        });
-                                    }}
-                                    placeholder="react, nextjs, tutorial (comma separated)"
-                                />
-                            </div>
-                            <div>
-                                <Label>Cover Image</Label>
-                                <div className="flex items-center gap-4">
-                                    <Input type="file" onChange={handleImageUpload} />
-                                    {formData.coverImage && (
-                                        <div className="h-10 w-10 relative shrink-0">
-                                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                                            <img src={formData.coverImage} alt="Cover" className="h-full w-full object-cover rounded" />
-                                        </div>
-                                    )}
+                {/* Main Content Area: 2-column layout */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                    {/* Left Column: Form (8 cols) */}
+                    <div className="lg:col-span-8 space-y-6">
+                        <Card>
+                            <CardContent className="pt-6 space-y-4">
+                                <div>
+                                    <Label>Title</Label>
+                                    <Input
+                                        value={formData.title}
+                                        onChange={e => setFormData({ ...formData, title: e.target.value })}
+                                        onBlur={isNew ? handleSlugify : undefined}
+                                        placeholder="Your amazing blog post title"
+                                        className="text-lg"
+                                    />
                                 </div>
-                            </div>
-                        </CardContent>
-                    </Card>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <Label>Slug</Label>
+                                        <Input
+                                            value={formData.slug}
+                                            onChange={e => setFormData({ ...formData, slug: e.target.value })}
+                                            placeholder="your-post-slug"
+                                        />
+                                        <p className="text-[10px] text-muted-foreground mt-1 text-primary">/blog/{formData.slug || 'your-slug-here'}</p>
+                                    </div>
+                                    <div>
+                                        <Label className="flex items-center gap-2 text-primary">
+                                            <Sparkles className="h-3.5 w-3.5" /> Rank Math: Focus Keyword
+                                        </Label>
+                                        <Input
+                                            value={formData.focusKeyword}
+                                            onChange={e => setFormData({ ...formData, focusKeyword: e.target.value })}
+                                            placeholder="main-target-keyword"
+                                            className="border-primary/30"
+                                        />
+                                    </div>
+                                </div>
+                                <div>
+                                    <Label>Excerpt</Label>
+                                    <Textarea
+                                        value={formData.excerpt}
+                                        onChange={e => setFormData({ ...formData, excerpt: e.target.value })}
+                                        rows={2}
+                                        maxLength={160}
+                                        placeholder="Brief description for search engines (max 160 chars)"
+                                    />
+                                    <p className={`text-[10px] mt-1 ${(formData.excerpt?.length || 0) > 155 ? 'text-orange-400' : 'text-muted-foreground'}`}>
+                                        {formData.excerpt?.length || 0}/160 characters
+                                    </p>
+                                </div>
+                                <div>
+                                    <Label className="flex items-center gap-1"><Hash className="h-3 w-3" /> Tags</Label>
+                                    <Input
+                                        value={tagsInput}
+                                        onChange={e => {
+                                            setTagsInput(e.target.value);
+                                            setFormData({
+                                                ...formData,
+                                                tags: e.target.value.split(',').map(t => t.trim()).filter(Boolean)
+                                            });
+                                        }}
+                                        placeholder="react, nextjs, tutorial (comma separated)"
+                                    />
+                                </div>
+                                <div>
+                                    <Label>Cover Image</Label>
+                                    <div className="flex items-center gap-4">
+                                        <Input type="file" onChange={handleImageUpload} />
+                                        {formData.coverImage && (
+                                            <div className="h-10 w-10 relative shrink-0">
+                                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                <img src={formData.coverImage} alt="Cover" className="h-full w-full object-cover rounded" />
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
 
-                    <div>
-                        <Label className="mb-2 block">Content</Label>
-                        <RichTextEditor
-                            content={formData.content || ''}
-                            onChange={(html) => setFormData({ ...formData, content: html })}
-                        />
-                        <div className="flex gap-4 mt-2 text-xs text-muted-foreground">
-                            <span>{contentStats.words} words</span>
-                            <span>{contentStats.chars} characters</span>
-                            <span>~{Math.ceil(contentStats.words / 200)} min read</span>
+                        <div>
+                            <Label className="mb-2 block">Content</Label>
+                            <RichTextEditor
+                                content={formData.content || ''}
+                                onChange={(html) => setFormData({ ...formData, content: html })}
+                            />
+                            <div className="flex gap-4 mt-2 text-xs text-muted-foreground">
+                                <span>{contentStats.words} words</span>
+                                <span>{contentStats.chars} characters</span>
+                                <span>~{Math.ceil(contentStats.words / 200)} min read</span>
+                            </div>
                         </div>
+                    </div>
+
+                    {/* Right Column: SEO Sidebar (4 cols) */}
+                    <div className="lg:col-span-4 sticky top-6 space-y-6">
+                        <SEOAnalyzer
+                            title={formData.title || ''}
+                            slug={formData.slug || ''}
+                            excerpt={formData.excerpt || ''}
+                            content={formData.content || ''}
+                            focusKeyword={formData.focusKeyword || ''}
+                        />
+
+                        {/* Quick Tips */}
+                        <Card className="bg-muted/20 border-border/40">
+                            <CardHeader className="pb-2">
+                                <CardTitle className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Editor Pro-Tips</CardTitle>
+                            </CardHeader>
+                            <CardContent className="text-xs space-y-2 text-muted-foreground italic">
+                                <p>• Use <strong>H2 tags</strong> for main headings to improve readability.</p>
+                                <p>• Ensure your <strong>Focus Keyword</strong> appears in the first paragraph.</p>
+                                <p>• Add at least one <strong>internal link</strong> to other tools on Tool Daddy.</p>
+                                <p>• Keep paragraphs short for better mobile reading.</p>
+                            </CardContent>
+                        </Card>
                     </div>
                 </div>
 

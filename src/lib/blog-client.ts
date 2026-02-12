@@ -31,6 +31,7 @@ export interface BlogPostInput {
     slug: string;
     excerpt: string;
     content: string;
+    focusKeyword?: string;
     coverImage?: string;
     tags: string[];
     published: boolean;
