@@ -10,7 +10,6 @@ import {
   Download,
   Palette,
   KeyRound,
-  BookMarked,
   type LucideIcon,
   Notebook,
   ListMusic,
@@ -51,6 +50,8 @@ import {
   Link as LinkIcon,
   MessageCircle,
   Clock,
+  GraduationCap,
+  Compass,
 } from 'lucide-react';
 
 export type Tool = {
@@ -393,6 +394,34 @@ export const TOOL_CATEGORIES: ToolCategory[] = [
         description: 'Convert names into Hiragana, Katakana, and Romaji.',
         href: '/japanese-name-converter',
         icon: Languages,
+      },
+      {
+        name: 'European Skills & Jobs Survey',
+        description: ' Cedefop database on skills and jobs across Europe.',
+        href: 'https://www.cedefop.europa.eu/en/tools/european-skills-and-jobs-survey',
+        icon: GraduationCap,
+        isExternal: true,
+      },
+      {
+        name: 'European Skills Index',
+        description: 'Compare skill system performance across EU countries.',
+        href: 'https://www.cedefop.europa.eu/en/tools/european-skills-index',
+        icon: ListOrdered,
+        isExternal: true,
+      },
+      {
+        name: 'Mobility Scoreboard',
+        description: 'Database for monitoring VET mobility across Europe.',
+        href: 'https://www.cedefop.europa.eu/en/tools/mobility-scoreboard',
+        icon: Compass,
+        isExternal: true,
+      },
+      {
+        name: 'Skills Intelligence',
+        description: ' Cedefop portal for labor market trends and skill needs.',
+        href: 'https://www.cedefop.europa.eu/en/tools/skills-intelligence',
+        icon: Zap,
+        isExternal: true,
       },
     ]
   },

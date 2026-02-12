@@ -36,13 +36,13 @@ const ROMAJI_TO_KANA: Record<string, string> = {
     'ja': 'ジャ', 'ju': 'ジュ', 'jo': 'ジョ',
     'bya': 'ビャ', 'byu': 'ビュ', 'byo': 'ビョ',
     'pya': 'ピャ', 'pyu': 'ピュ', 'pyo': 'ピョ',
-    'tsu': 'ツ', 'shi': 'シ', 'chi': 'チ', 'zu': 'ズ'
+    'tsu': 'ツ', 'shi': 'シ', 'chi': 'チ'
 };
 
 const KATA_TO_HIRA: Record<string, string> = {
     'ア': 'あ', 'イ': 'い', 'ウ': 'う', 'エ': 'え', 'オ': 'お',
     'カ': 'か', 'キ': 'き', 'ク': 'く', 'ケ': 'け', 'コ': 'こ',
-    'サ': 'さ', 'し': 'し', 'ス': 'す', 'セ': 'せ', 'ソ': 'そ',
+    'サ': 'さ', 'シ': 'し', 'ス': 'す', 'セ': 'せ', 'ソ': 'そ',
     'タ': 'た', 'チ': 'ち', 'ツ': 'つ', 'テ': 'て', 'ト': 'と',
     'ナ': 'な', 'ニ': 'に', 'ヌ': 'ぬ', 'ネ': 'ね', 'ノ': 'の',
     'ハ': 'は', 'ヒ': 'ひ', 'フ': 'ふ', 'ヘ': 'へ', 'ホ': 'ほ',
@@ -65,8 +65,7 @@ const KATA_TO_HIRA: Record<string, string> = {
     'ギャ': 'ぎゃ', 'ギュ': 'ぎゅう', 'ギョ': 'ぎょ',
     'ジャ': 'じゃ', 'ジュ': 'じゅ', 'ジョ': 'じょ',
     'ビャ': 'びゃ', 'ビュ': 'びゅう', 'ビョ': 'びょ',
-    'ピャ': 'ぴゃ', 'ピュ': 'ぴゅう', 'ピョ': 'ぴょ',
-    'ツ': 'つ', 'シ': 'し', 'チ': 'ち', 'ズ': 'ず'
+    'ピャ': 'ぴゃ', 'ピュ': 'ぴゅう', 'ピョ': 'ぴょ'
 };
 
 export default function JapaneseNameConverter() {
@@ -87,7 +86,6 @@ export default function JapaneseNameConverter() {
         }
 
         let resultKata = '';
-        let i = 0;
         const words = input.split(/\s+/);
 
         const convertedWords = words.map(word => {
@@ -110,7 +108,7 @@ export default function JapaneseNameConverter() {
                     p += 1;
                 }
                 // Double consonants (e.g. 'kk')
-                else if (p + 1 < word.length && word[p] === word[p + 1] && word[p] !== 'n' && word[p] !== 'a' && word[p] !== 'i' && word[p] !== 'u' && word[p] !== 'e' && word[p] !== 'o') {
+                else if (p + 1 < word.length && word[p] === word[p + 1] && word[p] !== 'n' && !'aiueo'.includes(word[p])) {
                     wordKata += 'ッ';
                     p += 1;
                 }
