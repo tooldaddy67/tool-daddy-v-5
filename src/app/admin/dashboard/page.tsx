@@ -51,10 +51,22 @@ const SEO_TOOLS = [
         icon: TrendingUp,
     },
     {
-        name: 'Ahrefs Webmaster Tools',
-        description: 'Free backlink checker, site audit, and keyword explorer.',
-        url: 'https://ahrefs.com/webmaster-tools',
+        name: 'Moz Domain Analysis',
+        description: 'Check domain authority, ranking keywords, and competitors.',
+        url: 'https://moz.com/domain-analysis',
         icon: Globe,
+    },
+    {
+        name: 'Ubersuggest',
+        description: 'Advanced keyword research and SEO site audit tool.',
+        url: 'https://neilpatel.com/ubersuggest/',
+        icon: Search,
+    },
+    {
+        name: 'GTmetrix',
+        description: 'Detailed analysis of page load performance and waterfalls.',
+        url: 'https://gtmetrix.com/',
+        icon: TrendingUp,
     },
     {
         name: 'Schema Markup Validator',

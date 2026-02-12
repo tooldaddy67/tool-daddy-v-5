@@ -10,7 +10,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import {
     ArrowLeft, Search, Globe, FileCode, Share2, Loader2,
-    CheckCircle2, XCircle, AlertTriangle, ExternalLink, Copy, Eye
+    CheckCircle2, XCircle, AlertTriangle, ExternalLink, Copy, Eye,
+    FileText, Type, List, Save, Download, RefreshCw
 } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
@@ -36,8 +37,24 @@ export default function AdminSeoTools() {
 
     // OG Preview state
     const [ogUrl, setOgUrl] = useState('');
-    const [ogLoading, setOgLoading] = useState(false);
     const [ogData, setOgData] = useState<any>(null);
+    const [ogLoading, setOgLoading] = useState(false);
+
+    // Robots.txt Generator state
+    const [robotsContent, setRobotsContent] = useState('User-agent: *\nAllow: /\nSitemap: https://tool-daddy.com/sitemap.xml');
+
+    // Keyword Density state
+    const [densityText, setDensityText] = useState('');
+    const [keywordDensity, setKeywordDensity] = useState<{ word: string; count: number; density: number }[]>([]);
+
+    const EXTERNAL_SEO_TOOLS = [
+        { name: 'Google Search Console', url: 'https://search.google.com/search-console', icon: Search, desc: 'Monitor search performance and indexing.' },
+        { name: 'PageSpeed Insights', url: 'https://pagespeed.web.dev/', icon: Globe, desc: 'Analyze page load speed and Core Web Vitals.' },
+        { name: 'Rich Results Test', url: 'https://search.google.com/test/rich-results', icon: FileCode, desc: 'Test structured data for rich snippets.' },
+        { name: 'Ahrefs Webmaster Tools', url: 'https://ahrefs.com/webmaster-tools', icon: Globe, desc: 'Free site audit and backlink analysis.' },
+        { name: 'Moz Domain Analysis', url: 'https://moz.com/domain-analysis', icon: Globe, desc: 'Check domain authority and keywords.' },
+        { name: 'Ubersuggest', url: 'https://neilpatel.com/ubersuggest/', icon: Search, desc: 'Keyword research and site audit.' },
+    ];
 
     const handleAnalyze = async () => {
         if (!analyzeUrl) return;
@@ -113,6 +130,28 @@ ${allPages.map(page => `  <url>
         toast({ title: 'Copied to clipboard!' });
     };
 
+    const handleKeywordAnalyze = () => {
+        if (!densityText) return;
+        const words = densityText.toLowerCase()
+            .replace(/[^\w\s]/g, '')
+            .split(/\s+/)
+            .filter(w => w.length > 3);
+
+        const counts: Record<string, number> = {};
+        words.forEach(w => counts[w] = (counts[w] || 0) + 1);
+
+        const result = Object.entries(counts)
+            .map(([word, count]) => ({
+                word,
+                count,
+                density: parseFloat(((count / words.length) * 100).toFixed(2))
+            }))
+            .sort((a, b) => b.count - a.count)
+            .slice(0, 20);
+
+        setKeywordDensity(result);
+    };
+
     const downloadSitemap = () => {
         if (!sitemapXml) return;
         const blob = new Blob([sitemapXml], { type: 'application/xml' });
@@ -150,15 +189,24 @@ ${allPages.map(page => `  <url>
 
                 {/* Tools Tabs */}
                 <Tabs defaultValue="analyzer" className="space-y-6">
-                    <TabsList className="grid w-full grid-cols-3 max-w-lg">
-                        <TabsTrigger value="analyzer" className="flex items-center gap-2">
-                            <Search className="h-4 w-4" /> Analyzer
+                    <TabsList className="flex flex-wrap h-auto gap-2 bg-transparent p-0">
+                        <TabsTrigger value="analyzer" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                            <Search className="h-4 w-4 mr-2" /> Analyzer
                         </TabsTrigger>
-                        <TabsTrigger value="sitemap" className="flex items-center gap-2">
-                            <FileCode className="h-4 w-4" /> Sitemap
+                        <TabsTrigger value="sitemap" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                            <FileCode className="h-4 w-4 mr-2" /> Sitemap
                         </TabsTrigger>
-                        <TabsTrigger value="ogpreview" className="flex items-center gap-2">
-                            <Share2 className="h-4 w-4" /> OG Preview
+                        <TabsTrigger value="ogpreview" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                            <Share2 className="h-4 w-4 mr-2" /> OG Preview
+                        </TabsTrigger>
+                        <TabsTrigger value="keywords" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                            <Type className="h-4 w-4 mr-2" /> Keywords
+                        </TabsTrigger>
+                        <TabsTrigger value="robots" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                            <FileText className="h-4 w-4 mr-2" /> Robots.txt
+                        </TabsTrigger>
+                        <TabsTrigger value="external" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                            <ExternalLink className="h-4 w-4 mr-2" /> External
                         </TabsTrigger>
                     </TabsList>
 
@@ -409,6 +457,119 @@ ${allPages.map(page => `  <url>
                                 )}
                             </CardContent>
                         </Card>
+                    </TabsContent>
+                    {/* ===== KEYWORD DENSITY ===== */}
+                    <TabsContent value="keywords" className="space-y-6">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2">
+                                    <Type className="h-5 w-5 text-primary" />
+                                    Keyword Density Analyzer
+                                </CardTitle>
+                                <CardDescription>Paste text below to analyze keyword frequency and density.</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <textarea
+                                    className="w-full h-40 p-3 rounded-lg border bg-background font-sans resize-none focus:ring-2 focus:ring-primary outline-none"
+                                    placeholder="Paste your content here..."
+                                    value={densityText}
+                                    onChange={(e) => setDensityText(e.target.value)}
+                                />
+                                <Button onClick={handleKeywordAnalyze} disabled={!densityText}>
+                                    Analyze Keywords
+                                </Button>
+
+                                {keywordDensity.length > 0 && (
+                                    <div className="pt-4 overflow-hidden rounded-lg border">
+                                        <table className="w-full text-sm text-left">
+                                            <thead className="bg-muted">
+                                                <tr>
+                                                    <th className="px-4 py-2 font-medium">Keyword</th>
+                                                    <th className="px-4 py-2 font-medium">Count</th>
+                                                    <th className="px-4 py-2 font-medium">Density (%)</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y">
+                                                {keywordDensity.map((row) => (
+                                                    <tr key={row.word} className="hover:bg-muted/50 transition-colors">
+                                                        <td className="px-4 py-2 font-medium">{row.word}</td>
+                                                        <td className="px-4 py-2">{row.count}</td>
+                                                        <td className="px-4 py-2">
+                                                            <div className="flex items-center gap-2">
+                                                                <div className="h-2 w-24 bg-muted rounded-full overflow-hidden">
+                                                                    <div className="h-full bg-primary" style={{ width: `${Math.min(row.density * 10, 100)}%` }} />
+                                                                </div>
+                                                                {row.density}%
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+
+                    {/* ===== ROBOTS.TXT GENERATOR ===== */}
+                    <TabsContent value="robots" className="space-y-6">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2">
+                                    <FileText className="h-5 w-5 text-primary" />
+                                    Robots.txt Generator
+                                </CardTitle>
+                                <CardDescription>Generate a standard robots.txt file for your site.</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <textarea
+                                    className="w-full h-40 p-4 rounded-lg border bg-muted/30 font-mono text-sm resize-none focus:ring-2 focus:ring-primary outline-none"
+                                    value={robotsContent}
+                                    onChange={(e) => setRobotsContent(e.target.value)}
+                                />
+                                <div className="flex gap-2">
+                                    <Button onClick={() => copyToClipboard(robotsContent)}>
+                                        <Copy className="mr-2 h-4 w-4" /> Copy
+                                    </Button>
+                                    <Button variant="outline" onClick={() => {
+                                        const blob = new Blob([robotsContent], { type: 'text/plain' });
+                                        const url = URL.createObjectURL(blob);
+                                        const a = document.createElement('a');
+                                        a.href = url;
+                                        a.download = 'robots.txt';
+                                        a.click();
+                                        URL.revokeObjectURL(url);
+                                    }}>
+                                        <Download className="mr-2 h-4 w-4" /> Download
+                                    </Button>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+
+                    {/* ===== EXTERNAL TOOLS ===== */}
+                    <TabsContent value="external" className="space-y-6">
+                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                            {EXTERNAL_SEO_TOOLS.map((tool) => (
+                                <a key={tool.name} href={tool.url} target="_blank" rel="noopener noreferrer" className="group">
+                                    <Card className="h-full transition-all hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5">
+                                        <CardHeader className="pb-3">
+                                            <CardTitle className="text-sm font-medium flex items-center justify-between">
+                                                <span className="flex items-center gap-2">
+                                                    <tool.icon className="h-4 w-4 text-primary" />
+                                                    {tool.name}
+                                                </span>
+                                                <ExternalLink className="h-3.5 w-3.5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                            </CardTitle>
+                                        </CardHeader>
+                                        <CardContent>
+                                            <p className="text-xs text-muted-foreground">{tool.desc}</p>
+                                        </CardContent>
+                                    </Card>
+                                </a>
+                            ))}
+                        </div>
                     </TabsContent>
                 </Tabs>
             </div>
