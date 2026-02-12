@@ -74,12 +74,23 @@ export default function ImageCompressor() {
       ctx.drawImage(img, 0, 0);
 
       const compressedDataUrl = canvas.toDataURL(mimeType, qualityValue / 100);
-      setCompressedImage(compressedDataUrl);
-
       const res = await fetch(compressedDataUrl);
       const blob = await res.blob();
       const newSize = blob.size;
+
+      // Check if size increased
+      if (newSize >= originalSize && qualityValue > 50) {
+        toast({
+          title: 'Already Optimized',
+          description: 'The compressed version was larger than the original. Using original quality.',
+        });
+        setCompressedImage(image);
+        setCompressedSize(originalSize);
+        return;
+      }
+
       setCompressedSize(newSize);
+      setCompressedImage(compressedDataUrl);
 
       addToHistory({
         tool: 'Image Compressor',

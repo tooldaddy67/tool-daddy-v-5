@@ -34,7 +34,7 @@ export default function PageHeader() {
   return (
     <>
       <header className={cn(
-        "sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background/50 backdrop-blur-lg px-4 md:px-6 transition-all duration-300",
+        "sticky top-0 z-50 flex h-16 items-center gap-4 border-b bg-background/90 backdrop-blur-lg px-4 md:px-6 transition-all duration-300",
         settings.sidebarStyle === 'mini' && "md:pl-2", // Less padding if mini to align better, but gap is handled by flex
         isHome && "hidden md:flex"
       )}>

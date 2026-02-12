@@ -21,6 +21,7 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { useFirebase } from '@/firebase';
 import { sendNotification } from '@/lib/send-notification';
+import zxcvbn from 'zxcvbn';
 
 export default function PasswordGenerator() {
   const [password, setPassword] = useState('');
@@ -106,37 +107,29 @@ export default function PasswordGenerator() {
     savePasswordAction('copied');
   }, [password, toast, savePasswordAction]);
 
-  // Calculate strength based on entropy/complexity
+  // Calculate strength based on zxcvbn entropy analysis
   useEffect(() => {
-    let score = 0;
-    if (length >= 8) score++;
-    if (length >= 12) score++;
-    if (length >= 16) score++;
-    if (includeUppercase) score++;
-    if (includeLowercase) score++;
-    if (includeNumbers) score++;
-    if (includeSymbols) score++;
-
-    // Cap score at 4 for simple logic
-    let label = 'Weak';
-    let color = 'bg-red-500';
-
-    if (score < 3) {
-      label = 'Weak';
-      color = 'bg-red-500';
-    } else if (score < 5) {
-      label = 'Medium';
-      color = 'bg-yellow-500';
-    } else if (score < 7) {
-      label = 'Strong';
-      color = 'bg-green-500';
-    } else {
-      label = 'Very Strong';
-      color = 'bg-green-600';
+    if (!password) {
+      setStrength({ label: 'None', color: 'bg-muted', score: 0 });
+      return;
     }
 
-    setStrength({ label, color, score });
-  }, [length, includeUppercase, includeLowercase, includeNumbers, includeSymbols]);
+    const analysis = zxcvbn(password);
+    const score = analysis.score; // 0-4
+
+    let label = 'Very Weak';
+    let color = 'bg-red-500';
+
+    switch (score) {
+      case 0: label = 'Very Weak'; color = 'bg-red-600'; break;
+      case 1: label = 'Weak'; color = 'bg-red-400'; break;
+      case 2: label = 'Medium'; color = 'bg-yellow-500'; break;
+      case 3: label = 'Strong'; color = 'bg-blue-500'; break;
+      case 4: label = 'Very Secure'; color = 'bg-green-500'; break;
+    }
+
+    setStrength({ label, color, score: (score + 1) * 2 }); // Scale to 10 for bar
+  }, [password]);
 
   // Initial generation (no history/notification on mount)
   useEffect(() => {
@@ -237,7 +230,7 @@ export default function PasswordGenerator() {
                 <span className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Security Strength</span>
                 <div className="flex items-center gap-2">
                   <div className="flex-grow bg-muted rounded-full h-2 overflow-hidden">
-                    <div className={cn("h-full rounded-full transition-all duration-500", strength.color, strength.score < 3 ? "w-1/4" : strength.score < 5 ? "w-2/4" : strength.score < 7 ? "w-3/4" : "w-full")}></div>
+                    <div className={cn("h-full rounded-full transition-all duration-500", strength.color)} style={{ width: `${(strength.score / 10) * 100}%` }}></div>
                   </div>
                   <span className={cn("text-xs font-bold min-w-[70px] text-right uppercase", strength.color.replace('bg-', 'text-'))}>{strength.label}</span>
                 </div>

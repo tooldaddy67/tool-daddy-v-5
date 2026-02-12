@@ -3,13 +3,43 @@
 [contenteditable]:empty:before {
     content: attr(data-placeholder);
     pointer-events: none;
-    display: block; /* For Firefox */
+    display: block;
+    /* For Firefox */
     color: hsl(var(--muted-foreground));
 }
-.prose h1 { font-size: 2em; }
-.prose h2 { font-size: 1.5em; }
-.prose h3 { font-size: 1.25em; }
+
+.prose h1 {
+    font-size: 2em;
+}
+
+.prose h2 {
+    font-size: 1.5em;
+}
+
+.prose h3 {
+    font-size: 1.25em;
+}
+
 .prose mark {
     background-color: #ca8a0480;
     color: inherit;
+}
+
+.prose ul {
+    list-style-type: disc !important;
+    padding-left: 1.5rem !important;
+    margin-top: 1rem !important;
+    margin-bottom: 1rem !important;
+}
+
+.prose ol {
+    list-style-type: decimal !important;
+    padding-left: 1.5rem !important;
+    margin-top: 1rem !important;
+    margin-bottom: 1rem !important;
+}
+
+.prose li {
+    margin-top: 0.25rem !important;
+    margin-bottom: 0.25rem !important;
 }

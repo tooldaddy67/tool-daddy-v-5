@@ -220,6 +220,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                                                 placeholder="Your name"
                                                 value={newDisplayName}
                                                 onChange={(e) => setNewDisplayName(e.target.value)}
+                                                maxLength={25}
                                                 className="border-primary/20"
                                             />
                                             <Button
@@ -279,6 +280,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                                         placeholder="e.g. My Tool Suite"
                                         value={settings.siteTitle}
                                         onChange={(e) => updateSettings({ siteTitle: e.target.value })}
+                                        maxLength={25}
                                         className="h-9 bg-background/50 border-border/50 focus:border-primary/50 transition-colors"
                                     />
                                     <p className="text-[10px] text-muted-foreground italic">Changes the brand text in the sidebar and header.</p>

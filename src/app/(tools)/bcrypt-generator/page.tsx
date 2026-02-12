@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { ShieldCheck, Copy, Check, RefreshCw, Eye, EyeOff, Search } from 'lucide-react';
+import { ShieldCheck, Copy, Check, RefreshCw, Eye, EyeOff, Search, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import bcrypt from 'bcryptjs';
 
@@ -23,10 +23,29 @@ export default function BcryptGenerator() {
     const { toast } = useToast();
     const [isCopied, setIsCopied] = useState(false);
 
-    const generateHash = () => {
+    const [isHashing, setIsHashing] = useState(false);
+
+    const generateHash = async () => {
         if (!password) return;
+
+        let r = rounds;
+        if (isNaN(r) || r < 4) r = 4;
+        if (r > 14) {
+            toast({
+                title: 'High Cost Factor',
+                description: 'Cost factor capped at 14 to prevent browser timeout.',
+                variant: 'destructive',
+            });
+            r = 14;
+            setRounds(14);
+        }
+
+        setIsHashing(true);
+        // Slight delay to let UI show loading state
+        await new Promise(resolve => setTimeout(resolve, 50));
+
         try {
-            const salt = bcrypt.genSaltSync(rounds);
+            const salt = bcrypt.genSaltSync(r);
             const hashed = bcrypt.hashSync(password, salt);
             setHash(hashed);
             setVerifyHash(hashed); // Auto-fill verification hash for convenience
@@ -36,6 +55,8 @@ export default function BcryptGenerator() {
                 description: 'Failed to generate Bcrypt hash.',
                 variant: 'destructive',
             });
+        } finally {
+            setIsHashing(false);
         }
     };
 
@@ -109,9 +130,9 @@ export default function BcryptGenerator() {
                                 onChange={(e) => setRounds(parseInt(e.target.value))}
                             />
                         </div>
-                        <Button className="w-full mt-4 h-12" onClick={generateHash} disabled={!password}>
-                            <RefreshCw className="mr-2 h-4 w-4" />
-                            Generate Bcrypt Hash
+                        <Button className="w-full mt-4 h-12" onClick={generateHash} disabled={!password || isHashing}>
+                            {isHashing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
+                            {isHashing ? 'Hashing...' : 'Generate Bcrypt Hash'}
                         </Button>
 
                         {hash && (

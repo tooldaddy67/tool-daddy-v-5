@@ -25,14 +25,15 @@ export default function HashText() {
 
         try {
             let hashed = '';
+            const enc = CryptoJS.enc.Hex;
             switch (algorithm) {
-                case 'MD5': hashed = CryptoJS.MD5(input).toString(); break;
-                case 'SHA1': hashed = CryptoJS.SHA1(input).toString(); break;
-                case 'SHA256': hashed = CryptoJS.SHA256(input).toString(); break;
-                case 'SHA512': hashed = CryptoJS.SHA512(input).toString(); break;
-                case 'SHA3': hashed = CryptoJS.SHA3(input).toString(); break;
-                case 'RIPEMD160': hashed = CryptoJS.RIPEMD160(input).toString(); break;
-                default: hashed = CryptoJS.SHA256(input).toString();
+                case 'MD5': hashed = CryptoJS.MD5(input).toString(enc); break;
+                case 'SHA1': hashed = CryptoJS.SHA1(input).toString(enc); break;
+                case 'SHA256': hashed = CryptoJS.SHA256(input).toString(enc); break;
+                case 'SHA512': hashed = CryptoJS.SHA512(input).toString(enc); break;
+                case 'SHA3': hashed = CryptoJS.SHA3(input).toString(enc); break;
+                case 'RIPEMD160': hashed = CryptoJS.RIPEMD160(input).toString(enc); break;
+                default: hashed = CryptoJS.SHA256(input).toString(enc);
             }
             setResult(hashed);
         } catch (error) {

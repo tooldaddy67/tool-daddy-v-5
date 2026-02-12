@@ -16,23 +16,36 @@ export default function MacLookup() {
 
     const lookup = async () => {
         if (!mac) return;
+        const cleanMac = mac.replace(/[^a-fA-F0-9]/g, '').slice(0, 12);
+        if (cleanMac.length < 6) {
+            toast({ title: 'Invalid MAC', description: 'MAC address must be at least 6 hex characters.', variant: 'destructive' });
+            return;
+        }
+
         setLoading(true);
         setResult(null);
 
         try {
-            // Using api.macvendors.com (free, no auth)
-            const response = await fetch(`https://api.macvendors.com/${mac}`);
+            // Primary lookup
+            let response = await fetch(`https://api.macvendors.com/${cleanMac}`);
 
             if (response.ok) {
                 const vendor = await response.text();
                 setResult({ vendor });
             } else {
-                throw new Error('Vendor not found or invalid MAC address');
+                // Secondary fallback
+                response = await fetch(`https://api.maclookup.app/v2/macs/${cleanMac}`);
+                const data = await response.json();
+                if (data.success && data.company) {
+                    setResult({ vendor: data.company });
+                } else {
+                    throw new Error('Vendor not found in database');
+                }
             }
         } catch (error: any) {
             toast({
                 title: 'Lookup Failed',
-                description: error.message,
+                description: 'Could not find vendor. Make sure the MAC is valid.',
                 variant: 'destructive'
             });
         } finally {

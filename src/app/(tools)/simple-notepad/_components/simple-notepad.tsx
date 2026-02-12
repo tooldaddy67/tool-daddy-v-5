@@ -251,9 +251,11 @@ export default function SimpleNotepad() {
   };
 
   const applyFormat = (command: string, value?: string) => {
-    document.execCommand(command, false, value);
-    editorRef.current?.focus();
-    handleSelectionChange(); // Re-check style after applying
+    if (editorRef.current) {
+      editorRef.current.focus();
+      document.execCommand(command, false, value);
+      handleInput({ currentTarget: editorRef.current } as any);
+    }
   };
 
   const applyBlockFormat = (tag: string) => {
