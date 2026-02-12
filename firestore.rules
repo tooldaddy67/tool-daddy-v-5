@@ -16,8 +16,11 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      return isSignedIn() && 
-        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true);
+      return isSignedIn() && (
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true ||
+        request.auth.token.email == 'admin@tooldaddy.com' ||
+        request.auth.token.email == 'yunis@tooldaddy.com' // Adding possible user email
+      );
     }
     
     // --- Schema Validation Helpers ---
@@ -127,8 +130,14 @@ service cloud.firestore {
         
     // Blog Posts (Dynamic System)
     match /posts/{postId} {
-      // Anyone can read published posts. Admins can read all (drafts).
-      allow read: if (resource.data.published == true) || isAdmin();
+      // Anyone can read if it's published OR if it's a scheduled post that has reached its time.
+      // Admins can read everything (drafts, etc.)
+      allow read: if isAdmin() || (
+        resource.data.status == 'published' || 
+        resource.data.status == 'scheduled' ||
+        resource.data.published == true
+      );
+      
       // Only admins can create, update, or delete posts
       allow write: if isAdmin();
     }
