@@ -27,8 +27,10 @@ export interface BlogPost {
         photoURL?: string;
     };
     published: boolean;
-    createdAt: any; // Timestamp
-    updatedAt: any; // Timestamp
+    status?: 'draft' | 'published' | 'scheduled';
+    scheduledAt?: string | null;
+    createdAt: string;
+    updatedAt: string;
 }
 
 export async function getPublishedPosts(): Promise<BlogPost[]> {
@@ -45,21 +47,26 @@ export async function getPublishedPosts(): Promise<BlogPost[]> {
         const scheduledAtDate = data.scheduledAt?.toDate?.() || null;
 
         return {
-            id: doc.id,
             ...data,
+            id: doc.id,
             createdAt: data.createdAt?.toDate?.()?.toISOString() || null,
             updatedAt: data.updatedAt?.toDate?.()?.toISOString() || null,
-            scheduledAtDate,
+            scheduledAt: data.scheduledAt?.toDate?.()?.toISOString() || null,
+            _tempScheduledDate: scheduledAtDate, // Helper for filtering
         } as any;
     }).filter(post => {
         if (post.status === 'published' || post.published === true) return true;
-        if (post.status === 'scheduled' && post.scheduledAtDate && post.scheduledAtDate <= now) return true;
+        if (post.status === 'scheduled' && post._tempScheduledDate && post._tempScheduledDate <= now) return true;
         return false;
+    }).map(post => {
+        // Remove the temporary date object before passing to client
+        const { _tempScheduledDate, ...cleanPost } = post;
+        return cleanPost as BlogPost;
     });
 
     return posts.sort((a, b) => {
-        const dateA = new Date(a.createdAt).getTime();
-        const dateB = new Date(b.createdAt).getTime();
+        const dateA = new Date(a.createdAt || 0).getTime();
+        const dateB = new Date(b.createdAt || 0).getTime();
         return dateB - dateA;
     });
 }
@@ -88,9 +95,10 @@ export async function getPostBySlug(slug: string): Promise<BlogPost | null> {
     }
 
     return {
-        id: doc.id,
         ...data,
+        id: doc.id,
         createdAt: data.createdAt?.toDate?.()?.toISOString() || null,
         updatedAt: data.updatedAt?.toDate?.()?.toISOString() || null,
+        scheduledAt: data.scheduledAt?.toDate?.()?.toISOString() || null,
     } as BlogPost;
 }
