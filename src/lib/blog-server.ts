@@ -32,25 +32,31 @@ export interface BlogPost {
 }
 
 export async function getPublishedPosts(): Promise<BlogPost[]> {
+    const now = new Date();
+    // Fetch posts that are either published or scheduled
     const q = query(
         collection(db, COLLECTION),
-        where('published', '==', true)
-        // orderBy('createdAt', 'desc') // Removed to avoid composite index requirement
+        where('status', 'in', ['published', 'scheduled'])
     );
 
     const snapshot = await getDocs(q);
     const posts = snapshot.docs.map(doc => {
         const data = doc.data();
+        const scheduledAtDate = data.scheduledAt?.toDate?.() || null;
+
         return {
             id: doc.id,
             ...data,
-            // Convert Timestamp to Date or ISO string if needed for hydration serialization
             createdAt: data.createdAt?.toDate?.()?.toISOString() || null,
             updatedAt: data.updatedAt?.toDate?.()?.toISOString() || null,
-        } as BlogPost;
+            scheduledAtDate,
+        } as any;
+    }).filter(post => {
+        if (post.status === 'published' || post.published === true) return true;
+        if (post.status === 'scheduled' && post.scheduledAtDate && post.scheduledAtDate <= now) return true;
+        return false;
     });
 
-    // Sort in memory
     return posts.sort((a, b) => {
         const dateA = new Date(a.createdAt).getTime();
         const dateB = new Date(b.createdAt).getTime();
@@ -62,7 +68,7 @@ export async function getPostBySlug(slug: string): Promise<BlogPost | null> {
     const q = query(
         collection(db, COLLECTION),
         where('slug', '==', slug),
-        where('published', '==', true),
+        where('status', 'in', ['published', 'scheduled']),
         limit(1)
     );
 
@@ -71,6 +77,15 @@ export async function getPostBySlug(slug: string): Promise<BlogPost | null> {
 
     const doc = snapshot.docs[0];
     const data = doc.data();
+    const now = new Date();
+
+    // Verification for scheduled posts
+    if (data.status === 'scheduled') {
+        const scheduledDate = data.scheduledAt?.toDate?.() || null;
+        if (!scheduledDate || scheduledDate > now) {
+            return null; // Don't show scheduled posts early
+        }
+    }
 
     return {
         id: doc.id,

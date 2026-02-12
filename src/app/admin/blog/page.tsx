@@ -98,11 +98,24 @@ export default function AdminBlogDashboard() {
                                     <TableRow key={post.id}>
                                         <TableCell className="font-medium">{post.title}</TableCell>
                                         <TableCell>
-                                            <span className={`px-2 py-1 rounded-full text-xs ${post.published ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
-                                                {post.published ? 'Published' : 'Draft'}
+                                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${post.status === 'published'
+                                                ? 'bg-green-500/10 text-green-500 border border-green-500/20'
+                                                : post.status === 'scheduled'
+                                                    ? 'bg-blue-500/10 text-blue-500 border border-blue-500/20'
+                                                    : 'bg-yellow-500/10 text-yellow-500 border border-yellow-500/20'
+                                                }`}>
+                                                {post.status === 'published' ? 'Published' : post.status === 'scheduled' ? 'Scheduled' : 'Draft'}
                                             </span>
                                         </TableCell>
-                                        <TableCell>{post.createdAt?.toDate?.().toLocaleDateString() || 'N/A'}</TableCell>
+                                        <TableCell>
+                                            <div className="text-xs">
+                                                {post.status === 'scheduled' && post.scheduledAt ? (
+                                                    <span className="text-blue-400 font-medium">Drops: {post.scheduledAt.toDate().toLocaleDateString()}</span>
+                                                ) : (
+                                                    <span>{post.createdAt?.toDate?.().toLocaleDateString() || 'N/A'}</span>
+                                                )}
+                                            </div>
+                                        </TableCell>
                                         <TableCell className="text-right space-x-2">
                                             <Link href={`/admin/blog/${post.id}`}>
                                                 <Button variant="ghost" size="sm">
