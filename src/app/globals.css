@@ -408,6 +408,15 @@
 
 /* UI Aesthetics */
 
+/* Glassy Style (Default) */
+.ui-glass .tool-island,
+.ui-glass .glass-panel {
+  backdrop-filter: blur(var(--glass-blur, 12px)) !important;
+  background: hsla(var(--background), 0.2) !important;
+  border: 1px solid hsla(var(--primary), 0.1) !important;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3) !important;
+}
+
 /* Neo-Brutalism Style */
 .ui-neo .glow-card,
 .ui-neo .tool-island {
@@ -415,6 +424,7 @@
   box-shadow: 4px 4px 0px 0px hsl(var(--primary)) !important;
   border-radius: 0px !important;
   background: hsl(var(--background)) !important;
+  backdrop-filter: none !important;
 }
 
 .ui-neo .glow-card:hover,
@@ -426,16 +436,18 @@
 /* Minimalist Style */
 .ui-minimal .glow-card,
 .ui-minimal .tool-island {
-  border: none !important;
+  border: 1px solid hsla(var(--primary), 0.05) !important;
   background: transparent !important;
   box-shadow: none !important;
-  transition: opacity 0.2s ease;
+  backdrop-filter: none !important;
+  transition: all 0.2s ease;
 }
 
 .ui-minimal .glow-card:hover,
 .ui-minimal .tool-island:hover {
-  opacity: 0.7;
-  transform: none !important;
+  background: hsla(var(--primary), 0.03) !important;
+  border-color: hsla(var(--primary), 0.2) !important;
+  transform: translateY(-2px) !important;
 }
 
 /* Cursor & Particle Effects */

@@ -177,11 +177,12 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
 
         // Also add classes to body for easier CSS targeting, but use classList.add/remove
         const body = document.body;
-        body.classList.remove('sidebar-mini', 'sidebar-float', 'ui-neo', 'ui-minimal');
+        body.classList.remove('sidebar-mini', 'sidebar-float', 'ui-neo', 'ui-minimal', 'ui-glass');
         if (localSettings.sidebarStyle === 'mini') body.classList.add('sidebar-mini');
         if (localSettings.sidebarStyle === 'float') body.classList.add('sidebar-float');
         if (localSettings.cardStyle === 'neo') body.classList.add('ui-neo');
         if (localSettings.cardStyle === 'minimal') body.classList.add('ui-minimal');
+        if (localSettings.cardStyle === 'glass') body.classList.add('ui-glass');
 
         root.style.setProperty('--sidebar-primary', colors.primary);
         root.style.setProperty('--sidebar-ring', colors.primary);
