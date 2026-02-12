@@ -12,13 +12,14 @@ import {
   SidebarGroup,
   SidebarGroupLabel,
   SidebarSeparator,
+  useSidebar,
 } from '@/components/ui/sidebar';
 import { History, BookOpen, LayoutDashboard } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { TOOL_CATEGORIES } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { UserAuthButton } from './user-auth-button';
 import { useFirebase } from '@/firebase';
 import { useSettings } from '@/components/settings-provider';
@@ -44,14 +45,24 @@ const Logo = ({ className }: { className?: string }) => (
 
 export default function AppSidebar() {
   const pathname = usePathname();
+  const { state } = useSidebar();
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
 
-  const filteredCategories = TOOL_CATEGORIES.map(category => ({
+  // Debounce search query to reduce recalculation frequency
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  const filteredCategories = useMemo(() => TOOL_CATEGORIES.map(category => ({
     ...category,
     tools: category.tools.filter(tool =>
-      tool.name.toLowerCase().includes(searchQuery.toLowerCase())
+      tool.name.toLowerCase().includes(debouncedSearchQuery.toLowerCase())
     ),
-  })).filter(category => category.tools.length > 0);
+  })).filter(category => category.tools.length > 0), [debouncedSearchQuery]);
 
 
   const { user } = useFirebase();
@@ -70,6 +81,8 @@ export default function AppSidebar() {
       }
     }).catch(() => setIsAdmin(false));
   }, [user]);
+
+  const isCollapsed = state === 'collapsed';
 
   return (
     <Sidebar
@@ -100,10 +113,10 @@ export default function AppSidebar() {
         {isAdmin && (
           <SidebarMenu className="mb-4">
             <SidebarMenuItem>
-              <Link href="/admin/dashboard" prefetch={true} className="w-full">
+              <Link href="/admin/dashboard" prefetch={false} className="w-full">
                 <SidebarMenuButton
                   isActive={pathname.startsWith('/admin')}
-                  tooltip="Admin Dashboard"
+                  tooltip={isCollapsed ? "Admin Dashboard" : undefined}
                   className="bg-destructive/10 text-destructive hover:bg-destructive/20 hover:text-destructive"
                 >
                   <LayoutDashboard className="shrink-0" />
@@ -125,26 +138,26 @@ export default function AppSidebar() {
                   {tool.isExternal ? (
                     <a href={tool.href} target="_blank" rel="noopener noreferrer" className="w-full">
                       <SidebarMenuButton
-                        tooltip={{
+                        tooltip={isCollapsed ? {
                           children: tool.name,
                           className: 'bg-accent text-accent-foreground',
-                        }}
+                        } : undefined}
                       >
                         <tool.icon className="shrink-0" />
                         <span className="group-data-[state=collapsed]:hidden">{tool.name}</span>
                       </SidebarMenuButton>
                     </a>
                   ) : (
-                    <Link href={tool.href} prefetch={true} className="w-full">
+                    <Link href={tool.href} prefetch={false} className="w-full">
                       <SidebarMenuButton
                         className={cn(
                           "transition-all duration-300 group",
                           pathname === tool.href ? "text-primary bg-primary/5" : "hover:text-primary"
                         )}
-                        tooltip={{
+                        tooltip={isCollapsed ? {
                           children: tool.name,
                           className: 'bg-accent text-accent-foreground',
-                        }}
+                        } : undefined}
                       >
                         <div className={cn(
                           "p-1.5 rounded-md transition-all duration-300 glow-island flex items-center justify-center",
@@ -168,10 +181,10 @@ export default function AppSidebar() {
 
         <SidebarMenu className="mt-2">
           <SidebarMenuItem>
-            <Link href="/blog" prefetch={true}>
+            <Link href="/blog" prefetch={false}>
               <SidebarMenuButton
                 isActive={pathname.startsWith('/blog')}
-                tooltip="Blog"
+                tooltip={isCollapsed ? "Blog" : undefined}
               >
                 <BookOpen />
                 <span className="group-data-[state=collapsed]:hidden">Blog</span>
@@ -179,13 +192,13 @@ export default function AppSidebar() {
             </Link>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <Link href="/history" prefetch={true} className="w-full">
+            <Link href="/history" prefetch={false} className="w-full">
               <SidebarMenuButton
                 isActive={pathname === '/history'}
-                tooltip={{
+                tooltip={isCollapsed ? {
                   children: 'History',
                   className: 'bg-accent text-accent-foreground',
-                }}
+                } : undefined}
               >
                 <History className="shrink-0" />
                 <span className="group-data-[state=collapsed]:hidden">History</span>

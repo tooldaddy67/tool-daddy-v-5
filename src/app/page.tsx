@@ -1,21 +1,29 @@
 "use client"
 
 import { ArrowDown, Sparkles } from 'lucide-react';
-
-import { DashboardWidgets } from '@/components/dashboard-widgets';
 import { useUser } from '@/firebase';
-// @ts-ignore
-import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { HeroSection } from '@/components/home/hero-section';
-import { BentoGrid } from '@/components/home/bento-grid';
-import { FeaturedTools } from '@/components/home/featured-tools';
-import { MobileHome } from '@/components/mobile/mobile-home';
+// Dynamic imports to reduce initial bundle size and TBT
+import dynamic from 'next/dynamic';
+
+const DashboardWidgets = dynamic(() => import('@/components/dashboard-widgets').then(mod => mod.DashboardWidgets), {
+  loading: () => <div className="min-h-[200px] w-full animate-pulse bg-muted/10 rounded-xl" />,
+  ssr: false
+});
+
+const BentoGrid = dynamic(() => import('@/components/home/bento-grid').then(mod => mod.BentoGrid), {
+  ssr: false // Disable SSR to improve TBT; these will hydrate on the client
+});
+
+const FeaturedTools = dynamic(() => import('@/components/home/featured-tools').then(mod => mod.FeaturedTools), {
+  ssr: false
+});
 
 export default function Home() {
   const { user, isUserLoading } = useUser();
-  const showDashboard = !!user; // Show for everyone (guests and logged in)
-  const isRealUser = user && !user.isAnonymous;
+  // Show dashboard skeleton while loading, or if we have a user (anonymous or real)
+  const showDashboard = isUserLoading || !!user;
 
   return (
     <div className="flex flex-col w-full min-h-screen">
@@ -23,15 +31,17 @@ export default function Home() {
         {/* New Hero Section */}
         <HeroSection />
 
-        {/* Bento Grid Features */}
-        <BentoGrid />
+        {/* Bento Grid Features - content-visibility optimization for performance */}
+        <div className="contain-content">
+          <BentoGrid />
+        </div>
 
         {/* Dashboard / Featured Tools Section */}
         <div className="relative w-full bg-background/50 backdrop-blur-sm">
 
           <div className="space-y-12">
             {showDashboard && (
-              <section className="px-4 md:px-6 py-12 max-w-7xl mx-auto border-b border-white/5">
+              <section className="px-4 md:px-6 py-12 max-w-7xl mx-auto border-b border-white/5 min-h-[400px]">
                 <div className="flex flex-col items-center justify-center text-center space-y-4 mb-8">
                   <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl font-headline">Your Dashboard</h2>
                   <p className="text-muted-foreground">Quick access to your recent activities.</p>

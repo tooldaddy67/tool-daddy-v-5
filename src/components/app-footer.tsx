@@ -1,5 +1,9 @@
 import Link from 'next/link';
-import { FeedbackModal } from '@/components/feedback-modal';
+import dynamic from 'next/dynamic';
+
+const FeedbackModal = dynamic(() => import('@/components/feedback-modal').then(mod => mod.FeedbackModal), {
+  ssr: false,
+});
 
 const Logo = () => (
   <svg

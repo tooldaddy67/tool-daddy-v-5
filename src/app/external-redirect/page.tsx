@@ -1,13 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader2, ExternalLink, ShieldCheck, Zap, Info } from 'lucide-react';
-import { cn } from '@/lib/utils';
 
-export default function ExternalRedirectPage() {
+function RedirectContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const targetUrl = searchParams.get('to');
@@ -26,7 +25,12 @@ export default function ExternalRedirectPage() {
             setCountdown((prev) => {
                 if (prev <= 1) {
                     clearInterval(timer);
-                    handleRedirect();
+                    // Use a local function or direct call to avoid dependency issues if handleRedirect isn't memoized
+                    // But here we can just define logic inline or use the function below
+                    if (targetUrl) {
+                        setIsRedirecting(true);
+                        window.location.href = targetUrl;
+                    }
                     return 0;
                 }
                 return prev - 1;
@@ -136,5 +140,17 @@ export default function ExternalRedirectPage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function ExternalRedirectPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center bg-[#020617] text-white">
+                <Loader2 className="h-8 w-8 animate-spin" />
+            </div>
+        }>
+            <RedirectContent />
+        </Suspense>
     );
 }

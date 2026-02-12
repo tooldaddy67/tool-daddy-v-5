@@ -6,6 +6,9 @@
   :root {
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
+    /* Default Fonts - Matches 'tech' setting to prevent FOUT/CLS */
+    --font-headline: var(--font-space-grotesk);
+    --font-body: var(--font-inter);
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
@@ -126,7 +129,19 @@
   background: hsla(var(--background), 0.2) !important;
   border: 1px solid hsla(var(--primary), 0.1) !important;
   box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3), 0 0 10px 0 hsla(var(--primary), 0.05) !important;
-  transition: all 0.3s ease;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+  will-change: transform, opacity;
+}
+
+.contain-content {
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 500px;
+}
+
+.gpu-accelerate {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
 }
 
 .glow-sm {

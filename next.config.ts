@@ -15,7 +15,7 @@ const nextConfig: NextConfig = {
 
   // ✅ Cache optimization
   experimental: {
-    optimizePackageImports: ['@radix-ui/react-*', 'lucide-react'],
+    optimizePackageImports: ['@radix-ui/react-*', 'lucide-react', 'framer-motion'],
   },
 
   images: {

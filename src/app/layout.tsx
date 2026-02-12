@@ -1,14 +1,24 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { cn } from '@/lib/utils';
-import AppSidebar from '@/components/app-sidebar';
 import { Toaster } from '@/components/ui/toaster';
-import PageHeader from '@/components/page-header';
 import { ThemeProvider } from '@/components/theme-provider';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { Inter, Space_Grotesk, Outfit, Plus_Jakarta_Sans, Quicksand, Nunito, Playfair_Display, Lora, Syne, JetBrains_Mono, Roboto_Mono, Fredoka, Cinzel, EB_Garamond } from 'next/font/google';
 import AppFooter from '@/components/app-footer';
 import Script from 'next/script';
+import dynamic from 'next/dynamic';
+import { LazyMotion, domAnimation } from 'framer-motion';
+
+const AppSidebar = dynamic(() => import('@/components/app-sidebar'), {
+  ssr: false,
+  loading: () => <div className="w-[60px] md:w-[18rem] min-h-screen bg-sidebar border-r border-border/20" />
+});
+
+const PageHeader = dynamic(() => import('@/components/page-header'), {
+  ssr: false,
+  loading: () => <div className="h-16 w-full border-b border-border/20" />
+});
 
 const inter = Inter({
   subsets: ['latin'],
@@ -105,42 +115,44 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
           <FirebaseClientProvider>
             <SettingsProvider>
-              <ClientOnlyExtras />
-              <SidebarProviderWrapper>
-                <div className="flex w-full">
-                  <AppSidebar />
-                  <main className="flex-1 flex flex-col min-h-screen">
-                    <PageHeader />
-                    <script
-                      type="application/ld+json"
-                      dangerouslySetInnerHTML={{
-                        __html: JSON.stringify({
-                          '@context': 'https://schema.org',
-                          '@type': 'WebSite',
-                          name: 'Tool Daddy',
-                          description: 'The ultimate free online tool suite. Image compression, video conversion, AI tools, and more.',
-                          url: process.env.NEXT_PUBLIC_BASE_URL || 'https://tool-daddy.com',
-                          potentialAction: {
-                            '@type': 'SearchAction',
-                            target: {
-                              '@type': 'EntryPoint',
-                              urlTemplate: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://tool-daddy.com'}/?q={search_term_string}`,
+              <LazyMotion features={domAnimation}>
+                <ClientOnlyExtras />
+                <SidebarProviderWrapper>
+                  <div className="flex w-full">
+                    <AppSidebar />
+                    <main className="flex-1 flex flex-col min-h-screen">
+                      <PageHeader />
+                      <script
+                        type="application/ld+json"
+                        dangerouslySetInnerHTML={{
+                          __html: JSON.stringify({
+                            '@context': 'https://schema.org',
+                            '@type': 'WebSite',
+                            name: 'Tool Daddy',
+                            description: 'The ultimate free online tool suite. Image compression, video conversion, AI tools, and more.',
+                            url: process.env.NEXT_PUBLIC_BASE_URL || 'https://tool-daddy.com',
+                            potentialAction: {
+                              '@type': 'SearchAction',
+                              target: {
+                                '@type': 'EntryPoint',
+                                urlTemplate: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://tool-daddy.com'}/?q={search_term_string}`,
+                              },
+                              'query-input': 'required name=search_term_string',
                             },
-                            'query-input': 'required name=search_term_string',
-                          },
-                        })
-                      }}
-                    />
-                    <div className="flex-1">{children}</div>
-                    <AppFooter />
-                  </main>
-                </div>
-              </SidebarProviderWrapper>
+                          })
+                        }}
+                      />
+                      <div className="flex-1">{children}</div>
+                      <AppFooter />
+                    </main>
+                  </div>
+                </SidebarProviderWrapper>
+              </LazyMotion>
             </SettingsProvider>
           </FirebaseClientProvider>
           <Toaster />
         </ThemeProvider>
-        <Script id="google-tag-manager" strategy="afterInteractive">
+        <Script id="google-tag-manager" strategy="lazyOnload">
           {`
             (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
             new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
@@ -149,8 +161,8 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
             })(window,document,'script','dataLayer','GTM-P2725PBH');
           `}
         </Script>
-        <Script src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_ID || 'G-95Z6VMSH51'}`} strategy="afterInteractive" />
-        <Script id="google-analytics" strategy="afterInteractive">
+        <Script src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_ID || 'G-95Z6VMSH51'}`} strategy="lazyOnload" />
+        <Script id="google-analytics" strategy="lazyOnload">
           {`
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}
@@ -162,7 +174,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
             });
           `}
         </Script>
-        <Script src="https://www.google.com/recaptcha/api.js?render=6Lfe02YsAAAAADPOetn7_P0L2oW2xhLgDVmYZgbF" strategy="afterInteractive" />
+        <Script src="https://www.google.com/recaptcha/api.js?render=6Lfe02YsAAAAADPOetn7_P0L2oW2xhLgDVmYZgbF" strategy="lazyOnload" />
       </body>
     </html>
   );
