@@ -29,6 +29,18 @@ import {
   Search,
   Plus,
   Factory,
+  Shuffle,
+  Hash,
+  Lock,
+  ShieldCheck,
+  Fingerprint,
+  ListOrdered,
+  AlignLeft,
+  Equal,
+  FileKey,
+  Gauge,
+  FileBadge,
+  Calendar,
 } from 'lucide-react';
 
 export type Tool = {
@@ -220,6 +232,83 @@ export const TOOL_CATEGORIES: ToolCategory[] = [
         description: 'Generate Unique Local Addresses (ULA) for private IPv6 networks.',
         href: '/ipv6-ula-generator',
         icon: Factory,
+      },
+    ]
+  },
+  {
+    name: 'IT & Development',
+    tools: [
+      {
+        name: 'Token Generator',
+        description: 'Generate random strings with customizable character sets.',
+        href: '/token-generator',
+        icon: Shuffle,
+      },
+      {
+        name: 'Hash Text',
+        description: 'Compute cryptographic hashes like MD5, SHA-1, SHA-256 for your text.',
+        href: '/hash-text',
+        icon: Hash,
+      },
+      {
+        name: 'Bcrypt Generator',
+        description: 'Hash and verify passwords using the secure Bcrypt algorithm.',
+        href: '/bcrypt-generator',
+        icon: ShieldCheck,
+      },
+      {
+        name: 'UUIDs Generator',
+        description: 'Generate Universally Unique Identifiers (UUID) version 4.',
+        href: '/uuids-generator',
+        icon: Fingerprint,
+      },
+      {
+        name: 'ULID Generator',
+        description: 'Generate Universally Unique Lexicographically Sortable Identifiers.',
+        href: '/ulid-generator',
+        icon: ListOrdered,
+      },
+      {
+        name: 'Encrypt / Decrypt Text',
+        description: 'Securely encrypt and decrypt text using AES encryption.',
+        href: '/encrypt-decrypt-text',
+        icon: Lock,
+      },
+      {
+        name: 'BIP39 Passphrase Generator',
+        description: 'Generate secure BIP39 mnemonic passphrases for crypto wallets.',
+        href: '/bip39-generator',
+        icon: AlignLeft,
+      },
+      {
+        name: 'HMAC Generator',
+        description: 'Compute Hash-based Message Authentication Codes with a secret key.',
+        href: '/hmac-generator',
+        icon: Equal,
+      },
+      {
+        name: 'RSA Key Pair Generator',
+        description: 'Generate public and private RSA key pairs in PEM format.',
+        href: '/rsa-key-generator',
+        icon: FileKey,
+      },
+      {
+        name: 'Password Strength Analyser',
+        description: 'Check the security and entropy of your passwords.',
+        href: '/password-strength-analyser',
+        icon: Gauge,
+      },
+      {
+        name: 'PDF Signature Checker',
+        description: 'Verify the digital signatures and integrity of PDF documents.',
+        href: '/pdf-signature-checker',
+        icon: FileBadge,
+      },
+      {
+        name: 'Date-Time Converter',
+        description: 'Convert between Unix timestamps, ISO formats, and human-readable dates.',
+        href: '/date-time-converter',
+        icon: Calendar,
       },
     ]
   },

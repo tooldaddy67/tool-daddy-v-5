@@ -73,7 +73,7 @@ export default function RangeExpander() {
         navigator.clipboard.writeText(results.join('\n'));
         setIsCopied(true);
         toast({ title: 'All IPs copied to clipboard' });
-        setTimeout(() => setIsCopied(null), 2000);
+        setTimeout(() => setIsCopied(false), 2000);
     };
 
     return (
