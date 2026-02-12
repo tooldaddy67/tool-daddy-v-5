@@ -41,6 +41,16 @@ import {
   Gauge,
   FileBadge,
   Calendar,
+  Calculator,
+  Percent,
+  Timer as ClockIcon,
+  Thermometer,
+  Zap,
+  Dna,
+  Languages,
+  Link as LinkIcon,
+  MessageCircle,
+  Clock,
 } from 'lucide-react';
 
 export type Tool = {
@@ -309,6 +319,80 @@ export const TOOL_CATEGORIES: ToolCategory[] = [
         description: 'Convert between Unix timestamps, ISO formats, and human-readable dates.',
         href: '/date-time-converter',
         icon: Calendar,
+      },
+    ]
+  },
+  {
+    name: 'Math & Calculation',
+    tools: [
+      {
+        name: 'Math Evaluator',
+        description: 'Evaluate complex mathematical expressions and functions.',
+        href: '/math-evaluator',
+        icon: Calculator,
+      },
+      {
+        name: 'Percentage Calculator',
+        description: 'Calculate percentages, increases, decreases, and differences.',
+        href: '/percentage-calculator',
+        icon: Percent,
+      },
+      {
+        name: 'ETA Calculator',
+        description: 'Estimate time of arrival based on distance and speed.',
+        href: '/eta-calculator',
+        icon: Clock,
+      },
+    ]
+  },
+  {
+    name: 'Measurement',
+    tools: [
+      {
+        name: 'Temperature Converter',
+        description: 'Convert between Celsius, Fahrenheit, Kelvin, and other scales.',
+        href: '/temperature-converter',
+        icon: Thermometer,
+      },
+      {
+        name: 'Benchmark Builder',
+        description: 'Create and run performance benchmarks for your code.',
+        href: '/benchmark-builder',
+        icon: Zap,
+      },
+    ]
+  },
+  {
+    name: 'Marketing & Social',
+    tools: [
+      {
+        name: 'WhatsApp Link Generator',
+        description: 'Create clickable WhatsApp chat links with pre-filled messages.',
+        href: '/whatsapp-link-generator',
+        icon: MessageCircle,
+      },
+      {
+        name: 'Link Shortener',
+        description: 'Shorten long URLs into clean, shareable links.',
+        href: '/link-shortener',
+        icon: LinkIcon,
+      },
+    ]
+  },
+  {
+    name: 'Science & Education',
+    tools: [
+      {
+        name: 'DNA to mRNA Converter',
+        description: 'Transcribe DNA sequences into mRNA and identify codons.',
+        href: '/dna-to-mrna-converter',
+        icon: Dna,
+      },
+      {
+        name: 'Japanese Name Converter',
+        description: 'Convert names into Hiragana, Katakana, and Romaji.',
+        href: '/japanese-name-converter',
+        icon: Languages,
       },
     ]
   },
