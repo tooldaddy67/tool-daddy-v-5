@@ -6,22 +6,32 @@ import { doc, setDoc } from 'firebase/firestore';
 import { cn } from '@/lib/utils';
 
 export type FontPair = 'tech' | 'modern' | 'classic' | 'friendly' | 'elegant' | 'futuristic' | 'monospace' | 'playful' | 'royal';
-export type ColorTheme = 'purple' | 'cyan' | 'green' | 'blue' | 'amber' | 'rose' | 'indigo' | 'emerald' | 'slate' | 'sunset';
+export type ColorTheme = 'purple' | 'cyan' | 'green' | 'blue' | 'amber' | 'rose' | 'indigo' | 'emerald' | 'slate' | 'sunset' | 'custom';
 export type BlurIntensity = 'low' | 'medium' | 'high';
 export type UIDensity = 'compact' | 'standard' | 'cozy';
 export type BorderStyle = 'sharp' | 'smooth' | 'round';
 export type BGStyle = 'dark' | 'mesh' | 'pulse';
+export type SidebarStyle = 'full' | 'mini' | 'float';
+export type CardStyle = 'glass' | 'neo' | 'minimal';
 
 interface UserSettings {
     displayName: string;
+    siteTitle: string;
     fontPair: FontPair;
     colorTheme: ColorTheme;
+    primaryColor: string; // HSL value like "271 91% 65%"
     blurIntensity: BlurIntensity;
     uiDensity: UIDensity;
     borderStyle: BorderStyle;
     bgStyle: BGStyle;
     animSpeed: number;
-    // New Settings
+    sidebarStyle: SidebarStyle;
+    cardStyle: CardStyle;
+    showCursorEffect: boolean;
+    showGrain: boolean;
+    showScrollIndicator: boolean;
+    enableSound: boolean;
+    accentGradient: boolean;
     dataPersistence: boolean;
     notifications: boolean;
 }
@@ -34,13 +44,22 @@ interface SettingsContextType {
 
 const defaultSettings: UserSettings = {
     displayName: '',
+    siteTitle: 'Tool Daddy',
     fontPair: 'tech',
     colorTheme: 'purple',
+    primaryColor: '271 91% 65%',
     blurIntensity: 'medium',
     uiDensity: 'standard',
     borderStyle: 'smooth',
     bgStyle: 'dark',
     animSpeed: 1,
+    sidebarStyle: 'full',
+    cardStyle: 'glass',
+    showCursorEffect: false,
+    showGrain: false,
+    showScrollIndicator: true,
+    enableSound: true,
+    accentGradient: true,
     dataPersistence: true,
     notifications: true,
 };
@@ -70,6 +89,7 @@ const COLOR_THEMES: Record<ColorTheme, { primary: string; primaryForeground: str
     emerald: { primary: '158 64% 52%', primaryForeground: '0 0% 100%', accent: '158 64% 15%' },
     slate: { primary: '215 16% 47%', primaryForeground: '0 0% 100%', accent: '215 16% 15%' },
     sunset: { primary: '22 90% 60%', primaryForeground: '0 0% 100%', accent: '22 90% 15%' },
+    custom: { primary: '271 91% 65%', primaryForeground: '0 0% 100%', accent: '271 91% 15%' },
 };
 
 const BLUR_MAP: Record<BlurIntensity, string> = { low: '2px', medium: '20px', high: '40px' };
@@ -119,7 +139,16 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
                 ...cloudSettings,
                 // Ensure new defaults are respected if cloud data is missing them
                 dataPersistence: cloudSettings.dataPersistence ?? prev.dataPersistence ?? true,
-                notifications: cloudSettings.notifications ?? prev.notifications ?? true
+                notifications: cloudSettings.notifications ?? prev.notifications ?? true,
+                primaryColor: cloudSettings.primaryColor ?? prev.primaryColor ?? '271 91% 65%',
+                siteTitle: cloudSettings.siteTitle ?? prev.siteTitle ?? 'Tool Daddy',
+                sidebarStyle: cloudSettings.sidebarStyle ?? prev.sidebarStyle ?? 'full',
+                cardStyle: cloudSettings.cardStyle ?? prev.cardStyle ?? 'glass',
+                accentGradient: cloudSettings.accentGradient ?? prev.accentGradient ?? true,
+                enableSound: cloudSettings.enableSound ?? prev.enableSound ?? true,
+                showCursorEffect: cloudSettings.showCursorEffect ?? prev.showCursorEffect ?? false,
+                showGrain: cloudSettings.showGrain ?? prev.showGrain ?? false,
+                showScrollIndicator: cloudSettings.showScrollIndicator ?? prev.showScrollIndicator ?? true
             }));
             localStorage.setItem('tool-dady-settings', JSON.stringify({ ...localSettings, ...cloudSettings }));
         }
@@ -135,12 +164,29 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
 
         root.style.setProperty('--font-headline', fonts.headline);
         root.style.setProperty('--font-body', fonts.body);
-        root.style.setProperty('--primary', colors.primary);
+
+        // Handle custom primary color
+        const primary = localSettings.colorTheme === 'custom' ? localSettings.primaryColor : colors.primary;
+        root.style.setProperty('--primary', primary || COLOR_THEMES.purple.primary);
         root.style.setProperty('--primary-foreground', colors.primaryForeground);
         root.style.setProperty('--accent', colors.accent);
 
+        // Sidebar and UI Styles - Use data attributes to avoid wiping out 'dark' class
+        root.setAttribute('data-sidebar-style', localSettings.sidebarStyle);
+        root.setAttribute('data-card-style', localSettings.cardStyle);
+
+        // Also add classes to body for easier CSS targeting, but use classList.add/remove
+        const body = document.body;
+        body.classList.remove('sidebar-mini', 'sidebar-float', 'ui-neo', 'ui-minimal');
+        if (localSettings.sidebarStyle === 'mini') body.classList.add('sidebar-mini');
+        if (localSettings.sidebarStyle === 'float') body.classList.add('sidebar-float');
+        if (localSettings.cardStyle === 'neo') body.classList.add('ui-neo');
+        if (localSettings.cardStyle === 'minimal') body.classList.add('ui-minimal');
+
         root.style.setProperty('--sidebar-primary', colors.primary);
         root.style.setProperty('--sidebar-ring', colors.primary);
+        root.style.setProperty('--accent-gradient', localSettings.accentGradient ? '1' : '0');
+        root.style.setProperty('--anim-speed', localSettings.animSpeed.toString());
 
         if (isDesktop) {
             root.style.setProperty('--glass-blur', BLUR_MAP[localSettings.blurIntensity]);

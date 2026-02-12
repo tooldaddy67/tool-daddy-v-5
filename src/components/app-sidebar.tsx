@@ -4,6 +4,7 @@ import {
   Sidebar,
   SidebarContent,
   SidebarHeader,
+  SidebarFooter,
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
@@ -20,17 +21,16 @@ import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { UserAuthButton } from './user-auth-button';
 import { useFirebase } from '@/firebase';
+import { useSettings } from '@/components/settings-provider';
 
 const BOOTSTRAP_ADMIN_EMAILS = ['admin@tooldaddy.com'];
 
-const Logo = () => (
+const Logo = ({ className }: { className?: string }) => (
   <svg
-    width="32"
-    height="32"
     viewBox="0 0 420 420"
     fill="none"
     xmlns="http://www.w3.org/2000/svg"
-    className="shrink-0"
+    className={cn("w-8 h-8 transition-all duration-300", className)}
   >
     <path d="M128 341.333C128 304.6 154.6 278 181.333 278H234.667C261.4 278 288 304.6 288 341.333V341.333C288 378.067 261.4 404.667 234.667 404.667H181.333C154.6 404.667 128 378.067 128 341.333V341.333Z" fill="#F87171" />
     <path d="M288 170.667C288 133.933 314.6 107.333 341.333 107.333H384V404.667H341.333C314.6 404.667 288 378.067 288 341.333V170.667Z" fill="#F87171" />
@@ -52,6 +52,7 @@ export default function AppSidebar() {
 
 
   const { user } = useFirebase();
+  const { settings } = useSettings();
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
@@ -69,32 +70,28 @@ export default function AppSidebar() {
 
   return (
     <Sidebar
-      className="border-r border-border/20 glass-panel"
+      className="border-r border-border/20 glass-panel transition-all duration-300"
       collapsible="icon"
       variant="sidebar"
     >
-      <SidebarHeader>
+      <SidebarHeader className="p-0 pt-2">
         <Link
           href="/"
-          className="flex items-center gap-2 justify-center group-data-[collapsible=icon]:justify-center"
+          className="flex items-center gap-2 px-4 py-4 group-data-[state=collapsed]:justify-center group-data-[state=collapsed]:px-0"
         >
-          <Logo />
-          <span className="font-bold text-lg font-headline group-data-[collapsible=icon]:hidden">
-            Tool Daddy
+          <Logo className="group-data-[state=collapsed]:w-7 group-data-[state=collapsed]:h-7" />
+          <span className="font-bold text-lg font-headline truncate group-data-[state=collapsed]:hidden">
+            {settings.siteTitle || 'Tool Daddy'}
           </span>
         </Link>
       </SidebarHeader>
       <SidebarContent className="p-2">
-        <div className="mb-2">
+        <div className="mb-2 group-data-[state=collapsed]:hidden">
           <SidebarInput
             placeholder="Search tools..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
-        </div>
-
-        <div className="mb-4">
-          <UserAuthButton />
         </div>
 
         {isAdmin && (
@@ -107,7 +104,7 @@ export default function AppSidebar() {
                   className="bg-destructive/10 text-destructive hover:bg-destructive/20 hover:text-destructive"
                 >
                   <LayoutDashboard className="shrink-0" />
-                  <span>Admin Panel</span>
+                  <span className="group-data-[state=collapsed]:hidden">Admin Panel</span>
                 </SidebarMenuButton>
               </Link>
             </SidebarMenuItem>
@@ -116,7 +113,7 @@ export default function AppSidebar() {
 
         {filteredCategories.map((category) => (
           <SidebarGroup key={category.name}>
-            <SidebarGroupLabel className="group-data-[collapsible=icon]:-mt-0">
+            <SidebarGroupLabel className="group-data-[state=collapsed]:hidden">
               {category.name}
             </SidebarGroupLabel>
             <SidebarMenu>
@@ -131,7 +128,7 @@ export default function AppSidebar() {
                         }}
                       >
                         <tool.icon className="shrink-0" />
-                        <span>{tool.name}</span>
+                        <span className="group-data-[state=collapsed]:hidden">{tool.name}</span>
                       </SidebarMenuButton>
                     </a>
                   ) : (
@@ -154,7 +151,7 @@ export default function AppSidebar() {
                         >
                           <tool.icon className="shrink-0 h-4 w-4" />
                         </div>
-                        <span className={cn("ml-1", pathname === tool.href && "font-bold")}>{tool.name}</span>
+                        <span className={cn("ml-1 group-data-[state=collapsed]:hidden", pathname === tool.href && "font-bold")}>{tool.name}</span>
                       </SidebarMenuButton>
                     </Link>
                   )}
@@ -174,7 +171,7 @@ export default function AppSidebar() {
                 tooltip="Blog"
               >
                 <BookOpen />
-                <span>Blog</span>
+                <span className="group-data-[state=collapsed]:hidden">Blog</span>
               </SidebarMenuButton>
             </Link>
           </SidebarMenuItem>
@@ -188,12 +185,15 @@ export default function AppSidebar() {
                 }}
               >
                 <History className="shrink-0" />
-                <span>History</span>
+                <span className="group-data-[state=collapsed]:hidden">History</span>
               </SidebarMenuButton>
             </Link>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarContent>
+      <SidebarFooter className={cn("p-2 border-t border-border/10", settings.sidebarStyle === 'mini' && "flex justify-center")}>
+        <UserAuthButton />
+      </SidebarFooter>
     </Sidebar>
   );
 }

@@ -220,8 +220,13 @@
 
 .group:hover .tool-island::before,
 .tool-island.group:hover::before {
-  opacity: 0.7;
-  animation: tool-island-breathe 3s ease-in-out infinite;
+  opacity: calc(0.7 * var(--accent-gradient, 1));
+  animation: tool-island-breathe calc(3s / var(--anim-speed, 1)) ease-in-out infinite;
+}
+
+/* Fallback for when accent-gradient is 0 */
+[style*="--accent-gradient: 0"] .tool-island::before {
+  display: none !important;
 }
 
 @keyframes tool-island-breathe {
@@ -239,23 +244,24 @@
 }
 
 @media (max-width: 768px) {
-  .glow-island, 
+
+  .glow-island,
   .tool-island,
   .tool-island::before {
     animation: none !important;
     transition: none !important;
   }
-  
+
   .glow-island {
     box-shadow: 0 0 10px 2px var(--glow-color, hsla(var(--primary), 0.3)) !important;
   }
 
   .tool-island {
-     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
   }
 
   .tool-island::before {
-    display: none !important; 
+    display: none !important;
   }
 
   body {
@@ -274,7 +280,7 @@
     radial-gradient(at 0% 100%, hsla(var(--accent), 0.15) 0px, transparent 50%),
     radial-gradient(at 50% 50%, hsla(var(--primary), 0.1) 0px, transparent 50%);
   background-size: 200% 200%;
-  animation: mesh-advanced 20s ease infinite;
+  animation: mesh-advanced calc(20s / var(--anim-speed, 1)) ease infinite;
 }
 
 @keyframes mesh-advanced {
@@ -300,7 +306,7 @@
 }
 
 .pulse-bg {
-  animation: pulse-bg 8s ease-in-out infinite;
+  animation: pulse-bg calc(8s / var(--anim-speed, 1)) ease-in-out infinite;
 }
 
 @keyframes pulse-bg {
@@ -315,6 +321,131 @@
     opacity: 0.4;
     transform: scale(1.05);
   }
+}
+
+/* --- DASHBOARD LAYOUT & UI STYLES --- */
+
+/* Sidebar Styles */
+.sidebar-mini {
+  --sidebar-width: 60px !important;
+}
+
+.sidebar-mini [data-sidebar="sidebar"] {
+  width: var(--sidebar-width) !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Hide all text and labels in mini mode */
+.sidebar-mini [data-state="collapsed"] [data-sidebar="sidebar"] .sidebar-label,
+.sidebar-mini [data-state="collapsed"] [data-sidebar="sidebar"] [data-sidebar="group-label"],
+.sidebar-mini [data-state="collapsed"] [data-sidebar="sidebar"] input,
+.sidebar-mini [data-state="collapsed"] [data-sidebar="sidebar"] .auth-text {
+  display: none !important;
+}
+
+/* Sleek scrollbar for mini mode */
+.sidebar-mini [data-sidebar="content"]::-webkit-scrollbar {
+  width: 4px;
+}
+
+.sidebar-mini [data-sidebar="content"]::-webkit-scrollbar-thumb {
+  background: hsla(var(--primary), 0.2);
+  border-radius: 10px;
+}
+
+.sidebar-mini [data-sidebar="content"]::-webkit-scrollbar-thumb:hover {
+  background: hsla(var(--primary), 0.5);
+}
+
+/* Center icons in mini mode */
+.sidebar-mini [data-sidebar="sidebar"] .flex,
+.sidebar-mini [data-sidebar="footer"] {
+  justify-content: center !important;
+}
+
+/* Force higher z-index for sidebar to prevent header overlap */
+.sidebar-mini [data-sidebar="sidebar"] {
+  z-index: 50 !important;
+}
+
+/* Ensure main content is pushed correctly even if gap div fails */
+@media (min-width: 768px) {
+  .sidebar-mini main {
+    margin-left: 60px !important;
+  }
+}
+
+.sidebar-mini [data-sidebar="sidebar"] [data-sidebar="menu-button"] {
+  padding: 0 !important;
+  justify-content: center !important;
+  height: 48px !important;
+  width: 48px !important;
+  margin: 4px auto !important;
+  border-radius: 12px !important;
+}
+
+.sidebar-mini [data-sidebar="sidebar"] [data-sidebar="header"] {
+  padding: 1rem 0 !important;
+  display: flex !important;
+  justify-content: center !important;
+}
+
+.sidebar-mini [data-sidebar="sidebar"] [data-sidebar="content"] {
+  padding: 0.5rem 0 !important;
+}
+
+.sidebar-mini [data-sidebar="sidebar"] [data-sidebar="separator"] {
+  margin: 1rem 1.5rem !important;
+}
+
+.sidebar-float [data-sidebar="sidebar"] {
+  margin: 1rem;
+  height: calc(100vh - 2rem) !important;
+  border-radius: var(--radius);
+  border: 1px solid hsla(var(--primary), 0.1) !important;
+  box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.5);
+}
+
+/* UI Aesthetics */
+
+/* Neo-Brutalism Style */
+.ui-neo .glow-card,
+.ui-neo .tool-island {
+  border: 2px solid hsl(var(--foreground)) !important;
+  box-shadow: 4px 4px 0px 0px hsl(var(--primary)) !important;
+  border-radius: 0px !important;
+  background: hsl(var(--background)) !important;
+}
+
+.ui-neo .glow-card:hover,
+.ui-neo .tool-island:hover {
+  transform: translate(-2px, -2px) !important;
+  box-shadow: 8px 8px 0px 0px hsl(var(--primary)) !important;
+}
+
+/* Minimalist Style */
+.ui-minimal .glow-card,
+.ui-minimal .tool-island {
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  transition: opacity 0.2s ease;
+}
+
+.ui-minimal .glow-card:hover,
+.ui-minimal .tool-island:hover {
+  opacity: 0.7;
+  transform: none !important;
+}
+
+/* Cursor & Particle Effects */
+.cursor-particle {
+  position: fixed;
+  pointer-events: none;
+  background: hsl(var(--primary));
+  border-radius: 50%;
+  z-index: 9999;
+  mix-blend-mode: screen;
 }
 
 /* --- TIPTAP EDITOR STYLES --- */

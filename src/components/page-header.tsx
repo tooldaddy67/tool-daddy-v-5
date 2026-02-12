@@ -20,20 +20,23 @@ import { ThemeToggle } from './theme-toggle';
 import { NotificationBell } from './notification-bell';
 import { SettingsDialog } from './settings-dialog';
 import { Button } from '@/components/ui/button';
+import { useSettings } from '@/components/settings-provider';
 
 export default function PageHeader() {
   const pathname = usePathname();
   const currentTool = ALL_TOOLS.find((tool) => tool.href === pathname);
   const isHome = pathname === '/';
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const { settings } = useSettings();
 
   const authRoutes = ['/login', '/signup'];
 
   return (
     <>
       <header className={cn(
-        "sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background/50 backdrop-blur-lg px-4 md:px-6",
-        isHome && "hidden md:flex" // Hide on mobile if home, as we have MobileHome header
+        "sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background/50 backdrop-blur-lg px-4 md:px-6 transition-all duration-300",
+        settings.sidebarStyle === 'mini' && "md:pl-2", // Less padding if mini to align better, but gap is handled by flex
+        isHome && "hidden md:flex"
       )}>
         <div className="md:hidden">
           <SidebarTrigger />

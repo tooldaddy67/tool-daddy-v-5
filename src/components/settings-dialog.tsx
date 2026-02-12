@@ -20,7 +20,7 @@ import { doc, setDoc } from 'firebase/firestore';
 import { Settings, Type, Palette, CheckCircle2, Layers, Maximize, Activity, Gauge, Image as ImageIcon, Sparkles, UserIcon, ShieldCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { useSettings, type FontPair, type ColorTheme, type BlurIntensity, type BorderStyle, type UIDensity, type BGStyle } from '@/components/settings-provider';
+import { useSettings, type FontPair, type ColorTheme, type BlurIntensity, type BorderStyle, type UIDensity, type BGStyle, type SidebarStyle, type CardStyle } from '@/components/settings-provider';
 // @ts-ignore
 import { motion, AnimatePresence } from 'framer-motion';
 import { Slider } from '@/components/ui/slider';
@@ -267,6 +267,24 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                                 </div>
                             )}
 
+                            {/* Site Identity Section */}
+                            <div className="space-y-4">
+                                <div className="flex items-center gap-2 text-sm font-semibold opacity-70 uppercase tracking-wider text-primary">
+                                    <ShieldCheck className="w-4 h-4" />
+                                    <span>Brand Identity</span>
+                                </div>
+                                <div className="bg-muted/30 p-4 rounded-xl border border-border/50 space-y-3">
+                                    <Label className="text-xs font-bold uppercase opacity-50">Custom Site Title</Label>
+                                    <Input
+                                        placeholder="e.g. My Tool Suite"
+                                        value={settings.siteTitle}
+                                        onChange={(e) => updateSettings({ siteTitle: e.target.value })}
+                                        className="h-9 bg-background/50 border-border/50 focus:border-primary/50 transition-colors"
+                                    />
+                                    <p className="text-[10px] text-muted-foreground italic">Changes the brand text in the sidebar and header.</p>
+                                </div>
+                            </div>
+
                             {/* Appearance Sections (Typography, Colors, etc.) */}
                             <div className="space-y-4">
                                 <div className="flex items-center gap-2 text-sm font-semibold opacity-70 uppercase tracking-wider text-primary">
@@ -314,88 +332,230 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                                 </Button>
                             </div>
 
+                            {/* Color Themes & Custom Picker */}
                             <div className="space-y-4">
-                                <div className="flex items-center gap-2 text-sm font-semibold opacity-70 uppercase tracking-wider text-primary">
-                                    <Palette className="w-4 h-4" />
-                                    <span>Color Themes</span>
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2 text-sm font-semibold opacity-70 uppercase tracking-wider text-primary">
+                                        <Palette className="w-4 h-4" />
+                                        <span>Brand Style</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Label htmlFor="custom-color-toggle" className="text-[10px] font-bold opacity-50 uppercase">Custom Color</Label>
+                                        <Switch
+                                            id="custom-color-toggle"
+                                            checked={settings.colorTheme === 'custom'}
+                                            onCheckedChange={(checked) => updateSettings({ colorTheme: checked ? 'custom' : 'purple' })}
+                                        />
+                                    </div>
                                 </div>
-                                <div className="flex flex-wrap gap-4 justify-between px-2 bg-muted/30 p-4 rounded-xl border border-border/50">
-                                    {([
-                                        { id: 'rose', color: '#fb7185' },
-                                        { id: 'sunset', color: '#fb923c' },
-                                        { id: 'amber', color: '#f97316' },
-                                        { id: 'emerald', color: '#34d399' },
-                                        { id: 'green', color: '#10b981' },
-                                        { id: 'cyan', color: '#06b6d4' },
-                                        { id: 'blue', color: '#3b82f6' },
-                                        { id: 'indigo', color: '#818cf8' },
-                                        { id: 'purple', color: '#a855f7' },
-                                        { id: 'slate', color: '#94a3b8' }
-                                    ] as { id: ColorTheme; color: string }[]).map((c) => (
-                                        <button
-                                            key={c.id}
-                                            onClick={() => updateSettings({ colorTheme: c.id })}
-                                            className={cn(
-                                                "relative w-10 h-10 rounded-full border-2 transition-all flex items-center justify-center hover:scale-110",
-                                                settings.colorTheme === c.id ? "border-primary p-0.5" : "border-transparent"
-                                            )}
-                                        >
-                                            <div className="w-full h-full rounded-full shadow-inner" style={{ backgroundColor: c.color }} />
-                                            {settings.colorTheme === c.id && (
-                                                <div className="absolute inset-0 flex items-center justify-center bg-black/20 rounded-full">
-                                                    <CheckCircle2 className="w-5 h-5 text-white" />
+
+                                {settings.colorTheme === 'custom' ? (
+                                    <div className="bg-muted/30 p-4 rounded-xl border border-primary/20 space-y-4 animate-in fade-in slide-in-from-top-2">
+                                        <Label className="text-xs">Pick your unique brand color</Label>
+                                        <div className="flex flex-col gap-4">
+                                            {/* We'll use a simple slider for now or link to a helper */}
+                                            <div className="space-y-2">
+                                                <div className="flex justify-between text-[10px] font-mono opacity-70">
+                                                    <span>HUE</span>
+                                                    <span>{settings.primaryColor.split(' ')[0]}°</span>
                                                 </div>
-                                            )}
-                                        </button>
-                                    ))}
+                                                <Slider
+                                                    value={[parseInt(settings.primaryColor.split(' ')[0])]}
+                                                    max={360}
+                                                    step={1}
+                                                    onValueChange={([h]) => updateSettings({ primaryColor: `${h} 91% 65%`, colorTheme: 'custom' })}
+                                                    className="cursor-pointer"
+                                                />
+                                            </div>
+                                            <div className="h-2 w-full rounded-full" style={{ background: `linear-gradient(to right, #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000)` }} />
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="flex flex-wrap gap-4 justify-between px-2 bg-muted/30 p-4 rounded-xl border border-border/50">
+                                        {([
+                                            { id: 'rose', color: '#fb7185' },
+                                            { id: 'sunset', color: '#fb923c' },
+                                            { id: 'amber', color: '#f97316' },
+                                            { id: 'emerald', color: '#34d399' },
+                                            { id: 'green', color: '#10b981' },
+                                            { id: 'cyan', color: '#06b6d4' },
+                                            { id: 'blue', color: '#3b82f6' },
+                                            { id: 'indigo', color: '#818cf8' },
+                                            { id: 'purple', color: '#a855f7' },
+                                            { id: 'slate', color: '#94a3b8' }
+                                        ] as { id: ColorTheme; color: string }[]).map((c) => (
+                                            <button
+                                                key={c.id}
+                                                onClick={() => updateSettings({ colorTheme: c.id })}
+                                                className={cn(
+                                                    "relative w-10 h-10 rounded-full border-2 transition-all flex items-center justify-center hover:scale-110",
+                                                    settings.colorTheme === c.id ? "border-primary p-0.5" : "border-transparent"
+                                                )}
+                                            >
+                                                <div className="w-full h-full rounded-full shadow-inner" style={{ backgroundColor: c.color }} />
+                                                {settings.colorTheme === c.id && (
+                                                    <div className="absolute inset-0 flex items-center justify-center bg-black/20 rounded-full">
+                                                        <CheckCircle2 className="w-5 h-5 text-white" />
+                                                    </div>
+                                                )}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* UI Layout Features */}
+                            <div className="space-y-6 pt-4 border-t border-border/50">
+                                <div className="flex items-center gap-2 text-sm font-semibold opacity-70 uppercase tracking-wider text-primary">
+                                    <LayoutTemplate className="w-4 h-4" />
+                                    <span>Workspace Layout</span>
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div className="space-y-3 bg-muted/30 p-4 rounded-xl border border-border/50">
+                                        <Label className="flex items-center gap-2 text-xs font-bold uppercase opacity-50">
+                                            <Database className="w-3 h-3 text-primary" /> Sidebar Style
+                                        </Label>
+                                        <div className="flex gap-1 bg-background/50 p-1 rounded-lg">
+                                            {(['full', 'mini', 'float'] as SidebarStyle[]).map((s) => (
+                                                <Button
+                                                    key={s}
+                                                    variant={settings.sidebarStyle === s ? 'default' : 'ghost'}
+                                                    size="sm"
+                                                    className="flex-1 text-[10px] h-8 rounded-md capitalize"
+                                                    onClick={() => updateSettings({ sidebarStyle: s })}
+                                                >
+                                                    {s}
+                                                </Button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-3 bg-muted/30 p-4 rounded-xl border border-border/50">
+                                        <Label className="flex items-center gap-2 text-xs font-bold uppercase opacity-50">
+                                            <Layers className="w-3 h-3 text-primary" /> Card Aesthetic
+                                        </Label>
+                                        <div className="flex gap-1 bg-background/50 p-1 rounded-lg">
+                                            {(['glass', 'neo', 'minimal'] as CardStyle[]).map((c) => (
+                                                <Button
+                                                    key={c}
+                                                    variant={settings.cardStyle === c ? 'default' : 'ghost'}
+                                                    size="sm"
+                                                    className="flex-1 text-[10px] h-8 rounded-md capitalize"
+                                                    onClick={() => updateSettings({ cardStyle: c })}
+                                                >
+                                                    {c}
+                                                </Button>
+                                            ))}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
-                            {/* Advanced Section - Desktop Only */}
-                            <div className="hidden lg:block space-y-6 pt-4 border-t border-border/50">
+                            {/* Visual Refinement Section */}
+                            <div className="space-y-6 pt-4 border-t border-border/50">
                                 <div className="flex items-center gap-2 text-sm font-semibold opacity-70 uppercase tracking-wider text-primary">
-                                    <Sparkles className="w-4 h-4" />
-                                    <span>Display & Feel</span>
+                                    <Maximize className="w-4 h-4" />
+                                    <span>Visual Refinement</span>
                                 </div>
-                                <div className="grid grid-cols-2 gap-6 bg-muted/30 p-4 rounded-xl border border-border/50">
+                                <div className="grid grid-cols-2 gap-4 bg-muted/30 p-4 rounded-xl border border-border/50">
                                     <div className="space-y-3">
-                                        <Label className="flex items-center gap-2 text-xs">
+                                        <Label className="flex items-center gap-2 text-[10px] font-bold uppercase opacity-50">
                                             <Layers className="w-3 h-3 text-primary" /> Glass Intensity
                                         </Label>
-                                        <div className="flex gap-1">
+                                        <div className="flex gap-1 bg-background/40 p-1 rounded-lg">
                                             {(['low', 'medium', 'high'] as BlurIntensity[]).map((b) => (
-                                                <Button key={b} variant={settings.blurIntensity === b ? 'default' : 'secondary'} size="sm" className="flex-1 text-[10px] h-7" onClick={() => updateSettings({ blurIntensity: b })}>{b}</Button>
+                                                <Button key={b} variant={settings.blurIntensity === b ? 'default' : 'ghost'} size="sm" className="flex-1 text-[10px] h-7 rounded-md capitalize" onClick={() => updateSettings({ blurIntensity: b })}>{b}</Button>
                                             ))}
                                         </div>
                                     </div>
                                     <div className="space-y-3">
-                                        <Label className="flex items-center gap-2 text-xs">
+                                        <Label className="flex items-center gap-2 text-[10px] font-bold uppercase opacity-50">
                                             <Maximize className="w-3 h-3 text-primary" /> Corner Style
                                         </Label>
-                                        <div className="flex gap-1">
+                                        <div className="flex gap-1 bg-background/40 p-1 rounded-lg">
                                             {(['sharp', 'smooth', 'round'] as BorderStyle[]).map((s) => (
-                                                <Button key={s} variant={settings.borderStyle === s ? 'default' : 'secondary'} size="sm" className="flex-1 text-[10px] h-7" onClick={() => updateSettings({ borderStyle: s })}>{s}</Button>
+                                                <Button key={s} variant={settings.borderStyle === s ? 'default' : 'ghost'} size="sm" className="flex-1 text-[10px] h-7 rounded-md capitalize" onClick={() => updateSettings({ borderStyle: s })}>{s}</Button>
                                             ))}
                                         </div>
                                     </div>
                                     <div className="space-y-3">
-                                        <Label className="flex items-center gap-2 text-xs">
+                                        <Label className="flex items-center gap-2 text-[10px] font-bold uppercase opacity-50">
                                             <Activity className="w-3 h-3 text-primary" /> UI Density
                                         </Label>
-                                        <div className="flex gap-1">
+                                        <div className="flex gap-1 bg-background/40 p-1 rounded-lg">
                                             {(['compact', 'standard', 'cozy'] as UIDensity[]).map((d) => (
-                                                <Button key={d} variant={settings.uiDensity === d ? 'default' : 'secondary'} size="sm" className="flex-1 text-[10px] h-7" onClick={() => updateSettings({ uiDensity: d })}>{d}</Button>
+                                                <Button key={d} variant={settings.uiDensity === d ? 'default' : 'ghost'} size="sm" className="flex-1 text-[10px] h-7 rounded-md capitalize" onClick={() => updateSettings({ uiDensity: d })}>{d}</Button>
                                             ))}
                                         </div>
                                     </div>
                                     <div className="space-y-3">
-                                        <Label className="flex items-center gap-2 text-xs">
+                                        <Label className="flex items-center gap-2 text-[10px] font-bold uppercase opacity-50">
                                             <ImageIcon className="w-3 h-3 text-primary" /> Background
                                         </Label>
-                                        <div className="flex gap-1">
+                                        <div className="flex gap-1 bg-background/40 p-1 rounded-lg">
                                             {(['dark', 'mesh', 'pulse'] as BGStyle[]).map((bg) => (
-                                                <Button key={bg} variant={settings.bgStyle === bg ? 'default' : 'secondary'} size="sm" className="flex-1 text-[10px] h-7" onClick={() => updateSettings({ bgStyle: bg })}>{bg}</Button>
+                                                <Button key={bg} variant={settings.bgStyle === bg ? 'default' : 'ghost'} size="sm" className="flex-1 text-[10px] h-7 rounded-md capitalize" onClick={() => updateSettings({ bgStyle: bg })}>{bg}</Button>
                                             ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Advanced Feel - Effects & Polish */}
+                            <div className="space-y-4 pt-4 border-t border-border/50">
+                                <div className="flex items-center gap-2 text-sm font-semibold opacity-70 uppercase tracking-wider text-primary">
+                                    <Sparkles className="w-4 h-4" />
+                                    <span>Experience Polish</span>
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4 px-2">
+                                    <div className="flex items-center justify-between">
+                                        <div className="space-y-0.5">
+                                            <Label className="text-sm font-medium">Glow Gradients</Label>
+                                            <p className="text-[10px] text-muted-foreground">Add neon glows to brand elements</p>
+                                        </div>
+                                        <Switch checked={settings.accentGradient} onCheckedChange={(v) => updateSettings({ accentGradient: v })} />
+                                    </div>
+                                    <div className="flex items-center justify-between">
+                                        <div className="space-y-0.5">
+                                            <Label className="text-sm font-medium">Grain Texture</Label>
+                                            <p className="text-[10px] text-muted-foreground">High-end subtle film grain overlay</p>
+                                        </div>
+                                        <Switch checked={settings.showGrain} onCheckedChange={(v) => updateSettings({ showGrain: v })} />
+                                    </div>
+                                    <div className="flex items-center justify-between">
+                                        <div className="space-y-0.5">
+                                            <Label className="text-sm font-medium">Scroll Progress</Label>
+                                            <p className="text-[10px] text-muted-foreground">Top bar showing scroll depth</p>
+                                        </div>
+                                        <Switch checked={settings.showScrollIndicator} onCheckedChange={(v) => updateSettings({ showScrollIndicator: v })} />
+                                    </div>
+                                    <div className="flex items-center justify-between">
+                                        <div className="space-y-0.5">
+                                            <Label className="text-sm font-medium">UI Sound Effects</Label>
+                                            <p className="text-[10px] text-muted-foreground">Subtle audible feedback on clicks</p>
+                                        </div>
+                                        <Switch checked={settings.enableSound} onCheckedChange={(v) => updateSettings({ enableSound: v })} />
+                                    </div>
+                                    <div className="flex items-center justify-between">
+                                        <div className="space-y-0.5">
+                                            <Label className="text-sm font-medium">Cursor Effects</Label>
+                                            <p className="text-[10px] text-muted-foreground">Interactive sparkles following mouse</p>
+                                        </div>
+                                        <Switch checked={settings.showCursorEffect} onCheckedChange={(v) => updateSettings({ showCursorEffect: v })} />
+                                    </div>
+                                    <div className="flex items-center justify-between">
+                                        <div className="space-y-0.5">
+                                            <Label className="text-sm font-medium">Animation Speed</Label>
+                                            <p className="text-[10px] text-muted-foreground">Adjust responsiveness of transitions</p>
+                                        </div>
+                                        <div className="w-24 px-2">
+                                            <Slider
+                                                value={[settings.animSpeed]}
+                                                min={0.5}
+                                                max={2}
+                                                step={0.1}
+                                                onValueChange={([v]) => updateSettings({ animSpeed: v })}
+                                            />
                                         </div>
                                     </div>
                                 </div>

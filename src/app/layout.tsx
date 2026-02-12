@@ -174,6 +174,11 @@ export const viewport: Viewport = {
 };
 
 import { SettingsProvider } from '@/components/settings-provider';
+import { CursorTrail } from '@/components/cursor-trail';
+import { UISound } from '@/components/ui-sound';
+import { GrainOverlay } from '@/components/grain-overlay';
+import { ScrollIndicator } from '@/components/scroll-indicator';
+import { SidebarProviderWrapper } from '@/components/sidebar-provider-wrapper';
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   // Enforce MFA for unstablegng role
@@ -222,7 +227,11 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         >
           <FirebaseClientProvider>
             <SettingsProvider>
-              <SidebarProvider>
+              <CursorTrail />
+              <UISound />
+              <GrainOverlay />
+              <ScrollIndicator />
+              <SidebarProviderWrapper>
                 <div className="flex w-full">
                   <AppSidebar />
                   <main className="flex-1 flex flex-col min-h-screen">
@@ -251,7 +260,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
                     <AppFooter />
                   </main>
                 </div>
-              </SidebarProvider>
+              </SidebarProviderWrapper>
             </SettingsProvider>
           </FirebaseClientProvider>
           <Toaster />

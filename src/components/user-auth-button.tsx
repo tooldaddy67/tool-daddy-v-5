@@ -257,7 +257,7 @@ export function UserAuthButton() {
                                     {(user.displayName || user.email || 'U').charAt(0).toUpperCase()}
                                 </AvatarFallback>
                             </Avatar>
-                            <div className="flex flex-col items-start text-sm">
+                            <div className="flex flex-col items-start text-sm auth-text">
                                 <span className="font-semibold text-foreground/80 max-w-[100px] truncate">
                                     {user.displayName || 'User'}
                                 </span>
@@ -294,7 +294,7 @@ export function UserAuthButton() {
             ) : (
                 <Button onClick={() => setIsAuthDialogOpen(true)} variant="default" size="sm" className="gap-2">
                     <LogIn className="h-4 w-4" />
-                    <span className="hidden sm:inline">Sign In</span>
+                    <span className="hidden sm:inline auth-text">Sign In</span>
                 </Button>
             )}
 
