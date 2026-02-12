@@ -35,7 +35,8 @@ export default function PasswordGenerator() {
   const { addToHistory } = useHistory();
   const { firestore, user } = useFirebase();
 
-  const generatePassword = useCallback(() => {
+  // Generate password without side effects (no history/notifications)
+  const generatePasswordOnly = useCallback(() => {
     const upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
     const lower = 'abcdefghijklmnopqrstuvwxyz';
     const numbers = '0123456789';
@@ -65,32 +66,45 @@ export default function PasswordGenerator() {
 
     setPassword(newPassword);
     setIsCopied(false);
+    return newPassword;
+  }, [length, includeUppercase, includeLowercase, includeNumbers, includeSymbols]);
 
+  // Save to history and send notification
+  const savePasswordAction = useCallback((actionType: 'generated' | 'copied') => {
     // Save to history
     addToHistory({
       tool: 'Password Generator',
       data: {
         passwordLength: length,
-        details: `Generated a ${length} character password.`
+        details: `${actionType === 'generated' ? 'Generated' : 'Copied'} a ${length} character password.`
       }
     });
 
     // Send notification
     sendNotification(firestore, user?.uid, {
-      title: 'Password Generated',
-      message: `A new ${length}-character password has been created.`,
+      title: actionType === 'generated' ? 'Password Generated' : 'Password Copied',
+      message: `A ${length}-character password has been ${actionType === 'generated' ? 'created' : 'copied to clipboard'}.`,
       type: 'success',
       link: '/password-generator'
     });
-  }, [length, includeUppercase, includeLowercase, includeNumbers, includeSymbols, addToHistory, firestore, user]);
+  }, [length, addToHistory, firestore, user]);
 
-  const copyToClipboard = () => {
+  // Handle regenerate button click
+  const handleRegenerate = useCallback(() => {
+    generatePasswordOnly();
+    savePasswordAction('generated');
+  }, [generatePasswordOnly, savePasswordAction]);
+
+  const copyToClipboard = useCallback(() => {
     if (!password) return;
     navigator.clipboard.writeText(password);
     setIsCopied(true);
     toast({ title: 'Password Copied!', description: 'The generated password has been copied to your clipboard.' });
     setTimeout(() => setIsCopied(false), 2000);
-  };
+
+    // Save to history and send notification on copy
+    savePasswordAction('copied');
+  }, [password, toast, savePasswordAction]);
 
   // Calculate strength based on entropy/complexity
   useEffect(() => {
@@ -124,10 +138,11 @@ export default function PasswordGenerator() {
     setStrength({ label, color, score });
   }, [length, includeUppercase, includeLowercase, includeNumbers, includeSymbols]);
 
-  // Initial generation
+  // Initial generation (no history/notification on mount)
   useEffect(() => {
-    generatePassword();
-  }, [generatePassword]);
+    generatePasswordOnly();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
 
   return (
@@ -188,7 +203,7 @@ export default function PasswordGenerator() {
               </div>
             </div>
 
-            <Button onClick={generatePassword} className="w-full" size="lg">
+            <Button onClick={handleRegenerate} className="w-full" size="lg">
               <RefreshCw className="mr-2 h-4 w-4" /> Regenerate
             </Button>
           </CardContent>
