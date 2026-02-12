@@ -212,38 +212,17 @@ export function UserAuthButton() {
         e.preventDefault();
         setIsLoading(true);
         const actionCodeSettings = {
-            // URL you want to redirect back to. The domain (tool-daddy.com) for this URL must be in the authorized domains list in the Firebase Console.
-            url: window.location.href,
+            url: window.location.origin + window.location.pathname,
             handleCodeInApp: true,
         };
 
         try {
-            await sendSignInLinkToEmail(auth, magicLinkEmail, actionCodeSettings);
-            window.localStorage.setItem('emailForSignIn', magicLinkEmail);
+            await sendSignInLinkToEmail(auth, email, actionCodeSettings);
+            window.localStorage.setItem('emailForSignIn', email);
             setMagicLinkSent(true);
-            toast({ title: 'Link sent!', description: 'Check your email to sign in.' });
+            toast({ title: 'Magic Link sent!', description: 'Check your inbox to sign in instantly.' });
         } catch (error: any) {
             toast({ title: 'Error sending link', description: error.message, variant: 'destructive' });
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const handleForgotPassword = async () => {
-        if (!email) {
-            toast({ title: "Email required", description: "Please enter your email address first.", variant: 'destructive' });
-            return;
-        }
-        setIsLoading(true);
-        try {
-            await sendPasswordResetEmail(auth, email);
-            toast({ title: "Reset email sent", description: "Check your inbox for instructions." });
-        } catch (error: any) {
-            toast({
-                title: "Failed to send reset email",
-                description: error.message,
-                variant: 'destructive'
-            });
         } finally {
             setIsLoading(false);
         }
@@ -327,173 +306,77 @@ export function UserAuthButton() {
                             Tool Daddy Cloud
                         </DialogTitle>
                         <DialogDescription>
-                            Sync your creations and settings across all your devices.
+                            Sign in or create an account with a passwordless magic link.
                         </DialogDescription>
                     </DialogHeader>
 
-                    <Tabs defaultValue="login" className="w-full mt-4" onValueChange={(v) => { setAuthMode(v as any); setMagicLinkSent(false); setOtpSent(false); }}>
-                        <TabsList className="grid w-full grid-cols-3 bg-muted/50 h-auto p-1">
-                            <TabsTrigger value="login" className="text-xs sm:text-sm py-2">Sign In</TabsTrigger>
-                            <TabsTrigger value="signup" className="text-xs sm:text-sm py-2">Sign Up</TabsTrigger>
-                            <TabsTrigger value="magic" className="text-xs sm:text-sm py-2">Magic Link</TabsTrigger>
-                        </TabsList>
-
-                        {/* ... Login Tab ... */}
-                        <TabsContent value="login" className="space-y-4 py-4 mt-0">
-                            <form onSubmit={handleAuth} className="space-y-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="email-login">Email Address</Label>
-                                    <Input
-                                        id="email-login"
-                                        type="email"
-                                        placeholder="name@example.com"
-                                        value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
-                                        className="border-border/50 focus:border-primary/50"
-                                        required
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <div className="flex items-center justify-between">
-                                        <Label htmlFor="password-login">Password</Label>
-                                        <button type="button" className="text-[10px] text-primary hover:underline" onClick={handleForgotPassword}>
-                                            Forgot password?
-                                        </button>
+                    <div className="mt-6">
+                        {magicLinkSent ? (
+                            <div className="flex flex-col items-center justify-center space-y-6 py-4 text-center animate-in fade-in zoom-in-95 duration-300">
+                                <div className="relative">
+                                    <div className="absolute inset-0 bg-primary/20 blur-2xl rounded-full" />
+                                    <div className="relative rounded-full bg-primary/10 p-4 border border-primary/20">
+                                        <CheckCircle2 className="h-10 w-10 text-primary" />
                                     </div>
-                                    <Input
-                                        id="password-login"
-                                        type="password"
-                                        value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
-                                        className="border-border/50 focus:border-primary/50"
-                                        required
-                                    />
                                 </div>
-                                <Button type="submit" className="w-full h-11" disabled={isLoading}>
-                                    {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <LogIn className="mr-2 h-4 w-4" />}
-                                    Sign In
+                                <div className="space-y-2">
+                                    <h3 className="font-bold text-xl">Check your email</h3>
+                                    <p className="text-sm text-muted-foreground max-w-[280px] mx-auto leading-relaxed">
+                                        We've sent a secure login link to <span className="font-semibold text-foreground underline decoration-primary/30">{email}</span>. Click it to sign in!
+                                    </p>
+                                </div>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="text-xs h-9 px-4 rounded-full border-primary/20 hover:bg-primary/5 hover:text-primary transition-all"
+                                    onClick={() => setMagicLinkSent(false)}
+                                >
+                                    Use a different email
                                 </Button>
-                            </form>
-                        </TabsContent>
-
-                        {/* ... Signup Tab ... */}
-                        <TabsContent value="signup" className="space-y-4 py-4 mt-0">
-                            <form onSubmit={handleAuth} className="space-y-4">
-                                {!otpSent ? (
-                                    <>
-                                        <div className="space-y-2">
-                                            <Label htmlFor="email-signup">Email Address</Label>
-                                            <Input
-                                                id="email-signup"
-                                                type="email"
-                                                placeholder="name@example.com"
-                                                value={email}
-                                                onChange={(e) => setEmail(e.target.value)}
-                                                className="border-border/50 focus:border-primary/50"
-                                                required
-                                            />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <Label htmlFor="password-signup">Password</Label>
-                                            <Input
-                                                id="password-signup"
-                                                type="password"
-                                                value={password}
-                                                onChange={(e) => setPassword(e.target.value)}
-                                                className="border-border/50 focus:border-primary/50"
-                                                required
-                                            />
-                                        </div>
-                                        <Button type="submit" className="w-full h-11" disabled={isLoading}>
-                                            {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UserPlus className="mr-2 h-4 w-4" />}
-                                            Create Account
-                                        </Button>
-                                    </>
-                                ) : (
-                                    <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2">
-                                        <div className="space-y-2">
-                                            <Label htmlFor="otp-code">Verification Code</Label>
-                                            <p className="text-xs text-muted-foreground">
-                                                We sent a code to <span className="font-medium text-foreground">{email}</span>.
-                                            </p>
-                                            <Input
-                                                id="otp-code"
-                                                type="text"
-                                                placeholder="123456"
-                                                value={otpCode}
-                                                onChange={(e) => setOtpCode(e.target.value)}
-                                                className="border-border/50 focus:border-primary/50 text-center tracking-widest text-lg"
-                                                required
-                                                maxLength={6}
-                                            />
-                                        </div>
-                                        <div className="flex gap-2">
-                                            <Button type="button" variant="outline" className="flex-1" onClick={() => setOtpSent(false)}>
-                                                Back
-                                            </Button>
-                                            <Button type="submit" className="flex-[2]" disabled={isLoading}>
-                                                {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle2 className="mr-2 h-4 w-4" />}
-                                                Verify & Create
-                                            </Button>
-                                        </div>
-                                        <div className="text-center">
-                                            <button
-                                                type="button"
-                                                className="text-xs text-primary hover:underline"
-                                                onClick={handleSendOtp}
-                                                disabled={isLoading}
-                                            >
-                                                Resend Code
-                                            </button>
-                                        </div>
-                                    </div>
-                                )}
-                            </form>
-                        </TabsContent>
-
-
-                        {/* ... Magic Link Tab ... */}
-                        <TabsContent value="magic" className="space-y-4 py-4 mt-0">
-                            {magicLinkSent ? (
-                                <div className="flex flex-col items-center justify-center space-y-4 py-6 text-center">
-                                    <div className="rounded-full bg-green-500/10 p-3">
-                                        <CheckCircle2 className="h-8 w-8 text-green-500" />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <h3 className="font-semibold text-lg">Check your email</h3>
-                                        <p className="text-sm text-muted-foreground max-w-[260px] mx-auto">
-                                            We sent a sign-in link to <span className="font-medium text-foreground">{magicLinkEmail}</span>
-                                        </p>
-                                    </div>
-                                    <Button variant="outline" size="sm" onClick={() => setMagicLinkSent(false)}>
-                                        Use a different email
-                                    </Button>
-                                </div>
-                            ) : (
-                                <form onSubmit={handleMagicLink} className="space-y-4">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="email-magic">Email Address</Label>
+                            </div>
+                        ) : (
+                            <form onSubmit={handleMagicLink} className="space-y-6">
+                                <div className="space-y-3">
+                                    <Label htmlFor="email-magic" className="text-sm font-medium ml-1">Email Address</Label>
+                                    <div className="relative group">
                                         <Input
                                             id="email-magic"
                                             type="email"
                                             placeholder="name@example.com"
-                                            value={magicLinkEmail}
-                                            onChange={(e) => setMagicLinkEmail(e.target.value)}
-                                            className="border-border/50 focus:border-primary/50"
+                                            value={email}
+                                            onChange={(e) => setEmail(e.target.value)}
+                                            className="h-12 border-border/40 bg-muted/30 focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all rounded-xl pl-4"
                                             required
                                         />
                                     </div>
-                                    <div className="bg-primary/5 rounded-lg p-3 text-xs text-muted-foreground border border-primary/10">
-                                        <p>We'll send you a magic link for a password-free sign in experience.</p>
+                                    <div className="bg-primary/5 rounded-xl p-4 text-xs text-muted-foreground border border-primary/10 leading-relaxed">
+                                        <p className="flex items-start gap-2">
+                                            <Sparkles className="h-3.5 w-3.5 text-primary mt-0.5 shrink-0" />
+                                            We'll send you a secure link for a password-free experience.
+                                            New here? We'll create your account automatically.
+                                        </p>
                                     </div>
-                                    <Button type="submit" className="w-full h-11" disabled={isLoading}>
-                                        {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-                                        Send Magic Link
-                                    </Button>
-                                </form>
-                            )}
-                        </TabsContent>
-                    </Tabs>
+                                </div>
+                                <Button
+                                    type="submit"
+                                    className="w-full h-12 text-base font-semibold rounded-xl shadow-lg shadow-primary/10 hover:shadow-primary/20 transition-all"
+                                    disabled={isLoading}
+                                >
+                                    {isLoading ? (
+                                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                                    ) : (
+                                        <Sparkles className="mr-2 h-5 w-5" />
+                                    )}
+                                    Get Magic Link
+                                </Button>
+
+                                <p className="text-[10px] text-center text-muted-foreground px-4">
+                                    By continuing, you agree to our terms of service and privacy policy.
+                                    Magic links expire in 10 minutes for your security.
+                                </p>
+                            </form>
+                        )}
+                    </div>
                 </DialogContent>
             </Dialog>
         </>
