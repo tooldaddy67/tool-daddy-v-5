@@ -23,6 +23,12 @@ import {
   Signal,
   FileSearch,
   Paintbrush,
+  Router,
+  Binary,
+  ChevronsUpDown,
+  Search,
+  Plus,
+  Factory,
 } from 'lucide-react';
 
 export type Tool = {
@@ -173,6 +179,47 @@ export const TOOL_CATEGORIES: ToolCategory[] = [
         description: 'Create strong, secure, and random passwords.',
         href: '/password-generator',
         icon: KeyRound,
+      },
+    ]
+  },
+  {
+    name: 'Network',
+    tools: [
+      {
+        name: 'IPv4 Subnet Calculator',
+        description: 'Calculate subnet masks, network addresses, and usable IP ranges.',
+        href: '/ipv4-subnet-calculator',
+        icon: Router,
+      },
+      {
+        name: 'IPv4 Address Converter',
+        description: 'Convert IPv4 addresses between decimal, binary, and hexadecimal.',
+        href: '/ipv4-address-converter',
+        icon: Binary,
+      },
+      {
+        name: 'IPv4 Range Expander',
+        description: 'Expand CIDR notations and IP ranges into full list of addresses.',
+        href: '/ipv4-range-expander',
+        icon: ChevronsUpDown,
+      },
+      {
+        name: 'MAC Address Lookup',
+        description: 'Identify the manufacturer and vendor of a network interface by its MAC address.',
+        href: '/mac-address-lookup',
+        icon: Search,
+      },
+      {
+        name: 'MAC Address Generator',
+        description: 'Generate random, valid MAC addresses for testing and privacy.',
+        href: '/mac-address-generator',
+        icon: Plus,
+      },
+      {
+        name: 'IPv6 ULA Generator',
+        description: 'Generate Unique Local Addresses (ULA) for private IPv6 networks.',
+        href: '/ipv6-ula-generator',
+        icon: Factory,
       },
     ]
   },
