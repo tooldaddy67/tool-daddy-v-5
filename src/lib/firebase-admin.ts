@@ -2,15 +2,27 @@ import admin from 'firebase-admin';
 
 if (!admin.apps.length) {
     try {
-        if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
-            // Parse the JSON string from env var
+        const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n');
+        const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+        const projectId = process.env.FIREBASE_PROJECT_ID;
+
+        if (projectId && clientEmail && privateKey) {
+            admin.initializeApp({
+                credential: admin.credential.cert({
+                    projectId,
+                    clientEmail,
+                    privateKey,
+                }),
+            });
+            console.log('Firebase Admin initialized with individual credentials.');
+        } else if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
             const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
             admin.initializeApp({
                 credential: admin.credential.cert(serviceAccount),
             });
+            console.log('Firebase Admin initialized with JSON key.');
         } else {
-            // Fallback for environments like App Hosting or local with GOOGLE_APPLICATION_CREDENTIALS
-            console.warn('FIREBASE_SERVICE_ACCOUNT_KEY not found. Attempting default credentials.');
+            console.warn('Firebase credentials not found. Attempting default.');
             admin.initializeApp();
         }
     } catch (error) {
