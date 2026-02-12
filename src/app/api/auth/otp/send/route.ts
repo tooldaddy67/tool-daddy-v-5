@@ -14,7 +14,7 @@ export async function POST(req: Request) {
     });
 
     const ip = await getClientIp();
-    if (!checkRateLimit(ip, 3, 10 * 60 * 1000)) { // 3 requests per 10 minutes
+    if (!checkRateLimit(ip, 10, 10 * 60 * 1000)) { // 10 requests per 10 minutes (increased for testing)
       return NextResponse.json({ error: 'Too many requests. Please try again later.' }, { status: 429 });
     }
 
