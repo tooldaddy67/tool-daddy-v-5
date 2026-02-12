@@ -56,14 +56,17 @@ export default function ToolCard({ href, name, description, icon: Icon, isExtern
 
   if (isExternal) {
     return (
-      <a href={href} target="_blank" rel="noopener noreferrer" className="group h-full">
+      <Link
+        href={`/external-redirect?to=${encodeURIComponent(href)}&name=${encodeURIComponent(name)}`}
+        className="group h-full"
+      >
         {cardContent}
-      </a>
+      </Link>
     )
   }
 
   return (
-    <Link href={href} prefetch={true} className="group h-full">
+    <Link href={href} prefetch={false} className="group h-full">
       {cardContent}
     </Link>
   );

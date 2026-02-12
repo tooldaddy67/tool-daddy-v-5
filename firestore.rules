@@ -16,11 +16,8 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      return isSignedIn() && (
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true ||
-        request.auth.token.email == 'admin@tooldaddy.com' ||
-        request.auth.token.email == 'yunis@tooldaddy.com' // Adding possible user email
-      );
+      return isSignedIn() && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
     }
     
     // --- Schema Validation Helpers ---

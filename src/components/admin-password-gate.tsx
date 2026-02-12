@@ -6,13 +6,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Lock, Eye, EyeOff } from 'lucide-react';
 
-const ADMIN_PASSWORD = 'tooldaddy-omlet-is-gay-famboy';
+import { verifyAdminPassword } from '@/app/actions/admin';
 
 export function AdminPasswordGate({ children }: { children: ReactNode }) {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [passwordInput, setPasswordInput] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [passwordError, setPasswordError] = useState(false);
+    const [isVerifying, setIsVerifying] = useState(false);
 
     useEffect(() => {
         if (typeof window !== 'undefined') {
@@ -21,14 +22,23 @@ export function AdminPasswordGate({ children }: { children: ReactNode }) {
         }
     }, []);
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (passwordInput === ADMIN_PASSWORD) {
-            setIsAuthenticated(true);
-            setPasswordError(false);
-            sessionStorage.setItem('admin-auth', 'true');
-        } else {
+        setIsVerifying(true);
+        try {
+            const isValid = await verifyAdminPassword(passwordInput);
+            if (isValid) {
+                setIsAuthenticated(true);
+                setPasswordError(false);
+                sessionStorage.setItem('admin-auth', 'true');
+            } else {
+                setPasswordError(true);
+            }
+        } catch (error) {
+            console.error('Verification failed:', error);
             setPasswordError(true);
+        } finally {
+            setIsVerifying(false);
         }
     };
 
@@ -66,8 +76,13 @@ export function AdminPasswordGate({ children }: { children: ReactNode }) {
                         {passwordError && (
                             <p className="text-sm text-destructive">Incorrect password. Try again.</p>
                         )}
-                        <Button type="submit" className="w-full">
-                            <Lock className="mr-2 h-4 w-4" /> Unlock
+                        <Button type="submit" className="w-full" disabled={isVerifying}>
+                            {isVerifying ? (
+                                <span className="animate-spin mr-2">...</span>
+                            ) : (
+                                <Lock className="mr-2 h-4 w-4" />
+                            )}
+                            {isVerifying ? 'Verifying...' : 'Unlock'}
                         </Button>
                     </form>
                 </CardContent>

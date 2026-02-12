@@ -20,6 +20,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import AdModal from '@/components/ad-modal';
+import DOMPurify from 'dompurify';
 import '../styles.css';
 
 const LOCAL_STORAGE_KEY = 'rich-notepad-content';
@@ -88,9 +89,10 @@ export default function SimpleNotepad() {
       // If logged in and cloud data exists, use it
       if (!isCloudLoading && cloudData) {
         const cloudContent = (cloudData as any).content || '';
-        if (editorRef.current) editorRef.current.innerHTML = cloudContent;
-        setContent(cloudContent);
-        updateCounts(cloudContent);
+        const sanitized = DOMPurify.sanitize(cloudContent);
+        if (editorRef.current) editorRef.current.innerHTML = sanitized;
+        setContent(sanitized);
+        updateCounts(sanitized);
       } else if (!isCloudLoading && !cloudData) {
         // New user or no cloud data, try loading local
         const savedContent = localStorage.getItem(LOCAL_STORAGE_KEY);
@@ -106,9 +108,10 @@ export default function SimpleNotepad() {
       // Guest mode or Data Persistence Disabled
       const savedContent = localStorage.getItem(LOCAL_STORAGE_KEY);
       if (savedContent) {
-        if (editorRef.current) editorRef.current.innerHTML = savedContent;
-        setContent(savedContent);
-        updateCounts(savedContent);
+        const sanitized = DOMPurify.sanitize(savedContent);
+        if (editorRef.current) editorRef.current.innerHTML = sanitized;
+        setContent(sanitized);
+        updateCounts(sanitized);
       }
     }
 
@@ -152,16 +155,16 @@ export default function SimpleNotepad() {
       setIsTxtDialogOpen(true);
     }
   };
-
   const handleInput = (e: React.FormEvent<HTMLDivElement>) => {
-    const newContent = e.currentTarget.innerHTML;
-    setContent(newContent);
-    localStorage.setItem(LOCAL_STORAGE_KEY, newContent);
-    updateCounts(newContent);
+    const rawContent = e.currentTarget.innerHTML;
+    const sanitizedContent = DOMPurify.sanitize(rawContent);
+    setContent(sanitizedContent);
+    localStorage.setItem(LOCAL_STORAGE_KEY, sanitizedContent);
+    updateCounts(sanitizedContent);
 
     // Save to Cloud (Debounced ideally, but direct for now for simplicity)
     if (notepadDocRef) {
-      setDoc(notepadDocRef, { content: newContent, updatedAt: serverTimestamp() }, { merge: true });
+      setDoc(notepadDocRef, { content: sanitizedContent, updatedAt: serverTimestamp() }, { merge: true });
     }
   };
 
@@ -176,7 +179,7 @@ export default function SimpleNotepad() {
     }
     updateCounts('');
     toast({ title: 'Notepad Cleared' });
-  }
+  };
 
   const handleDownloadPdf = async () => {
     if (!editorRef.current || !content.trim()) {

@@ -1,12 +1,9 @@
 
-'use client';
-
 import dynamic from 'next/dynamic';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const ImageCompressor = dynamic(() => import('./_components/image-compressor'), {
-    loading: () => <ImageCompressorSkeleton />,
-    ssr: false
+  loading: () => <ImageCompressorSkeleton />
 });
 
 
@@ -22,6 +19,19 @@ function ImageCompressorSkeleton() {
   )
 }
 
+import { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Image Compressor | Tool Daddy',
+  description: 'Compress your images effortlessly without losing quality. Support for JPEG, PNG, and WebP.',
+  keywords: ['image compressor', 'compress images', 'jpeg compressor', 'png compressor', 'online image tool'],
+  openGraph: {
+    title: 'Image Compressor | Tool Daddy',
+    description: 'Compress your images effortlessly without losing quality.',
+    type: 'website',
+  }
+};
+
 export default function ImageCompressorPage() {
-    return <ImageCompressor />;
+  return <ImageCompressor />;
 }

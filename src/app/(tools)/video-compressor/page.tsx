@@ -1,55 +1,19 @@
-'use client';
-
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { Loader2 } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import AdModal from '@/components/ad-modal';
+import { Metadata } from 'next';
+import VideoCompressorClient from './_components/video-compressor-client';
 
 const EXTERNAL_URL = 'https://www.freeconvert.com/video-compressor';
 
-export default function VideoCompressorRedirectPage() {
-  const router = useRouter();
-  const [isAdModalOpen, setIsAdModalOpen] = useState(true);
-
-  const handleAdFinish = () => {
-    setIsAdModalOpen(false);
-    window.location.replace(EXTERNAL_URL);
-  };
-
-  const handleModalClose = () => {
-    setIsAdModalOpen(false);
-    router.replace('/');
+export const metadata: Metadata = {
+  title: 'Video Compressor | Tool Daddy',
+  description: 'Reduce video file sizes without losing quality. Support for MP4, MOV, AVI, and more with our professional compression tool.',
+  keywords: ['video compressor', 'compress video', 'file size reducer', 'mp4 compressor', 'online video tool'],
+  openGraph: {
+    title: 'Video Compressor | Tool Daddy',
+    description: 'Reduce video file sizes without losing quality instantly.',
+    type: 'website',
   }
+};
 
-  return (
-    <>
-      <div className="w-full max-w-4xl mx-auto p-4 md:p-8">
-        <Card className="bg-card/50 backdrop-blur-lg border-border/20">
-          <CardHeader>
-            <CardTitle>Redirecting...</CardTitle>
-            <CardDescription>
-              Please wait while we redirect you to the Video Compressor.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex justify-center items-center h-64 border-2 border-dashed rounded-lg bg-background/30">
-              <div className="text-center">
-                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground mx-auto" />
-                <p className="mt-4 text-muted-foreground">Preparing the external tool...</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <AdModal
-        isOpen={isAdModalOpen}
-        onClose={handleModalClose}
-        onAdFinish={handleAdFinish}
-        title="Redirecting you to our partner..."
-        duration={10}
-      />
-    </>
-  );
+export default function VideoCompressorPage() {
+  return <VideoCompressorClient externalUrl={EXTERNAL_URL} />;
 }

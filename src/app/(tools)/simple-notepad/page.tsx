@@ -4,33 +4,32 @@ import dynamic from 'next/dynamic';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const SimpleNotepad = dynamic(() => import('./_components/simple-notepad'), {
-    loading: () => <SimpleNotepadSkeleton />,
-    ssr: false
+  loading: () => <SimpleNotepadSkeleton />
 });
 
 function SimpleNotepadSkeleton() {
   return (
-     <div className="w-full h-full p-4 md:p-6">
+    <div className="w-full h-full p-4 md:p-6">
       <div className="w-full h-full flex flex-col bg-card/50 backdrop-blur-lg border-border/20 rounded-lg">
         <div className="p-6 flex flex-row justify-between items-center">
-            <div>
-                <Skeleton className="h-8 w-56" />
-                <Skeleton className="h-4 w-96 mt-2" />
-            </div>
-            <div className="flex items-center gap-2">
-                <Skeleton className="h-10 w-32" />
-                <Skeleton className="h-10 w-24" />
-            </div>
+          <div>
+            <Skeleton className="h-8 w-56" />
+            <Skeleton className="h-4 w-96 mt-2" />
+          </div>
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-10 w-32" />
+            <Skeleton className="h-10 w-24" />
+          </div>
         </div>
         <div className="px-6 pb-6 flex-grow flex flex-col relative overflow-y-auto">
-            <Skeleton className="flex-grow w-full" />
+          <Skeleton className="flex-grow w-full" />
         </div>
         <div className="p-6 pt-0 text-sm text-muted-foreground justify-between items-center flex-shrink-0 flex">
-            <div className="flex gap-4">
-              <Skeleton className="h-5 w-24" />
-              <Skeleton className="h-5 w-24" />
-            </div>
-            <Skeleton className="h-10 w-10" />
+          <div className="flex gap-4">
+            <Skeleton className="h-5 w-24" />
+            <Skeleton className="h-5 w-24" />
+          </div>
+          <Skeleton className="h-10 w-10" />
         </div>
       </div>
     </div>
@@ -38,5 +37,5 @@ function SimpleNotepadSkeleton() {
 }
 
 export default function SimpleNotepadPage() {
-    return <SimpleNotepad />;
+  return <SimpleNotepad />;
 }

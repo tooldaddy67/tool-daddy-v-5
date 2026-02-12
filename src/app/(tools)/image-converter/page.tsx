@@ -1,12 +1,20 @@
-
-'use client';
-
+import { Metadata } from 'next';
 import dynamic from 'next/dynamic';
 import { Skeleton } from '@/components/ui/skeleton';
 
+export const metadata: Metadata = {
+  title: 'Image Converter | Tool Daddy',
+  description: 'Convert images between multiple formats including JPEG, PNG, WebP, and SVG with our fast online converter.',
+  keywords: ['image converter', 'convert images', 'png to jpg', 'jpg to webp', 'online image tool'],
+  openGraph: {
+    title: 'Image Converter | Tool Daddy',
+    description: 'Convert images between multiple formats instantly.',
+    type: 'website',
+  }
+};
+
 const ImageConverter = dynamic(() => import('./_components/image-converter'), {
-    loading: () => <ImageConverterSkeleton />,
-    ssr: false
+  loading: () => <ImageConverterSkeleton />
 });
 
 function ImageConverterSkeleton() {
@@ -22,5 +30,5 @@ function ImageConverterSkeleton() {
 }
 
 export default function ImageConverterPage() {
-    return <ImageConverter />;
+  return <ImageConverter />;
 }

@@ -1,12 +1,20 @@
-
-'use client';
-
+import { Metadata } from 'next';
 import dynamic from 'next/dynamic';
 import { Skeleton } from '@/components/ui/skeleton';
 
+export const metadata: Metadata = {
+  title: 'Video to Audio Converter | Tool Daddy',
+  description: 'Extract high-quality audio from your video files instantly. Support for MP4 to MP3, MOV to AAC, and more.',
+  keywords: ['video to audio', 'extract audio', 'mp4 to mp3', 'video converter', 'audio extractor'],
+  openGraph: {
+    title: 'Video to Audio Converter | Tool Daddy',
+    description: 'Extract high-quality audio from your video files instantly.',
+    type: 'website',
+  }
+};
+
 const VideoToAudioConverter = dynamic(() => import('./_components/video-to-audio-converter'), {
-    loading: () => <VideoToAudioConverterSkeleton />,
-    ssr: false
+  loading: () => <VideoToAudioConverterSkeleton />,
 });
 
 function VideoToAudioConverterSkeleton() {
@@ -22,5 +30,5 @@ function VideoToAudioConverterSkeleton() {
 }
 
 export default function VideoToAudioConverterPage() {
-    return <VideoToAudioConverter />;
+  return <VideoToAudioConverter />;
 }

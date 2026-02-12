@@ -1,11 +1,9 @@
-'use client';
 
 import dynamic from 'next/dynamic';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const AiPlaylistMaker = dynamic(() => import('./_components/ai-playlist-maker'), {
-    loading: () => <AiPlaylistMakerSkeleton />,
-    ssr: false,
+    loading: () => <AiPlaylistMakerSkeleton />
 });
 
 function AiPlaylistMakerSkeleton() {
@@ -37,6 +35,19 @@ function AiPlaylistMakerSkeleton() {
         </div>
     )
 }
+
+import { Metadata } from 'next';
+
+export const metadata: Metadata = {
+    title: 'AI Playlist Maker | Tool Daddy',
+    description: 'Generate custom music playlists using AI based on your mood, activities, or favorite genres.',
+    keywords: ['ai playlist maker', 'music generator', 'playlist generator', 'spotify tools', 'ai music'],
+    openGraph: {
+        title: 'AI Playlist Maker | Tool Daddy',
+        description: 'Generate custom music playlists using AI.',
+        type: 'website',
+    }
+};
 
 export default function AiPlaylistMakerPage() {
     return <AiPlaylistMaker />;
