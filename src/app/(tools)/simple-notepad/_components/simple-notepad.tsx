@@ -458,17 +458,17 @@ export default function SimpleNotepad() {
 
   return (
     <>
-      <div className={cn("w-full h-full p-4 md:p-6", isFullScreen && "p-0 md:p-0")}>
+      <div className={cn("w-full h-full p-2 md:p-6", isFullScreen && "p-0 md:p-0")}>
         <Card className={cn(
           "w-full h-full flex flex-col bg-card/50 backdrop-blur-lg border-border/20 transition-all duration-300",
           isFullScreen && "fixed inset-0 z-40 rounded-none border-none"
         )}>
-          <CardHeader className="flex flex-row justify-between items-start">
+          <CardHeader className="flex flex-col sm:flex-row justify-between items-start gap-4 sm:gap-0">
             <div>
               <CardTitle className="flex items-center gap-2"><Notebook /> Simple Notepad</CardTitle>
-              <CardDescription>Your notes are automatically saved. Download them as you wish.</CardDescription>
+              <CardDescription className="hidden sm:block">Your notes are automatically saved. Download them as you wish.</CardDescription>
             </div>
-            <div className="flex flex-col items-end gap-2">
+            <div className="flex flex-wrap sm:flex-col items-end gap-2 w-full sm:w-auto mt-2 sm:mt-0">
               <div className="flex items-center gap-2">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>

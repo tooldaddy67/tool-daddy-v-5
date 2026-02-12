@@ -19,11 +19,10 @@ if (!getApps().length) {
  * Checks for a valid Firebase Auth ID token in the Authorization header (Bearer token) or cookie.
  * If valid, allows request to proceed. Otherwise, returns 401 Unauthorized.
  *
- * RBAC: Supports 'unstablegng' role, which is granted if the user provides the correct password.
+ * RBAC: Supports 'unstablegng' role.
  * Users with 'unstablegng' role will not see ads (set X-User-Role header).
  */
 const UNSTABLEGNG_ROLE = 'unstablegng';
-const UNSTABLEGNG_PASSWORD = 'mrxisgodbutgodisnotreal';
 
 export async function requireAuth(request: NextRequest, options?: { requireRole?: string }) {
   const authHeader = request.headers.get('authorization');
@@ -42,14 +41,8 @@ export async function requireAuth(request: NextRequest, options?: { requireRole?
 
   try {
     const decodedToken = await getAuth().verifyIdToken(idToken);
-    // RBAC: Check for custom role claim or password
+    // RBAC: Check for custom role claim
     let userRole = decodedToken.role || null;
-
-    // Allow role assignment via password (for demo/testing)
-    const rolePassword = request.headers.get('x-role-password') || request.cookies.get('role_password')?.value;
-    if (rolePassword === UNSTABLEGNG_PASSWORD) {
-      userRole = UNSTABLEGNG_ROLE;
-    }
 
     // If a specific role is required, enforce it
     if (options?.requireRole && userRole !== options.requireRole) {

@@ -169,50 +169,52 @@ export function NotificationBell() {
                         </Button>
                     )}
                 </div>
-                <ScrollArea className="max-h-80">
-                    {isLoading ? (
-                        <div className="flex items-center justify-center py-8">
-                            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-                        </div>
-                    ) : !notifications || notifications.length === 0 ? (
-                        <div className="py-8 text-center text-sm text-muted-foreground">
-                            No notifications yet.
-                        </div>
-                    ) : (
-                        <div className="divide-y">
-                            {notifications.map((notif) => (
-                                <button
-                                    key={notif.id}
-                                    className={cn(
-                                        'w-full text-left px-4 py-3 transition-colors hover:bg-muted/50',
-                                        !notif.read && 'bg-primary/5'
-                                    )}
-                                    onClick={() => {
-                                        if (!notif.read) handleMarkRead(notif.id);
-                                    }}
-                                >
-                                    <div className="flex items-start gap-2">
-                                        {!notif.read && (
-                                            <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-primary" />
+                <ScrollArea className="h-80">
+                    <div className="min-h-full">
+                        {isLoading ? (
+                            <div className="flex items-center justify-center py-8">
+                                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                            </div>
+                        ) : !notifications || notifications.length === 0 ? (
+                            <div className="py-8 text-center text-sm text-muted-foreground">
+                                No notifications yet.
+                            </div>
+                        ) : (
+                            <div className="divide-y">
+                                {notifications.map((notif) => (
+                                    <button
+                                        key={notif.id}
+                                        className={cn(
+                                            'w-full text-left px-4 py-3 transition-colors hover:bg-muted/50',
+                                            !notif.read && 'bg-primary/5'
                                         )}
-                                        <div className={cn('flex-1 min-w-0', notif.read && 'pl-4')}>
-                                            <p className={cn('text-sm font-medium leading-tight', notif.read && 'text-muted-foreground')}>
-                                                {notif.title}
-                                            </p>
-                                            <p className="mt-0.5 text-xs text-muted-foreground line-clamp-2">
-                                                {notif.message}
-                                            </p>
-                                            {notif.createdAt && (
-                                                <p className="mt-1 text-[10px] text-muted-foreground/70">
-                                                    {timeAgo(notif.createdAt.toDate())}
-                                                </p>
+                                        onClick={() => {
+                                            if (!notif.read) handleMarkRead(notif.id);
+                                        }}
+                                    >
+                                        <div className="flex items-start gap-2">
+                                            {!notif.read && (
+                                                <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-primary" />
                                             )}
+                                            <div className={cn('flex-1 min-w-0', notif.read && 'pl-4')}>
+                                                <p className={cn('text-sm font-medium leading-tight', notif.read && 'text-muted-foreground')}>
+                                                    {notif.title}
+                                                </p>
+                                                <p className="mt-0.5 text-xs text-muted-foreground line-clamp-2">
+                                                    {notif.message}
+                                                </p>
+                                                {notif.createdAt && (
+                                                    <p className="mt-1 text-[10px] text-muted-foreground/70">
+                                                        {timeAgo(notif.createdAt.toDate())}
+                                                    </p>
+                                                )}
+                                            </div>
                                         </div>
-                                    </div>
-                                </button>
-                            ))}
-                        </div>
-                    )}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </div>
                 </ScrollArea>
             </PopoverContent>
         </Popover>

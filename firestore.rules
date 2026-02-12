@@ -100,8 +100,7 @@ service cloud.firestore {
 
     // Tasks (Flattened)
     match /users/{userId}/todolists/{listId}/tasks/{taskId} {
-      allow read: if true; // DEBUG: Allow anyone to read to diagnose permission error
-      allow delete: if isOwner(userId);
+      allow read, delete: if isOwner(userId);
       allow create: if isOwner(userId) && validateTaskOnCreate(request.resource.data);
       allow update: if isOwner(userId) && validateTaskOnUpdate(request.resource.data, resource.data);
     }
@@ -126,12 +125,6 @@ service cloud.firestore {
       allow get, list, create, update, delete: if isOwner(userId);
     }
         
-    // Feedback Collection (New)
-    match /feedback/{feedbackId} {
-      allow create: if true; // Allow anyone to submit feedback
-      allow read, update, delete: if isAdmin(); // Only admins can manage feedback
-    }
-
     // Blog Posts (Dynamic System)
     match /posts/{postId} {
       // Anyone can read published posts. Admins can read all (drafts).
@@ -141,9 +134,8 @@ service cloud.firestore {
     }
 
     match /rate-limits/{identifier} {
-      // Only allow unauthenticated server-side process
-      allow read, write: if request.auth == null;
-      allow list, delete: if false;
+      // Only allow unauthenticated server-side process (Admin SDK bypasses rules, so we deny all client access)
+      allow read, write: if false;
     }
   }
 }

@@ -33,13 +33,13 @@ const DiscordIcon = () => (
 export default function AppFooter() {
   return (
     <footer className="border-t border-border/20 bg-background/50 backdrop-blur-lg mt-auto">
-      <div className="mx-auto px-4 md:px-6 py-6 flex flex-col sm:flex-row items-center justify-between gap-4 max-w-7xl">
-        <div className="flex items-center gap-2">
+      <div className="mx-auto px-4 md:px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4 max-w-7xl">
+        <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
           <Logo />
-          <p className="text-xs md:text-sm text-muted-foreground text-center sm:text-left">&copy; {new Date().getFullYear()} Tool Daddy. All Rights Reserved.</p>
+          <p className="text-[10px] md:text-sm text-muted-foreground text-center sm:text-left">&copy; {new Date().getFullYear()} Tool Daddy. All Rights Reserved.</p>
         </div>
-        <div className="flex flex-col items-center sm:items-end gap-2 text-xs text-muted-foreground/60 text-center sm:text-right">
-          <div className="flex items-center gap-2 md:gap-4 text-xs md:text-sm text-foreground/80">
+        <div className="flex flex-col items-center sm:items-end gap-2 text-xs text-muted-foreground/60 text-center sm:text-right w-full sm:w-auto">
+          <div className="flex flex-wrap justify-center sm:justify-end items-center gap-3 md:gap-4 text-xs md:text-sm text-foreground/80">
             <Link href="https://discord.gg/TgErTdrGrG" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
               <DiscordIcon />
             </Link>
@@ -51,7 +51,7 @@ export default function AppFooter() {
             </Link>
             <FeedbackModal />
           </div>
-          <p>
+          <p className="text-[10px] sm:text-xs px-4 sm:px-0">
             This site is protected by reCAPTCHA and the Google{' '}
             <a href="https://policies.google.com/privacy" className="underline hover:text-foreground">Privacy Policy</a> and{' '}
             <a href="https://policies.google.com/terms" className="underline hover:text-foreground">Terms of Service</a> apply.

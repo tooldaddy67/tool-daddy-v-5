@@ -191,10 +191,10 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
 
                 <Tabs defaultValue="general" className="flex-1 flex flex-col overflow-hidden">
                     <div className="px-6 pt-4">
-                        <TabsList className="grid w-full grid-cols-3">
-                            <TabsTrigger value="general">General</TabsTrigger>
-                            <TabsTrigger value="privacy">Privacy & Account</TabsTrigger>
-                            <TabsTrigger value="help">Help & Guide</TabsTrigger>
+                        <TabsList className="flex w-full overflow-x-auto sm:grid sm:grid-cols-3 h-auto p-0 sm:p-1 gap-2 sm:gap-1 no-scrollbar bg-transparent sm:bg-muted">
+                            <TabsTrigger value="general" className="flex-shrink-0 px-4 py-2 rounded-full sm:rounded-sm border border-border/50 sm:border-transparent bg-background/50 sm:bg-transparent data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:data-[state=active]:bg-background sm:data-[state=active]:text-foreground shadow-none">General</TabsTrigger>
+                            <TabsTrigger value="privacy" className="flex-shrink-0 px-4 py-2 rounded-full sm:rounded-sm border border-border/50 sm:border-transparent bg-background/50 sm:bg-transparent data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:data-[state=active]:bg-background sm:data-[state=active]:text-foreground shadow-none">Privacy & Account</TabsTrigger>
+                            <TabsTrigger value="help" className="flex-shrink-0 px-4 py-2 rounded-full sm:rounded-sm border border-border/50 sm:border-transparent bg-background/50 sm:bg-transparent data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:data-[state=active]:bg-background sm:data-[state=active]:text-foreground shadow-none">Help & Guide</TabsTrigger>
                         </TabsList>
                     </div>
 
@@ -321,16 +321,16 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                                 </div>
                                 <div className="flex flex-wrap gap-4 justify-between px-2 bg-muted/30 p-4 rounded-xl border border-border/50">
                                     {([
-                                        { id: 'purple', color: '#a855f7' },
-                                        { id: 'cyan', color: '#06b6d4' },
-                                        { id: 'green', color: '#10b981' },
-                                        { id: 'blue', color: '#3b82f6' },
-                                        { id: 'amber', color: '#f97316' },
                                         { id: 'rose', color: '#fb7185' },
-                                        { id: 'indigo', color: '#818cf8' },
+                                        { id: 'sunset', color: '#fb923c' },
+                                        { id: 'amber', color: '#f97316' },
                                         { id: 'emerald', color: '#34d399' },
-                                        { id: 'slate', color: '#94a3b8' },
-                                        { id: 'sunset', color: '#fb923c' }
+                                        { id: 'green', color: '#10b981' },
+                                        { id: 'cyan', color: '#06b6d4' },
+                                        { id: 'blue', color: '#3b82f6' },
+                                        { id: 'indigo', color: '#818cf8' },
+                                        { id: 'purple', color: '#a855f7' },
+                                        { id: 'slate', color: '#94a3b8' }
                                     ] as { id: ColorTheme; color: string }[]).map((c) => (
                                         <button
                                             key={c.id}

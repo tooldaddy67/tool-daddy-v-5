@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { addDocumentNonBlocking, updateDocumentNonBlocking, deleteDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { cn } from '@/lib/utils';
+import { cn, safeUUID } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
 import {
@@ -72,6 +72,8 @@ function combineDateAndTime(date: Date, time: string): Date {
   newDate.setHours(hours, minutes, 0, 0);
   return newDate;
 }
+
+
 
 function TodoListManager() {
   const { firestore, user, isUserLoading } = useFirebase();
@@ -208,7 +210,7 @@ function TodoListManager() {
   const handleAddList = async () => {
     if (!newListName.trim()) return;
 
-    const newListId = crypto.randomUUID();
+    const newListId = safeUUID();
     const newList: TodoList = {
       id: newListId,
       name: newListName,
@@ -280,7 +282,7 @@ function TodoListManager() {
     }
 
     const newTask: Task = {
-      id: crypto.randomUUID(),
+      id: safeUUID(),
       text: newTaskText,
       completed: false,
       createdAt: new Date().toISOString(),

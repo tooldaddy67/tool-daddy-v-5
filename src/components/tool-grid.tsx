@@ -13,7 +13,7 @@ export default function ToolGrid() {
           <h2 className="text-2xl sm:text-3xl font-bold font-headline tracking-tight">
             {category.name}
           </h2>
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="grid grid-cols-1 gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {category.tools.map((tool) => {
               const currentIndex = toolIndex++;
               return (

@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy, limit, doc, setDoc, deleteDoc, writeBatch } from 'firebase/firestore';
 import { useToast } from './use-toast';
+import { safeUUID } from '@/lib/utils';
 
 export type HistoryItem = {
   id: string;
@@ -106,7 +107,7 @@ export function useHistory() {
     try {
       const newItem: HistoryItem = {
         ...item,
-        id: crypto.randomUUID(),
+        id: safeUUID(),
         timestamp: new Date().toISOString(),
       };
 

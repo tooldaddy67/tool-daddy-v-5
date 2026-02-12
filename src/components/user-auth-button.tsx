@@ -46,6 +46,9 @@ export function UserAuthButton() {
     const [isLoading, setIsLoading] = useState(false);
     const [authMode, setAuthMode] = useState<'login' | 'signup' | 'magic'>('login');
 
+    // OTP State
+    const [otpSent, setOtpSent] = useState(false);
+    const [otpCode, setOtpCode] = useState('');
 
     useEffect(() => {
         if (user) {
@@ -95,22 +98,98 @@ export function UserAuthButton() {
         }
     }, [auth]);
 
+    const handleSendOtp = async () => {
+        setIsLoading(true);
+        try {
+            const res = await fetch('/api/auth/otp/send', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email }),
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                throw new Error(data.error || 'Failed to send OTP');
+            }
+
+            setOtpSent(true);
+            toast({ title: "OTP Sent", description: "Please check your email for the verification code." });
+        } catch (error: any) {
+            toast({
+                title: "Error Sending OTP",
+                description: error.message,
+                variant: 'destructive'
+            });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleVerifyAndSignup = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsLoading(true);
+
+        try {
+            // Verify OTP
+            const res = await fetch('/api/auth/otp/verify', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, code: otpCode }),
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                throw new Error(data.error || 'Invalid OTP');
+            }
+
+            // If OTP is valid, proceed to create user
+            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+            if (userCredential.user) {
+                await updateProfile(userCredential.user, { displayName: email.split('@')[0] });
+            }
+            toast({ title: "Account created successfully" });
+            setIsAuthDialogOpen(false);
+            // Reset state
+            setOtpSent(false);
+            setOtpCode('');
+            setEmail('');
+            setPassword('');
+
+        } catch (error: any) {
+            toast({
+                title: "Verification Failed",
+                description: error.message,
+                variant: 'destructive'
+            });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+
     const handleAuth = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        if (authMode === 'signup' && !otpSent) {
+            await handleSendOtp();
+            return;
+        }
+
+        if (authMode === 'signup' && otpSent) {
+            await handleVerifyAndSignup(e);
+            return;
+        }
+
         setIsLoading(true);
         try {
             if (authMode === 'login') {
                 await signInWithEmailAndPassword(auth, email, password);
                 toast({ title: "Signed in successfully" });
                 setIsAuthDialogOpen(false);
-            } else {
-                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                if (userCredential.user) {
-                    await updateProfile(userCredential.user, { displayName: email.split('@')[0] });
-                }
-                toast({ title: "Account created successfully" });
-                setIsAuthDialogOpen(false);
             }
+            // Signup logic is handled above now
         } catch (error: any) {
             toast({
                 title: "Authentication failed",
@@ -234,7 +313,7 @@ export function UserAuthButton() {
             )}
 
             <Dialog open={isAuthDialogOpen} onOpenChange={setIsAuthDialogOpen}>
-                <DialogContent className="sm:max-w-[400px] border-primary/20 bg-background/95 backdrop-blur-xl">
+                <DialogContent className="w-[95vw] sm:w-full sm:max-w-[400px] rounded-xl sm:rounded-lg border-primary/20 bg-background/95 backdrop-blur-xl p-4 sm:p-6 overflow-y-auto max-h-[90vh]">
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2 text-2xl font-bold font-headline">
                             <Sparkles className="h-6 w-6 text-primary" />
@@ -245,16 +324,15 @@ export function UserAuthButton() {
                         </DialogDescription>
                     </DialogHeader>
 
-                    <Tabs defaultValue="login" className="w-full mt-4" onValueChange={(v) => { setAuthMode(v as any); setMagicLinkSent(false); }}>
-                        <TabsList className="grid w-full grid-cols-3 bg-muted/50">
-                            <TabsTrigger value="login">Sign In</TabsTrigger>
-                            <TabsTrigger value="signup">Sign Up</TabsTrigger>
-                            <TabsTrigger value="magic">Magic Link</TabsTrigger>
+                    <Tabs defaultValue="login" className="w-full mt-4" onValueChange={(v) => { setAuthMode(v as any); setMagicLinkSent(false); setOtpSent(false); }}>
+                        <TabsList className="grid w-full grid-cols-3 bg-muted/50 h-auto p-1">
+                            <TabsTrigger value="login" className="text-xs sm:text-sm py-2">Sign In</TabsTrigger>
+                            <TabsTrigger value="signup" className="text-xs sm:text-sm py-2">Sign Up</TabsTrigger>
+                            <TabsTrigger value="magic" className="text-xs sm:text-sm py-2">Magic Link</TabsTrigger>
                         </TabsList>
 
                         {/* ... Login Tab ... */}
                         <TabsContent value="login" className="space-y-4 py-4 mt-0">
-                            {/* ... existing login form ... */}
                             <form onSubmit={handleAuth} className="space-y-4">
                                 <div className="space-y-2">
                                     <Label htmlFor="email-login">Email Address</Label>
@@ -293,37 +371,79 @@ export function UserAuthButton() {
 
                         {/* ... Signup Tab ... */}
                         <TabsContent value="signup" className="space-y-4 py-4 mt-0">
-                            {/* ... existing signup form ... */}
                             <form onSubmit={handleAuth} className="space-y-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="email-signup">Email Address</Label>
-                                    <Input
-                                        id="email-signup"
-                                        type="email"
-                                        placeholder="name@example.com"
-                                        value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
-                                        className="border-border/50 focus:border-primary/50"
-                                        required
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="password-signup">Password</Label>
-                                    <Input
-                                        id="password-signup"
-                                        type="password"
-                                        value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
-                                        className="border-border/50 focus:border-primary/50"
-                                        required
-                                    />
-                                </div>
-                                <Button type="submit" className="w-full h-11" disabled={isLoading}>
-                                    {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UserPlus className="mr-2 h-4 w-4" />}
-                                    Create Account
-                                </Button>
+                                {!otpSent ? (
+                                    <>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="email-signup">Email Address</Label>
+                                            <Input
+                                                id="email-signup"
+                                                type="email"
+                                                placeholder="name@example.com"
+                                                value={email}
+                                                onChange={(e) => setEmail(e.target.value)}
+                                                className="border-border/50 focus:border-primary/50"
+                                                required
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="password-signup">Password</Label>
+                                            <Input
+                                                id="password-signup"
+                                                type="password"
+                                                value={password}
+                                                onChange={(e) => setPassword(e.target.value)}
+                                                className="border-border/50 focus:border-primary/50"
+                                                required
+                                            />
+                                        </div>
+                                        <Button type="submit" className="w-full h-11" disabled={isLoading}>
+                                            {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UserPlus className="mr-2 h-4 w-4" />}
+                                            Create Account
+                                        </Button>
+                                    </>
+                                ) : (
+                                    <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="otp-code">Verification Code</Label>
+                                            <p className="text-xs text-muted-foreground">
+                                                We sent a code to <span className="font-medium text-foreground">{email}</span>.
+                                            </p>
+                                            <Input
+                                                id="otp-code"
+                                                type="text"
+                                                placeholder="123456"
+                                                value={otpCode}
+                                                onChange={(e) => setOtpCode(e.target.value)}
+                                                className="border-border/50 focus:border-primary/50 text-center tracking-widest text-lg"
+                                                required
+                                                maxLength={6}
+                                            />
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <Button type="button" variant="outline" className="flex-1" onClick={() => setOtpSent(false)}>
+                                                Back
+                                            </Button>
+                                            <Button type="submit" className="flex-[2]" disabled={isLoading}>
+                                                {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle2 className="mr-2 h-4 w-4" />}
+                                                Verify & Create
+                                            </Button>
+                                        </div>
+                                        <div className="text-center">
+                                            <button
+                                                type="button"
+                                                className="text-xs text-primary hover:underline"
+                                                onClick={handleSendOtp}
+                                                disabled={isLoading}
+                                            >
+                                                Resend Code
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
                             </form>
                         </TabsContent>
+
 
                         {/* ... Magic Link Tab ... */}
                         <TabsContent value="magic" className="space-y-4 py-4 mt-0">

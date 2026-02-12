@@ -12,7 +12,9 @@ interface RateLimitEntry {
   resetTime: number;
 }
 
-const rateLimitStore = new Map<string, RateLimitEntry>();
+const globalStore = global as unknown as { _rateLimitStore?: Map<string, RateLimitEntry> };
+const rateLimitStore = globalStore._rateLimitStore || new Map<string, RateLimitEntry>();
+if (process.env.NODE_ENV !== 'production') globalStore._rateLimitStore = rateLimitStore;
 
 // Cleanup old entries every 5 minutes
 setInterval(() => {
@@ -64,13 +66,13 @@ export function checkRateLimit(
  */
 export async function getClientIp(): Promise<string> {
   const headersList = await headers();
-  
+
   // Check various header sources in order of reliability
   const forwarded = headersList.get('x-forwarded-for');
   if (forwarded) {
     return forwarded.split(',')[0].trim();
   }
-  
+
   const realIp = headersList.get('x-real-ip');
   if (realIp) {
     return realIp;

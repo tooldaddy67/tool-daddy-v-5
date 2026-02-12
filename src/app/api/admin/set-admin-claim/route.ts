@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
 
         // Set or remove admin claim
         const isAdmin = admin !== false; // default: true
-        await adminAuth.setCustomClaims(targetUid, { admin: isAdmin });
+        await adminAuth.setCustomUserClaims(targetUid, { admin: isAdmin });
 
         // Force token refresh for the target user
         await adminAuth.revokeRefreshTokens(targetUid);

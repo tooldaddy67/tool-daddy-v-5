@@ -18,6 +18,23 @@ if (!admin.apps.length) {
     }
 }
 
-export const adminAuth = admin.auth();
-export const adminFirestore = admin.firestore();
+let adminAuth: admin.auth.Auth;
+let adminFirestore: admin.firestore.Firestore;
+let adminDb: admin.firestore.Firestore;
+
+try {
+    adminAuth = admin.auth();
+    adminFirestore = admin.firestore();
+    adminDb = adminFirestore;
+} catch (error) {
+    console.error('Failed to initialize Firebase Admin services', error);
+    // @ts-ignore
+    adminAuth = null;
+    // @ts-ignore
+    adminFirestore = null;
+    // @ts-ignore
+    adminDb = null;
+}
+
+export { adminAuth, adminFirestore, adminDb };
 export default admin;

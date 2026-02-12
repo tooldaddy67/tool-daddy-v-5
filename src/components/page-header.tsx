@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { SidebarTrigger } from '@/components/ui/sidebar';
+import { cn } from '@/lib/utils';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -30,7 +31,10 @@ export default function PageHeader() {
 
   return (
     <>
-      <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background/50 backdrop-blur-lg px-4 md:px-6">
+      <header className={cn(
+        "sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background/50 backdrop-blur-lg px-4 md:px-6",
+        isHome && "hidden md:flex" // Hide on mobile if home, as we have MobileHome header
+      )}>
         <div className="md:hidden">
           <SidebarTrigger />
         </div>

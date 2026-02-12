@@ -238,6 +238,32 @@
   }
 }
 
+@media (max-width: 768px) {
+  .glow-island, 
+  .tool-island,
+  .tool-island::before {
+    animation: none !important;
+    transition: none !important;
+  }
+  
+  .glow-island {
+    box-shadow: 0 0 10px 2px var(--glow-color, hsla(var(--primary), 0.3)) !important;
+  }
+
+  .tool-island {
+     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+  }
+
+  .tool-island::before {
+    display: none !important; 
+  }
+
+  body {
+    overflow-x: hidden;
+  }
+}
+
+
 /* ELITE MESH BACKGROUND */
 .mesh-bg {
   background-color: hsl(var(--background));

@@ -1,4 +1,4 @@
-import * as Sentry from '@sentry/nextjs';
+// import * as Sentry from '@sentry/nextjs';
 
 /**
  * Initialize Sentry for error tracking.
@@ -6,11 +6,14 @@ import * as Sentry from '@sentry/nextjs';
  */
 export function initSentry() {
   if (process.env.NEXT_PUBLIC_SENTRY_DSN) {
+    console.log('Sentry initialization requested but @sentry/nextjs is not installed.');
+    /*
     Sentry.init({
       dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
       tracesSampleRate: 1.0,
       environment: process.env.NODE_ENV,
     });
+    */
   }
 }
 
@@ -20,5 +23,6 @@ export function initSentry() {
  * @param {object} [context]
  */
 export function logErrorToSentry(error: Error, context?: Record<string, any>) {
-  Sentry.captureException(error, { extra: context });
+  console.error('Error (simulated Sentry log):', error, context);
+  // Sentry.captureException(error, { extra: context });
 }

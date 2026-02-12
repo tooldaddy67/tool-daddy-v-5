@@ -18,7 +18,18 @@ export function formatBytes(bytes: number, decimals = 2) {
 }
 
 export function getFileExtension(mimeType?: string) {
-    if (!mimeType) return 'bin';
-    const parts = mimeType.split('/');
-    return parts[parts.length - 1] || 'bin';
+  if (!mimeType) return 'bin';
+  const parts = mimeType.split('/');
+  return parts[parts.length - 1] || 'bin';
+}
+
+export function safeUUID(): string {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
 }

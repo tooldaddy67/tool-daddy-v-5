@@ -1,4 +1,4 @@
-import { getAuth, listUsers, revokeRefreshTokens } from 'firebase-admin/auth';
+import { getAuth } from 'firebase-admin/auth';
 
 /**
  * Revoke refresh tokens for users inactive for a given number of days.
@@ -11,12 +11,12 @@ export async function revokeInactiveUserTokens(daysInactive = 30) {
   const cutoff = now - daysInactive * 24 * 60 * 60 * 1000;
   let nextPageToken;
   do {
-    const result = await listUsers(1000, nextPageToken);
+    const result: any = await auth.listUsers(1000, nextPageToken);
     for (const user of result.users) {
       if (user.metadata.lastSignInTime) {
         const lastSignIn = new Date(user.metadata.lastSignInTime).getTime();
         if (lastSignIn < cutoff) {
-          await revokeRefreshTokens(user.uid);
+          await auth.revokeRefreshTokens(user.uid);
           console.log(`Revoked tokens for inactive user: ${user.uid}`);
         }
       }
