@@ -48,6 +48,7 @@
 
   html {
     font-size: calc(100% * var(--spacing-multiplier, 1));
+    overflow-x: hidden;
   }
 
   .dark {
@@ -90,6 +91,9 @@
   body {
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
+    overflow-x: hidden !important;
+    touch-action: manipulation;
+    -webkit-text-size-adjust: 100%;
   }
 
   /* Custom Scrollbar Styles */

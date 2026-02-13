@@ -66,6 +66,10 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
   themeColor: [
     { media: '(prefers-color-scheme: light)', color: 'white' },
     { media: '(prefers-color-scheme: dark)', color: 'black' },
@@ -122,35 +126,33 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
                 <LazyMotion features={domAnimation}>
                   <ClientOnlyExtras />
                   <SidebarProviderWrapper>
-                    <div className="flex w-full">
-                      <AppSidebar />
-                      <main className="flex-1 flex flex-col min-h-screen">
-                        <PageHeader />
-                        <script
-                          type="application/ld+json"
-                          dangerouslySetInnerHTML={{
-                            __html: JSON.stringify({
-                              '@context': 'https://schema.org',
-                              '@type': 'WebSite',
-                              name: 'Tool Daddy',
-                              description: 'The ultimate free online tool suite. Image compression, video conversion, AI tools, and more.',
-                              url: process.env.NEXT_PUBLIC_BASE_URL || 'https://tool-daddy.com',
-                              potentialAction: {
-                                '@type': 'SearchAction',
-                                target: {
-                                  '@type': 'EntryPoint',
-                                  urlTemplate: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://tool-daddy.com'}/?q={search_term_string}`,
-                                },
-                                'query-input': 'required name=search_term_string',
+                    <AppSidebar />
+                    <main className="flex-1 flex flex-col min-h-screen w-full relative overflow-x-hidden">
+                      <PageHeader />
+                      <script
+                        type="application/ld+json"
+                        dangerouslySetInnerHTML={{
+                          __html: JSON.stringify({
+                            '@context': 'https://schema.org',
+                            '@type': 'WebSite',
+                            name: 'Tool Daddy',
+                            description: 'The ultimate free online tool suite. Image compression, video conversion, AI tools, and more.',
+                            url: process.env.NEXT_PUBLIC_BASE_URL || 'https://tool-daddy.com',
+                            potentialAction: {
+                              '@type': 'SearchAction',
+                              target: {
+                                '@type': 'EntryPoint',
+                                urlTemplate: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://tool-daddy.com'}/?q={search_term_string}`,
                               },
-                            })
-                          }}
-                        />
-                        <div className="flex-1">{children}</div>
-                        <AppFooter />
-                        <MobileNav />
-                      </main>
-                    </div>
+                              'query-input': 'required name=search_term_string',
+                            },
+                          })
+                        }}
+                      />
+                      <div className="flex-1 w-full flex flex-col items-center">{children}</div>
+                      <AppFooter />
+                      <MobileNav />
+                    </main>
                   </SidebarProviderWrapper>
                   <FloatingFeedback />
                 </LazyMotion>

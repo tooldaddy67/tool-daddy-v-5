@@ -3,18 +3,21 @@
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { useSettings } from '@/components/settings-provider';
 import { ReactNode } from 'react';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 export function SidebarProviderWrapper({ children }: { children: ReactNode }) {
     const { settings } = useSettings();
+    const isMobile = useIsMobile();
 
     // When mini style is active, we force the sidebar to stay collapsed
-    // We use the 'open' prop to control it definitively based on settings
+    // On mobile, we also force it collapsed to prevent layout shifts
     const isMini = settings.sidebarStyle === 'mini';
+    const shouldBeOpen = !isMini && !isMobile;
 
     return (
         <SidebarProvider
-            defaultOpen={!isMini}
-            open={isMini ? false : undefined}
+            defaultOpen={shouldBeOpen}
+            open={shouldBeOpen ? undefined : false}
             style={{
                 "--sidebar-width": "18rem",
                 "--sidebar-width-icon": "60px",

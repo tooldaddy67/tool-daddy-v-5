@@ -13,32 +13,32 @@ export function MobileHome() {
     const { user } = useUser();
 
     return (
-        <div className="min-h-screen bg-[#0a192f] md:hidden pb-32">
+        <div className="min-h-screen w-full bg-[#112240] md:hidden pb-32 overflow-x-hidden flex flex-col items-center">
             <MobileHeader searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
 
-            <main className="pt-20 px-6 space-y-12">
-                {/* Vogue Style Header */}
-                <div className="relative pt-8">
-                    <div className="absolute top-0 right-0 font-playfair italic text-6xl opacity-20 text-white pointer-events-none">
-                        Vol.5
-                    </div>
-
+            <div className="pt-24 px-4 space-y-10 flex flex-col items-center w-full max-w-full">
+                {/* New Branding Hero - Forced Centering */}
+                <div className="w-full flex flex-col items-center text-center">
                     <motion.div
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        className="space-y-6"
+                        initial={{ opacity: 0, y: 15 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="flex flex-col items-center w-full"
                     >
-                        <h1 className="text-6xl font-black text-white leading-[0.9] tracking-tighter uppercase font-headline">
-                            Unlock <br /> System <br /> Power
+                        <h1 className="text-2xl font-black tracking-tighter uppercase font-headline text-center">
+                            <span className="text-white">Tool</span>{" "}
+                            <span className="text-cyan-400">Daddy</span>
                         </h1>
-                        <p className="text-base font-bold text-white/90 max-w-[300px] leading-snug uppercase tracking-tight">
-                            With Tool Daddy, aspiring creators receive the necessary tools and resources to build a high-end digital workflow that can be shared across the workspace. This gives you the chance to boost your productivity by thousands!
+
+                        <p className="mt-4 text-[10px] font-semibold text-white/70 max-w-[240px] mx-auto leading-relaxed uppercase tracking-widest text-center">
+                            Your ultimate digital toolkit. Simplify your workflow with our collection of powerful, easy-to-use tools designed for creators and developers.
                         </p>
 
-                        <Link href="/tools" className="inline-flex items-center gap-2 text-white font-black uppercase text-sm border-b-2 border-white pb-1 hover:gap-4 transition-all group">
-                            Explore All Tools
-                            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                        </Link>
+                        <div className="mt-8 flex justify-center w-full">
+                            <Link href="/tools" className="inline-flex items-center gap-2 text-white font-black uppercase text-[10px] border-b border-white/30 pb-1 hover:border-white transition-all group">
+                                Explore All Tools
+                                <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
+                            </Link>
+                        </div>
                     </motion.div>
                 </div>
 
@@ -152,7 +152,7 @@ export function MobileHome() {
                         </div>
                     </motion.section>
                 )}
-            </main>
+            </div>
         </div>
     );
 }

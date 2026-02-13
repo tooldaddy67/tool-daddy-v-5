@@ -17,7 +17,6 @@ if (!admin.apps.length) {
             console.log('Firebase Admin: Initialized with individual credentials.');
         } else if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
             let key = process.env.FIREBASE_SERVICE_ACCOUNT_KEY.trim();
-            // Remove wrapping quotes if present
             if (key.startsWith("'") && key.endsWith("'")) key = key.slice(1, -1);
             if (key.startsWith('"') && key.endsWith('"')) key = key.slice(1, -1);
 
@@ -26,9 +25,13 @@ if (!admin.apps.length) {
                 credential: admin.credential.cert(serviceAccount),
             });
             console.log('Firebase Admin: Initialized with JSON key.');
+        } else if (projectId) {
+            // If at least project ID is provided, try to use default credentials (might work in some GCP/Firebase environments)
+            admin.initializeApp({ projectId });
+            console.log('Firebase Admin: Initialized with Project ID only.');
         } else {
-            console.warn('Firebase Admin: No credentials found. Using default.');
-            admin.initializeApp();
+            console.warn('Firebase Admin: No credentials or Project ID found. Admin features will be disabled.');
+            // Do NOT call initializeApp() here to prevent the "Unable to detect a Project Id" crash
         }
     } catch (error) {
         console.error('Firebase Admin: Initialization failed!', error);
@@ -40,9 +43,19 @@ let adminFirestore: admin.firestore.Firestore;
 let adminDb: admin.firestore.Firestore;
 
 try {
-    adminAuth = admin.auth();
-    adminFirestore = admin.firestore();
-    adminDb = adminFirestore;
+    if (admin.apps.length > 0) {
+        adminAuth = admin.auth();
+        adminFirestore = admin.firestore();
+        adminDb = adminFirestore;
+    } else {
+        console.warn('Firebase Admin: No apps initialized. Services will be null.');
+        // @ts-ignore
+        adminAuth = null;
+        // @ts-ignore
+        adminFirestore = null;
+        // @ts-ignore
+        adminDb = null;
+    }
 } catch (error) {
     console.error('Failed to initialize Firebase Admin services', error);
     // @ts-ignore

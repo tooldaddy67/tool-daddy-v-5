@@ -72,7 +72,7 @@ export function MobileHeader({ searchQuery, setSearchQuery }: MobileHeaderProps)
                         value={setSearchQuery ? searchQuery : localQuery}
                         onChange={handleSearch}
                         onKeyDown={handleKeyDown}
-                        className="h-9 w-full bg-accent/50 border-transparent focus-visible:bg-background focus-visible:border-primary pl-9 rounded-full text-sm"
+                        className="h-9 w-full bg-accent/50 border-transparent focus-visible:bg-background focus-visible:border-primary pl-9 rounded-full text-base"
                     />
                 </div>
             </div>
