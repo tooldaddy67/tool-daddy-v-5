@@ -80,7 +80,17 @@ import { FloatingFeedback } from '@/components/floating-feedback';
 
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  const lockoutStatus = await checkIpLockout();
+  let lockoutStatus = { isLocked: false, lockedUntil: 0 };
+
+  try {
+    const status = await checkIpLockout();
+    lockoutStatus = {
+      isLocked: status.isLocked || false,
+      lockedUntil: status.lockedUntil || 0
+    };
+  } catch (error) {
+    console.error('[RootLayout] IP Lockout check failed:', error);
+  }
 
   return (
     <html lang="en" suppressHydrationWarning className={cn(

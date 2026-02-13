@@ -103,43 +103,50 @@ export async function verifyAdminPassword(password: string): Promise<AdminAuthRe
 }
 
 export async function checkIpLockout(): Promise<AdminAuthResponse> {
-    const ip = await getIp();
+    try {
+        const ip = await getIp();
 
-    if (!adminDb) return { isValid: false, isLocked: false };
+        if (!adminDb) return { isValid: false, isLocked: false };
 
-    const lockoutRef = adminDb.collection('admin_lockouts').doc(ip);
-    const lockoutDoc = await lockoutRef.get();
+        const lockoutRef = adminDb.collection('admin_lockouts').doc(ip);
+        const lockoutDoc = await lockoutRef.get();
 
-    if (lockoutDoc.exists) {
-        const data = lockoutDoc.data();
-        if (data) {
-            const now = Date.now();
-            let lockedUntil: number = 0;
+        if (lockoutDoc.exists) {
+            const data = lockoutDoc.data();
+            if (data) {
+                const now = Date.now();
+                let lockedUntil: number = 0;
 
-            try {
-                const lu = data.lockedUntil;
-                if (lu && typeof lu === 'object' && '_seconds' in lu) lockedUntil = lu._seconds * 1000;
-                else if (typeof lu?.toMillis === 'function') lockedUntil = lu.toMillis();
-                else if (lu instanceof Date) lockedUntil = lu.getTime();
-                else if (lu && typeof lu === 'object' && 'getTime' in lu) lockedUntil = (lu as any).getTime();
-                else lockedUntil = Number(lu);
-            } catch (e) {
-                lockedUntil = 0;
-            }
+                try {
+                    const lu = data.lockedUntil;
+                    if (lu && typeof lu === 'object' && '_seconds' in lu) lockedUntil = lu._seconds * 1000;
+                    else if (typeof lu?.toMillis === 'function') lockedUntil = lu.toMillis();
+                    else if (lu instanceof Date) lockedUntil = lu.getTime();
+                    else if (lu && typeof lu === 'object' && 'getTime' in lu) lockedUntil = (lu as any).getTime();
+                    else lockedUntil = Number(lu);
+                } catch (e) {
+                    lockedUntil = 0;
+                }
 
-            if (lockedUntil > now) {
-                console.log(`[AdminAuth] >>> BLOCKING SITE for IP: [${ip}] until ${new Date(lockedUntil).toISOString()}`);
-                return { isValid: false, isLocked: true, lockedUntil };
-            }
+                if (lockedUntil > now) {
+                    // Redact IP in production logs but show first segment for debugging
+                    const redactedIp = ip === '127.0.0.1' ? ip : `${ip.split('.')[0]}.X.X.X`;
+                    console.log(`[AdminAuth] >>> BLOCKING SITE for IP: [${redactedIp}] until ${new Date(lockedUntil).toISOString()}`);
+                    return { isValid: false, isLocked: true, lockedUntil };
+                }
 
-            // Secondary safety: if attempts are huge but no lockedUntil, lock them anyway
-            if (data.attempts >= 4 && !lockedUntil) {
-                const newLockedUntil = Date.now() + 3 * 60 * 1000;
-                await lockoutRef.set({ lockedUntil: new Date(newLockedUntil) }, { merge: true });
-                return { isValid: false, isLocked: true, lockedUntil: newLockedUntil };
+                // Secondary safety: if attempts are huge but no lockedUntil, lock them anyway
+                if (data.attempts >= 4 && !lockedUntil) {
+                    const newLockedUntil = Date.now() + 3 * 60 * 1000;
+                    await lockoutRef.set({ lockedUntil: new Date(newLockedUntil) }, { merge: true });
+                    return { isValid: false, isLocked: true, lockedUntil: newLockedUntil };
+                }
             }
         }
-    }
 
-    return { isValid: false, isLocked: false };
+        return { isValid: false, isLocked: false };
+    } catch (error) {
+        console.error('[AdminAuth] Error in checkIpLockout:', error);
+        return { isValid: false, isLocked: false };
+    }
 }
