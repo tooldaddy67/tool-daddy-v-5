@@ -26,26 +26,24 @@ export default function MacLookup() {
         setResult(null);
 
         try {
-            // Primary lookup
-            let response = await fetch(`https://api.macvendors.com/${cleanMac}`);
+            const response = await fetch(`/api/mac-lookup?mac=${cleanMac}`);
 
             if (response.ok) {
-                const vendor = await response.text();
-                setResult({ vendor });
-            } else {
-                // Secondary fallback
-                response = await fetch(`https://api.maclookup.app/v2/macs/${cleanMac}`);
                 const data = await response.json();
-                if (data.success && data.company) {
-                    setResult({ vendor: data.company });
+                if (data.vendor) {
+                    setResult({ vendor: data.vendor });
                 } else {
-                    throw new Error('Vendor not found in database');
+                    throw new Error(data.error || 'Vendor not found');
                 }
+            } else {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.error || `HTTP ${response.status}`);
             }
         } catch (error: any) {
+            console.error('Lookup detailed error:', error);
             toast({
                 title: 'Lookup Failed',
-                description: 'Could not find vendor. Make sure the MAC is valid.',
+                description: error.message || 'Could not find vendor. Make sure the MAC is valid.',
                 variant: 'destructive'
             });
         } finally {

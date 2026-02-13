@@ -21,8 +21,7 @@ import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
 import AdModal from '@/components/ad-modal';
 import { Badge } from '@/components/ui/badge';
-import { cn } from '@/lib/utils';
-
+import { useToolAd } from '@/hooks/use-tool-ad';
 
 const StyleSlider = ({ label, value, onChange, variant, helpText }: { label: string, value: number, onChange: (value: number) => void, variant: any, helpText: string }) => (
   <div className="space-y-2 group" title={helpText}>
@@ -43,6 +42,7 @@ const StyleSlider = ({ label, value, onChange, variant, helpText }: { label: str
 )
 
 export default function AiTextHumanizer() {
+  const { isAdOpen, setIsAdOpen, showAd, handleAdFinish, duration, title: adTitle } = useToolAd('heavy_ai');
   const [inputText, setInputText] = useState('');
   const [humanizedText, setHumanizedText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -56,9 +56,6 @@ export default function AiTextHumanizer() {
   const [directness, setDirectness] = useState(5);
   const [conciseness, setConciseness] = useState(5);
 
-  const [isAdModalOpen, setIsAdModalOpen] = useState(false);
-
-  // --- Phase 2: Rate Limiting State ---
   const [rateLimitInfo, setRateLimitInfo] = useState<{ remaining: number | null, limit: number | null }>({ remaining: null, limit: 4 });
   const [cooldownTime, setCooldownTime] = useState(0);
 
@@ -102,7 +99,7 @@ export default function AiTextHumanizer() {
       return;
     }
 
-    setIsAdModalOpen(true);
+    showAd(performHumanize);
   };
 
   const handleError = (error: any) => {
@@ -111,7 +108,6 @@ export default function AiTextHumanizer() {
 
     if (error instanceof Error) {
       description = error.message;
-      // Check for rate limit error from backend
       if (description.startsWith('Rate limit exceeded.')) {
         const timeMatch = description.match(/(\d+)/);
         if (timeMatch) {
@@ -135,11 +131,9 @@ export default function AiTextHumanizer() {
     setIsCopied(false);
 
     try {
-      // Execute reCAPTCHA v3
       if (typeof window !== 'undefined' && (window as any).grecaptcha) {
         await (window as any).grecaptcha.ready(async () => {
-          const token = await (window as any).grecaptcha.execute('6Lfe02YsAAAAADPOetn7_P0L2oW2xhLgDVmYZgbF', { action: 'humanize_text' });
-          console.log('reCAPTCHA token generated:', token ? 'Success' : 'Failed');
+          await (window as any).grecaptcha.execute('6Lfe02YsAAAAADPOetn7_P0L2oW2xhLgDVmYZgbF', { action: 'humanize_text' });
         });
       }
     } catch (error) {
@@ -165,7 +159,6 @@ export default function AiTextHumanizer() {
         data: { inputText, humanizedText: result.data.humanizedText },
       });
 
-      // Send notification
       sendNotification(firestore, user?.uid, {
         title: 'Text Humanized',
         message: 'Your text has been successfully humanized.',
@@ -174,11 +167,6 @@ export default function AiTextHumanizer() {
       });
     }
   }
-
-  const handleAdFinish = async () => {
-    setIsAdModalOpen(false);
-    await performHumanize();
-  };
 
   const handleCopy = () => {
     if (!humanizedText) return;
@@ -209,7 +197,7 @@ export default function AiTextHumanizer() {
                   onChange={(e) => setInputText(e.target.value)}
                   className="h-full resize-none min-h-[200px]"
                   disabled={isLoading}
-                  maxLength={MAX_CHAR_LIMIT + 500} // Soft limit for UX
+                  maxLength={MAX_CHAR_LIMIT + 500}
                 />
                 <div className="absolute bottom-2 right-3 text-xs text-muted-foreground tabular-nums">
                   {inputText.length} / {MAX_CHAR_LIMIT}
@@ -252,7 +240,6 @@ export default function AiTextHumanizer() {
           </div>
         </div>
 
-
         <Card className="flex-1 flex flex-col bg-background/80 border-border/20">
           <CardHeader>
             <CardTitle>Output</CardTitle>
@@ -269,17 +256,8 @@ export default function AiTextHumanizer() {
                 className="h-full resize-none bg-muted/50 min-h-[200px]"
               />
               {humanizedText && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={handleCopy}
-                  className="absolute top-2 right-2"
-                >
-                  {isCopied ? (
-                    <Check className="h-5 w-5 text-green-500" />
-                  ) : (
-                    <Copy className="h-5 w-5" />
-                  )}
+                <Button variant="ghost" size="icon" onClick={handleCopy} className="absolute top-2 right-2">
+                  {isCopied ? <Check className="h-5 w-5 text-green-500" /> : <Copy className="h-5 w-5" />}
                 </Button>
               )}
             </div>
@@ -288,11 +266,11 @@ export default function AiTextHumanizer() {
       </div>
 
       <AdModal
-        isOpen={isAdModalOpen}
-        onClose={() => setIsAdModalOpen(false)}
+        isOpen={isAdOpen}
+        onClose={() => setIsAdOpen(false)}
         onAdFinish={handleAdFinish}
-        title="Humanizing your text..."
-        duration={10}
+        title={adTitle}
+        duration={duration}
       />
     </>
   );

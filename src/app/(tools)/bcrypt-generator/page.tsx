@@ -45,10 +45,10 @@ export default function BcryptGenerator() {
         await new Promise(resolve => setTimeout(resolve, 50));
 
         try {
-            const salt = bcrypt.genSaltSync(r);
-            const hashed = bcrypt.hashSync(password, salt);
+            const salt = await bcrypt.genSalt(r);
+            const hashed = await bcrypt.hash(password, salt);
             setHash(hashed);
-            setVerifyHash(hashed); // Auto-fill verification hash for convenience
+            // Don't auto-fill verify hash to avoid confusion
         } catch (error) {
             toast({
                 title: 'Hashing Error',
@@ -60,10 +60,10 @@ export default function BcryptGenerator() {
         }
     };
 
-    const verify = () => {
+    const verify = async () => {
         if (!verifyPassword || !verifyHash) return;
         try {
-            const match = bcrypt.compareSync(verifyPassword, verifyHash);
+            const match = await bcrypt.compare(verifyPassword, verifyHash);
             setVerifyResult(match);
         } catch (error) {
             toast({

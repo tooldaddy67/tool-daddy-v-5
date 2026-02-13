@@ -268,8 +268,8 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                                 </div>
                             )}
 
-                            {/* Site Identity Section */}
-                            <div className="space-y-4">
+                            {/* Site Identity Section - Hidden on mobile */}
+                            <div className="space-y-4 hidden md:block">
                                 <div className="flex items-center gap-2 text-sm font-semibold opacity-70 uppercase tracking-wider text-primary">
                                     <ShieldCheck className="w-4 h-4" />
                                     <span>Brand Identity</span>

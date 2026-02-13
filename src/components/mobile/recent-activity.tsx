@@ -1,77 +1,72 @@
 "use client";
 
 import { useHistory } from "@/hooks/use-history";
-import { Clock, FileText, Image as ImageIcon, Music, Bot } from "lucide-react";
 import Link from "next/link";
-import { cn } from "@/lib/utils";
+import { ALL_TOOLS_CATEGORIES } from "@/lib/tools-data";
+import { Clock, ArrowRight } from "lucide-react";
 
 export function RecentActivity() {
     const { history, isLoaded } = useHistory();
 
-    // Mock icons based on tool name (simple heuristic)
-    const getToolIcon = (name: string) => {
-        const n = name.toLowerCase();
-        if (n.includes('pdf') || n.includes('note')) return FileText;
-        if (n.includes('image') || n.includes('photo')) return ImageIcon;
-        if (n.includes('music') || n.includes('audio')) return Music;
-        if (n.includes('ai')) return Bot;
-        return Clock;
+    const getToolDetails = (name: string) => {
+        for (const cat of ALL_TOOLS_CATEGORIES) {
+            const tool = cat.tools.find(t => t.name === name);
+            if (tool) return tool;
+        }
+        return { name, icon: Clock, href: '/', description: 'Tool' };
     };
 
-    if (!isLoaded) return null; // Or a loading skeleton
+    if (!isLoaded) return null;
 
-    const displayHistory = history.slice(0, 5); // Show top 5
+    // Deduplicate history by tool name for "Jump Back In" purposes
+    const uniqueHistory = Array.from(new Set(history.map(h => h.tool)))
+        .map(toolName => history.find(h => h.tool === toolName))
+        .filter(Boolean)
+        .slice(0, 10);
 
-    if (displayHistory.length === 0) {
-        return (
-            <div className="px-4 mb-8 md:hidden">
-                <h3 className="text-lg font-bold mb-4">Recent Activity</h3>
-                <div className="p-4 rounded-2xl bg-white/5 border border-white/5 text-center text-muted-foreground">
-                    <p>No recent activity yet.</p>
-                    <p className="text-sm">Start using tools to see them here!</p>
-                </div>
-            </div>
-        );
-    }
+    if (uniqueHistory.length === 0) return null;
 
     return (
-        <div className="w-full mb-10 md:hidden">
+        <div className="w-full mb-8 md:hidden">
             <div className="px-5 mb-4 flex items-center justify-between">
-                <h3 className="text-xl font-bold tracking-tight text-white">Recent Activity</h3>
-                <Link href="/history" className="text-sm text-muted-foreground hover:text-white transition-colors">See all</Link>
+                <h3 className="text-lg font-bold tracking-tight text-white flex items-center gap-2">
+                    Jump Back In <span className="text-xs font-normal text-muted-foreground bg-white/5 px-2 py-0.5 rounded-full border border-white/5">Recent</span>
+                </h3>
             </div>
 
-            {/* Horizontal Scroll Container */}
-            <div className="flex overflow-x-auto pb-6 px-5 gap-4 scrollbar-hide snap-x">
-                {displayHistory.map((item) => {
-                    const Icon = getToolIcon(item.tool);
+            <div className="flex overflow-x-auto pb-4 px-5 gap-3 scrollbar-hide snap-x">
+                {uniqueHistory.map((item) => {
+                    if (!item) return null;
+                    const tool = getToolDetails(item.tool);
+                    const Icon = tool.icon;
 
                     return (
-                        <div
+                        <Link
                             key={item.id}
-                            className="snap-start flex-shrink-0 w-[240px] p-5 rounded-[2rem] bg-[#13131A] border border-white/5 flex flex-col gap-4 relative overflow-hidden group shadow-lg"
+                            href={tool.href}
+                            className="snap-start flex-shrink-0 w-[160px] h-[140px] p-4 rounded-3xl bg-[#13131A] border border-white/5 relative overflow-hidden group active:scale-95 transition-transform"
                         >
-                            {/* Left Purple Glow Bar */}
-                            <div className="absolute top-0 bottom-0 left-0 w-1.5 bg-gradient-to-b from-purple-500 to-pink-500 shadow-[0_0_15px_rgba(168,85,247,0.4)]" />
+                            {/* Subtle Gradient Background */}
+                            <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
 
-                            <div className="flex items-start gap-4">
-                                <div className="p-2.5 rounded-2xl bg-[#1E1E26] text-primary border border-white/5 shadow-inner">
+                            {/* Top Color Line */}
+                            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 opacity-70" />
+
+                            <div className="h-full flex flex-col justify-between relative z-10">
+                                <div className="p-2.5 w-fit rounded-2xl bg-[#1E1E26] text-primary border border-white/5 shadow-inner group-hover:bg-[#252530] transition-colors">
                                     <Icon className="w-5 h-5" />
                                 </div>
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-bold text-white line-clamp-1">{item.tool}</p>
-                                    <p className="text-[10px] text-muted-foreground mt-0.5">
-                                        {new Date(item.timestamp).toLocaleDateString()}
-                                    </p>
+
+                                <div>
+                                    <h4 className="font-bold text-sm text-white line-clamp-2 leading-tight mb-1">
+                                        {tool.name}
+                                    </h4>
+                                    <div className="flex items-center text-[10px] text-muted-foreground group-hover:text-primary transition-colors">
+                                        Open Tool <ArrowRight className="w-3 h-3 ml-1 -rotate-45 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                                    </div>
                                 </div>
                             </div>
-
-                            <div className="bg-[#1E1E26]/50 rounded-xl px-3 py-2 border border-white/5">
-                                <p className="text-xs text-muted-foreground line-clamp-1">
-                                    Action completed successfully
-                                </p>
-                            </div>
-                        </div>
+                        </Link>
                     );
                 })}
             </div>

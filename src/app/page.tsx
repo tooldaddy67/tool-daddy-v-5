@@ -12,13 +12,11 @@ const DashboardWidgets = dynamic(() => import('@/components/dashboard-widgets').
   ssr: false
 });
 
-const BentoGrid = dynamic(() => import('@/components/home/bento-grid').then(mod => mod.BentoGrid), {
-  ssr: false // Disable SSR to improve TBT; these will hydrate on the client
-});
+const BentoGrid = dynamic(() => import('@/components/home/bento-grid').then(mod => mod.BentoGrid));
 
-const FeaturedTools = dynamic(() => import('@/components/home/featured-tools').then(mod => mod.FeaturedTools), {
-  ssr: false
-});
+const FeaturedTools = dynamic(() => import('@/components/home/featured-tools').then(mod => mod.FeaturedTools));
+
+import { MobileHome } from '@/components/mobile/mobile-home';
 
 export default function Home() {
   const { user, isUserLoading } = useUser();
@@ -26,37 +24,38 @@ export default function Home() {
   const showDashboard = isUserLoading || !!user;
 
   return (
-    <div className="flex flex-col w-full min-h-screen">
-      <main className="flex-1">
-        {/* New Hero Section */}
-        <HeroSection />
+    <>
+      <MobileHome />
+      <div className="hidden md:flex flex-col w-full min-h-screen">
+        <main className="flex-1">
+          {/* New Hero Section */}
+          <HeroSection />
 
-        {/* Bento Grid Features - content-visibility optimization for performance */}
-        <div className="contain-content">
+          {/* Bento Grid Features */}
           <BentoGrid />
-        </div>
 
-        {/* Dashboard / Featured Tools Section */}
-        <div className="relative w-full bg-background/50 backdrop-blur-sm">
+          {/* Dashboard / Featured Tools Section */}
+          <div className="relative w-full bg-background/50 backdrop-blur-sm">
 
-          <div className="space-y-12">
-            {showDashboard && (
-              <section className="px-4 md:px-6 py-12 max-w-7xl mx-auto border-b border-white/5 min-h-[400px]">
-                <div className="flex flex-col items-center justify-center text-center space-y-4 mb-8">
-                  <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl font-headline">Your Dashboard</h2>
-                  <p className="text-muted-foreground">Quick access to your recent activities.</p>
-                </div>
-                <DashboardWidgets />
-              </section>
-            )}
+            <div className="space-y-12">
+              {showDashboard && (
+                <section className="px-4 md:px-6 py-12 max-w-7xl mx-auto border-b border-white/5 min-h-[400px]">
+                  <div className="flex flex-col items-center justify-center text-center space-y-4 mb-8">
+                    <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl font-headline">Your Dashboard</h2>
+                    <p className="text-muted-foreground">Quick access to your recent activities.</p>
+                  </div>
+                  <DashboardWidgets />
+                </section>
+              )}
 
-            {/* Featured Tools & Link to All */}
-            <FeaturedTools />
+              {/* Featured Tools & Link to All */}
+              <FeaturedTools />
 
+            </div>
           </div>
-        </div>
-      </main>
-    </div>
+        </main>
+      </div>
+    </>
   );
 }
 

@@ -14,19 +14,24 @@ if (!admin.apps.length) {
                     privateKey,
                 }),
             });
-            console.log('Firebase Admin initialized with individual credentials.');
+            console.log('Firebase Admin: Initialized with individual credentials.');
         } else if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
-            const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
+            let key = process.env.FIREBASE_SERVICE_ACCOUNT_KEY.trim();
+            // Remove wrapping quotes if present
+            if (key.startsWith("'") && key.endsWith("'")) key = key.slice(1, -1);
+            if (key.startsWith('"') && key.endsWith('"')) key = key.slice(1, -1);
+
+            const serviceAccount = JSON.parse(key);
             admin.initializeApp({
                 credential: admin.credential.cert(serviceAccount),
             });
-            console.log('Firebase Admin initialized with JSON key.');
+            console.log('Firebase Admin: Initialized with JSON key.');
         } else {
-            console.warn('Firebase credentials not found. Attempting default.');
+            console.warn('Firebase Admin: No credentials found. Using default.');
             admin.initializeApp();
         }
     } catch (error) {
-        console.error('Firebase Admin initialization error', error);
+        console.error('Firebase Admin: Initialization failed!', error);
     }
 }
 

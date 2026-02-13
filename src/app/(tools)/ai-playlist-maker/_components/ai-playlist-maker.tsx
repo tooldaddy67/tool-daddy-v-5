@@ -26,6 +26,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { useToolAd } from '@/hooks/use-tool-ad';
 
 interface NowPlaying {
   title: string;
@@ -33,14 +34,14 @@ interface NowPlaying {
 }
 
 export default function AiPlaylistMaker() {
-  const [prompt, setPrompt] = useState('');
+  const [userPrompt, setUserPrompt] = useState('');
   const [playlist, setPlaylist] = useState<PlaylistOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const { addToHistory } = useHistory();
   const { firestore, user } = useFirebase();
-  const [isAdModalOpen, setIsAdModalOpen] = useState(false);
   const [nowPlaying, setNowPlaying] = useState<NowPlaying | null>(null);
+  const { isAdOpen, setIsAdOpen, showAd, handleAdFinish, duration, title: adTitle } = useToolAd('heavy_ai');
 
   // Helper function to generate YouTube Music search URL for direct music videos
   const getYoutubeSearchUrl = (title: string, artist: string) => {
@@ -62,7 +63,7 @@ export default function AiPlaylistMaker() {
   };
 
   const handleGenerateClick = () => {
-    if (!prompt.trim()) {
+    if (!userPrompt.trim()) {
       toast({
         title: 'Prompt Required',
         description: 'Please enter a vibe or theme for your playlist.',
@@ -70,7 +71,7 @@ export default function AiPlaylistMaker() {
       });
       return;
     }
-    setIsAdModalOpen(true);
+    showAd(performGeneration);
   };
 
   const performGeneration = async () => {
@@ -78,7 +79,7 @@ export default function AiPlaylistMaker() {
     setPlaylist(null);
 
     try {
-      const result = await generatePlaylistAction({ prompt });
+      const result = await generatePlaylistAction({ prompt: userPrompt });
       setPlaylist(result);
 
       // Save to history
@@ -110,11 +111,6 @@ export default function AiPlaylistMaker() {
     }
   };
 
-  const handleAdFinish = async () => {
-    setIsAdModalOpen(false);
-    await performGeneration();
-  };
-
   const examplePrompts = [
     "Rainy day coding session",
     "80s synthwave driving at night",
@@ -137,8 +133,8 @@ export default function AiPlaylistMaker() {
             <CardContent className="flex-grow flex flex-col space-y-4">
               <Textarea
                 placeholder="e.g., 'A workout playlist with 90s hip-hop hits' or 'sad songs for walking in the rain'"
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
+                value={userPrompt}
+                onChange={(e) => setUserPrompt(e.target.value)}
                 className="h-full resize-none min-h-[150px]"
                 disabled={isLoading}
               />
@@ -146,7 +142,7 @@ export default function AiPlaylistMaker() {
                 <p className="text-xs text-muted-foreground">Or try an example:</p>
                 <div className="flex flex-wrap gap-2">
                   {examplePrompts.map(p => (
-                    <Button key={p} variant="outline" size="sm" onClick={() => setPrompt(p)} disabled={isLoading}>
+                    <Button key={p} variant="outline" size="sm" onClick={() => setUserPrompt(p)} disabled={isLoading}>
                       {p}
                     </Button>
                   ))}
@@ -229,11 +225,11 @@ export default function AiPlaylistMaker() {
       </div>
 
       <AdModal
-        isOpen={isAdModalOpen}
-        onClose={() => setIsAdModalOpen(false)}
+        isOpen={isAdOpen}
+        onClose={() => setIsAdOpen(false)}
         onAdFinish={handleAdFinish}
-        title="Generating your playlist..."
-        duration={5}
+        title={adTitle}
+        duration={duration}
       />
 
       {/* YouTube Player Modal */}

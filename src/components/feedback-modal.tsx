@@ -27,7 +27,7 @@ import { collection, serverTimestamp } from 'firebase/firestore';
 import { Loader2, MessageSquare } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
-export function FeedbackModal() {
+export function FeedbackModal({ trigger }: { trigger?: React.ReactNode }) {
     const { firestore, user } = useFirebase();
     const { toast } = useToast();
     const [open, setOpen] = useState(false);
@@ -90,10 +90,12 @@ export function FeedbackModal() {
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button variant="ghost" size="sm" className="hidden sm:flex text-muted-foreground hover:text-foreground h-auto p-0 md:p-2 md:h-9">
-                    <MessageSquare className="mr-2 h-4 w-4" />
-                    Feedback
-                </Button>
+                {trigger || (
+                    <Button variant="ghost" size="sm" className="hidden sm:flex text-muted-foreground hover:text-foreground h-auto p-0 md:p-2 md:h-9">
+                        <MessageSquare className="mr-2 h-4 w-4" />
+                        Feedback
+                    </Button>
+                )}
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>

@@ -4,6 +4,7 @@ import React, { createContext, useContext, useEffect, useState, useMemo } from '
 import { useFirebase, useDoc } from '@/firebase';
 import { doc, setDoc } from 'firebase/firestore';
 import { cn } from '@/lib/utils';
+import { SettingsDialog } from '@/components/settings-dialog';
 
 export type FontPair = 'tech' | 'modern' | 'classic' | 'friendly' | 'elegant' | 'futuristic' | 'monospace' | 'playful' | 'royal';
 export type ColorTheme = 'purple' | 'cyan' | 'green' | 'blue' | 'amber' | 'rose' | 'indigo' | 'emerald' | 'slate' | 'sunset' | 'custom';
@@ -40,6 +41,8 @@ interface SettingsContextType {
     settings: UserSettings;
     updateSettings: (newSettings: Partial<UserSettings>) => Promise<void>;
     isLoading: boolean;
+    settingsOpen: boolean;
+    setSettingsOpen: (open: boolean) => void;
 }
 
 const defaultSettings: UserSettings = {
@@ -57,9 +60,9 @@ const defaultSettings: UserSettings = {
     cardStyle: 'glass',
     showCursorEffect: false,
     showGrain: false,
-    showScrollIndicator: true,
-    enableSound: true,
-    accentGradient: true,
+    showScrollIndicator: false,
+    enableSound: false,
+    accentGradient: false,
     dataPersistence: true,
     notifications: true,
 };
@@ -102,6 +105,9 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     const [isLocalLoaded, setIsLocalLoaded] = useState(false);
     const [isDesktop, setIsDesktop] = useState(typeof window !== 'undefined' ? window.innerWidth >= 1024 : true);
 
+    // Global Settings Dialog State
+    const [settingsOpen, setSettingsOpen] = useState(false);
+
     // Handle Window Resize
     useEffect(() => {
         const handleResize = () => {
@@ -137,7 +143,6 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
             setLocalSettings(prev => ({
                 ...prev,
                 ...cloudSettings,
-                // Ensure new defaults are respected if cloud data is missing them
                 dataPersistence: cloudSettings.dataPersistence ?? prev.dataPersistence ?? true,
                 notifications: cloudSettings.notifications ?? prev.notifications ?? true,
                 primaryColor: cloudSettings.primaryColor ?? prev.primaryColor ?? '271 91% 65%',
@@ -165,17 +170,14 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
         root.style.setProperty('--font-headline', fonts.headline);
         root.style.setProperty('--font-body', fonts.body);
 
-        // Handle custom primary color
         const primary = localSettings.colorTheme === 'custom' ? localSettings.primaryColor : colors.primary;
         root.style.setProperty('--primary', primary || COLOR_THEMES.purple.primary);
         root.style.setProperty('--primary-foreground', colors.primaryForeground);
         root.style.setProperty('--accent', colors.accent);
 
-        // Sidebar and UI Styles - Use data attributes to avoid wiping out 'dark' class
         root.setAttribute('data-sidebar-style', localSettings.sidebarStyle);
         root.setAttribute('data-card-style', localSettings.cardStyle);
 
-        // Also add classes to body for easier CSS targeting, but use classList.add/remove
         const body = document.body;
         body.classList.remove('sidebar-mini', 'sidebar-float', 'ui-neo', 'ui-minimal', 'ui-glass');
         if (localSettings.sidebarStyle === 'mini') body.classList.add('sidebar-mini');
@@ -189,18 +191,10 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
         root.style.setProperty('--accent-gradient', localSettings.accentGradient ? '1' : '0');
         root.style.setProperty('--anim-speed', localSettings.animSpeed.toString());
 
-        if (isDesktop) {
-            root.style.setProperty('--glass-blur', BLUR_MAP[localSettings.blurIntensity]);
-            root.style.setProperty('--radius', RADIUS_MAP[localSettings.borderStyle]);
-            root.style.setProperty('--spacing-multiplier', DENSITY_MAP[localSettings.uiDensity]);
-            root.style.setProperty('--anim-speed', localSettings.animSpeed.toString());
-        } else {
-            // Standard values for mobile/tablet
-            root.style.setProperty('--glass-blur', '12px');
-            root.style.setProperty('--radius', '0.8rem');
-            root.style.setProperty('--spacing-multiplier', '1');
-            root.style.setProperty('--anim-speed', '1');
-        }
+        root.style.setProperty('--glass-blur', BLUR_MAP[localSettings.blurIntensity]);
+        root.style.setProperty('--radius', RADIUS_MAP[localSettings.borderStyle]);
+        root.style.setProperty('--spacing-multiplier', DENSITY_MAP[localSettings.uiDensity]);
+        root.style.setProperty('--anim-speed', localSettings.animSpeed.toString());
     }, [localSettings, isLocalLoaded, isDesktop]);
 
     const updateSettings = async (newSettings: Partial<UserSettings>) => {
@@ -208,25 +202,8 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
         setLocalSettings(updated);
         localStorage.setItem('tool-dady-settings', JSON.stringify(updated));
 
-        // If data persistence is OFF, and we are NOT toggling it ON right now,
-        // then we shouldn't save settings to cloud either... except the setting ITSELF needs to be saved.
-        // The prompt says "if user disable the feature we will delete it".
-        // Use case: User turns off persistence. We delete data. 
-        // We MUST save "dataPersistence: false" to Firestore? 
-        // "we will not store user data other then their pass word and user id in our data base"
-        // This suggests we shouldn't even store the preference!
-        // But if we don't store "persistence: false", how do we know next time they login?
-        // Maybe we just store this ONE document?
-        // "other then their pass word and user id".
-        // Strictly speaking, storing settings IS storing user data.
-        // However, without storing this bit, the feature is impossible to implement consistently across devices.
-        // I will assume we can store this one preference document.
-
         if (settingsDocRef) {
             try {
-                // If data persistence is disabled, we might want to ONLY save the persistence/notification flags?
-                // For now, I'll save everything to this doc as it's just preferences. 
-                // The heavy user data (history, etc) is what we really care about deleting.
                 await setDoc(settingsDocRef, updated, { merge: true });
             } catch (e) {
                 console.error('Failed to update cloud settings', e);
@@ -238,6 +215,8 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
         settings: localSettings,
         updateSettings,
         isLoading: !isLocalLoaded || (!!user && !user.isAnonymous && isCloudLoading),
+        settingsOpen,
+        setSettingsOpen
     };
 
     return (
@@ -249,6 +228,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
                 (!isDesktop || localSettings.bgStyle === 'dark') ? 'bg-background' : ''
             )}>
                 {children}
+                <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
             </div>
         </SettingsContext.Provider>
     );

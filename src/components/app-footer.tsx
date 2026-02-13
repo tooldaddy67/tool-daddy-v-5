@@ -1,9 +1,7 @@
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 
-const FeedbackModal = dynamic(() => import('@/components/feedback-modal').then(mod => mod.FeedbackModal), {
-  ssr: false,
-});
+const FeedbackModal = dynamic(() => import('@/components/feedback-modal').then(mod => mod.FeedbackModal));
 
 const Logo = () => (
   <svg
@@ -53,7 +51,9 @@ export default function AppFooter() {
             <Link href="/buy-me-a-coffee" className="text-muted-foreground hover:text-foreground transition-colors whitespace-nowrap">
               Support Us
             </Link>
-            <FeedbackModal />
+            <Link href="/feedback" className="text-muted-foreground hover:text-foreground transition-colors whitespace-nowrap">
+              Feedback
+            </Link>
           </div>
           <p className="text-[10px] sm:text-xs px-4 sm:px-0">
             This site is protected by reCAPTCHA and the Google{' '}
@@ -65,3 +65,4 @@ export default function AppFooter() {
     </footer>
   );
 }
+

@@ -14,6 +14,7 @@ export function AdminPasswordGate({ children }: { children: ReactNode }) {
     const [showPassword, setShowPassword] = useState(false);
     const [passwordError, setPasswordError] = useState(false);
     const [isVerifying, setIsVerifying] = useState(false);
+    const [failedAttempts, setFailedAttempts] = useState(0);
 
     useEffect(() => {
         if (typeof window !== 'undefined') {
@@ -26,16 +27,36 @@ export function AdminPasswordGate({ children }: { children: ReactNode }) {
         e.preventDefault();
         setIsVerifying(true);
         try {
-            const isValid = await verifyAdminPassword(passwordInput);
-            if (isValid) {
+            console.log(`[AdminGate] Attempt #${failedAttempts + 1}`);
+            const result = await verifyAdminPassword(passwordInput);
+            console.log('[AdminGate] Server Response:', result);
+
+            if (result.isValid) {
                 setIsAuthenticated(true);
                 setPasswordError(false);
+                setFailedAttempts(0);
                 sessionStorage.setItem('admin-auth', 'true');
+            } else if (result.isLocked) {
+                console.log('[AdminGate] Lockout confirmed by server. Reloading...');
+                window.location.reload();
             } else {
+                const newAttempts = failedAttempts + 1;
+                console.log(`[AdminGate] Invalid password. Client-side attempts: ${newAttempts}/4`);
+                setFailedAttempts(newAttempts);
                 setPasswordError(true);
+
+                if (newAttempts >= 4) {
+                    console.log('[AdminGate] Client-side limit reached. Forcing security reload...');
+                    window.location.reload();
+                    return;
+                }
+
+                if (result.error) {
+                    alert(`System Error: ${result.error}`);
+                }
             }
         } catch (error) {
-            console.error('Verification failed:', error);
+            console.error('[AdminGate] Verification crashed:', error);
             setPasswordError(true);
         } finally {
             setIsVerifying(false);

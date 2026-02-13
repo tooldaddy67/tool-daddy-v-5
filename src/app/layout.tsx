@@ -4,21 +4,19 @@ import { cn } from '@/lib/utils';
 import { Toaster } from '@/components/ui/toaster';
 import { ThemeProvider } from '@/components/theme-provider';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
-import { Inter, Space_Grotesk, Outfit, Plus_Jakarta_Sans, Quicksand, Nunito, Playfair_Display, Lora, Syne, JetBrains_Mono, Roboto_Mono, Fredoka, Cinzel, EB_Garamond } from 'next/font/google';
-import AppFooter from '@/components/app-footer';
+import { Inter, Space_Grotesk, Playfair_Display } from 'next/font/google';
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 import Script from 'next/script';
-import dynamic from 'next/dynamic';
 import { LazyMotion, domAnimation } from 'framer-motion';
 
-const AppSidebar = dynamic(() => import('@/components/app-sidebar'), {
-  ssr: false,
-  loading: () => <div className="w-[60px] md:w-[18rem] min-h-screen bg-sidebar border-r border-border/20" />
-});
-
-const PageHeader = dynamic(() => import('@/components/page-header'), {
-  ssr: false,
-  loading: () => <div className="h-16 w-full border-b border-border/20" />
-});
+import AppSidebar from '@/components/app-sidebar';
+import PageHeader from '@/components/page-header';
+import AppFooter from '@/components/app-footer';
+import { MobileNav } from '@/components/mobile/mobile-nav';
+import { ClientOnlyExtras } from '@/components/client-only-extras';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -32,19 +30,11 @@ const spaceGrotesk = Space_Grotesk({
   variable: '--font-space-grotesk',
 });
 
-// Non-default fonts: preload: false to avoid blocking initial render
-const outfit = Outfit({ subsets: ['latin'], display: 'swap', variable: '--font-outfit', preload: false });
-const plusJakartaSans = Plus_Jakarta_Sans({ subsets: ['latin'], display: 'swap', variable: '--font-plus-jakarta-sans', preload: false });
-const quicksand = Quicksand({ subsets: ['latin'], display: 'swap', variable: '--font-quicksand', preload: false });
-const nunito = Nunito({ subsets: ['latin'], display: 'swap', variable: '--font-nunito', preload: false });
-const playfairDisplay = Playfair_Display({ subsets: ['latin'], display: 'swap', variable: '--font-playfair-display', preload: false });
-const lora = Lora({ subsets: ['latin'], display: 'swap', variable: '--font-lora', preload: false });
-const syne = Syne({ subsets: ['latin'], display: 'swap', variable: '--font-syne', preload: false });
-const jetbrainsMono = JetBrains_Mono({ subsets: ['latin'], display: 'swap', variable: '--font-jetbrains-mono', preload: false });
-const robotoMono = Roboto_Mono({ subsets: ['latin'], display: 'swap', variable: '--font-roboto-mono', preload: false });
-const fredoka = Fredoka({ subsets: ['latin'], display: 'swap', variable: '--font-fredoka', preload: false });
-const cinzel = Cinzel({ subsets: ['latin'], display: 'swap', variable: '--font-cinzel', preload: false });
-const ebGaramond = EB_Garamond({ subsets: ['latin'], display: 'swap', variable: '--font-eb-garamond', preload: false });
+const playfair = Playfair_Display({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-playfair',
+});
 
 export const metadata: Metadata = {
   title: 'Tool Daddy - Your Ultimate Suite of Online Tools',
@@ -84,74 +74,82 @@ export const viewport: Viewport = {
 
 import { SettingsProvider } from '@/components/settings-provider';
 import { SidebarProviderWrapper } from '@/components/sidebar-provider-wrapper';
-import { ClientOnlyExtras } from '@/components/client-only-extras';
+import { checkIpLockout } from '@/app/actions/admin';
+import { BrutalLockout } from '@/components/brutal-lockout';
+import { FloatingFeedback } from '@/components/floating-feedback';
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+
+export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const lockoutStatus = await checkIpLockout();
+
   return (
     <html lang="en" suppressHydrationWarning className={cn(
       inter.variable,
       spaceGrotesk.variable,
-      outfit.variable,
-      plusJakartaSans.variable,
-      quicksand.variable,
-      nunito.variable,
-      playfairDisplay.variable,
-      lora.variable,
-      syne.variable,
-      jetbrainsMono.variable,
-      robotoMono.variable,
-      fredoka.variable,
-      cinzel.variable,
-      ebGaramond.variable
+      playfair.variable
     )}>
       <head>
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <link rel="apple-touch-icon" href="/icon.png" />
+        {/* Preconnect to external domains for performance */}
+        <link rel="preconnect" href="https://www.googletagmanager.com" />
+        <link rel="preconnect" href="https://www.google-analytics.com" />
+        <link rel="preconnect" href="https://www.google.com" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       </head>
       <body suppressHydrationWarning className="min-h-screen bg-background font-body antialiased">
         <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-P2725PBH"
           height="0" width="0" style={{ display: "none", visibility: "hidden" }} title="gtm"></iframe></noscript>
+
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
           <FirebaseClientProvider>
             <SettingsProvider>
-              <LazyMotion features={domAnimation}>
-                <ClientOnlyExtras />
-                <SidebarProviderWrapper>
-                  <div className="flex w-full">
-                    <AppSidebar />
-                    <main className="flex-1 flex flex-col min-h-screen">
-                      <PageHeader />
-                      <script
-                        type="application/ld+json"
-                        dangerouslySetInnerHTML={{
-                          __html: JSON.stringify({
-                            '@context': 'https://schema.org',
-                            '@type': 'WebSite',
-                            name: 'Tool Daddy',
-                            description: 'The ultimate free online tool suite. Image compression, video conversion, AI tools, and more.',
-                            url: process.env.NEXT_PUBLIC_BASE_URL || 'https://tool-daddy.com',
-                            potentialAction: {
-                              '@type': 'SearchAction',
-                              target: {
-                                '@type': 'EntryPoint',
-                                urlTemplate: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://tool-daddy.com'}/?q={search_term_string}`,
+              {lockoutStatus.isLocked && lockoutStatus.lockedUntil ? (
+                <BrutalLockout lockedUntil={lockoutStatus.lockedUntil} />
+              ) : (
+                <LazyMotion features={domAnimation}>
+                  <ClientOnlyExtras />
+                  <SidebarProviderWrapper>
+                    <div className="flex w-full">
+                      <AppSidebar />
+                      <main className="flex-1 flex flex-col min-h-screen">
+                        <PageHeader />
+                        <script
+                          type="application/ld+json"
+                          dangerouslySetInnerHTML={{
+                            __html: JSON.stringify({
+                              '@context': 'https://schema.org',
+                              '@type': 'WebSite',
+                              name: 'Tool Daddy',
+                              description: 'The ultimate free online tool suite. Image compression, video conversion, AI tools, and more.',
+                              url: process.env.NEXT_PUBLIC_BASE_URL || 'https://tool-daddy.com',
+                              potentialAction: {
+                                '@type': 'SearchAction',
+                                target: {
+                                  '@type': 'EntryPoint',
+                                  urlTemplate: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://tool-daddy.com'}/?q={search_term_string}`,
+                                },
+                                'query-input': 'required name=search_term_string',
                               },
-                              'query-input': 'required name=search_term_string',
-                            },
-                          })
-                        }}
-                      />
-                      <div className="flex-1">{children}</div>
-                      <AppFooter />
-                    </main>
-                  </div>
-                </SidebarProviderWrapper>
-              </LazyMotion>
+                            })
+                          }}
+                        />
+                        <div className="flex-1">{children}</div>
+                        <AppFooter />
+                        <MobileNav />
+                      </main>
+                    </div>
+                  </SidebarProviderWrapper>
+                  <FloatingFeedback />
+                </LazyMotion>
+              )}
             </SettingsProvider>
           </FirebaseClientProvider>
           <Toaster />
         </ThemeProvider>
+
         <Script id="google-tag-manager" strategy="lazyOnload">
           {`
             (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':

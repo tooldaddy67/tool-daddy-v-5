@@ -9,16 +9,19 @@ const nextConfig: NextConfig = {
   // eslint config removed (deprecated in Next.js 16+)
   turbopack: {}, // Added for Next.js 16+ compatibility
 
+  reactStrictMode: true,
   // ✅ Performance Optimizations
   productionBrowserSourceMaps: false, // Disable source maps in production
   compress: true, // Enable gzip compression
 
   // ✅ Cache optimization
   experimental: {
-    optimizePackageImports: ['@radix-ui/react-*', 'lucide-react', 'framer-motion'],
+    optimizePackageImports: ['@radix-ui/react-*', 'lucide-react', 'framer-motion', 'date-fns', 'mathjs', 'lucide-react'],
   },
 
   images: {
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     remotePatterns: [
       {
         protocol: 'https',

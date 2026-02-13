@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminAuth } from '@/lib/firebase-admin';
 
-// Bootstrap: emails that are always treated as admin (for initial setup)
-const BOOTSTRAP_ADMIN_EMAILS = ['admin@tooldaddy.com'];
+const BOOTSTRAP_ADMIN_EMAILS = [
+    'admin@tooldaddy.com',
+    ...(process.env.NEXT_PUBLIC_ADMIN_EMAILS?.split(',') || [])
+];
 
 export async function POST(request: NextRequest) {
     try {
+        console.log('SetAdminClaim API: Start request');
         // Verify caller is an admin
         const authHeader = request.headers.get('Authorization');
         if (!authHeader?.startsWith('Bearer ')) {
@@ -14,14 +17,23 @@ export async function POST(request: NextRequest) {
 
         const token = authHeader.split('Bearer ')[1];
         const callerToken = await adminAuth.verifyIdToken(token);
+        const callerUid = callerToken.uid;
+        const callerEmail = callerToken.email;
+
+        console.log(`SetAdminClaim API: Checking authorization for caller UID: ${callerUid}, Email: ${callerEmail}`);
 
         // Only existing admins or bootstrap emails can set admin claims
         const isCallerAdmin =
             callerToken.admin === true ||
-            BOOTSTRAP_ADMIN_EMAILS.includes(callerToken.email || '');
+            BOOTSTRAP_ADMIN_EMAILS.includes(callerEmail || '');
 
         if (!isCallerAdmin) {
-            return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+            console.warn(`Access Denied: Caller UID ${callerUid} (${callerEmail}) is not authorized to set claims.`);
+            return NextResponse.json({
+                error: 'Forbidden',
+                message: 'Only super admins can modify custom claims.',
+                debug: { callerUid, callerEmail }
+            }, { status: 403 });
         }
 
         const body = await request.json();

@@ -1,5 +1,6 @@
-'use client';
+"use client";
 
+import { useState } from "react";
 import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -23,9 +24,9 @@ const toolIcons: { [key: string]: React.ElementType } = {
   'Password Generator': KeyRound,
 };
 
-
 export default function HistoryPage() {
   const { history, isLoaded, clearHistory } = useHistory();
+  const [searchQuery, setSearchQuery] = useState("");
 
   const handleDownload = (dataUrl: string, filename: string) => {
     const link = document.createElement("a");
@@ -36,8 +37,14 @@ export default function HistoryPage() {
     document.body.removeChild(link);
   };
 
+  const filteredHistory = history.filter(item =>
+    item.tool.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (item.data.playlistName && item.data.playlistName.toLowerCase().includes(searchQuery.toLowerCase())) ||
+    (item.data.fileType && item.data.fileType.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
+
   return (
-    <div className="w-full space-y-6">
+    <div className="w-full space-y-6 md:mt-0 mt-8">
       <Card className="bg-card/50 backdrop-blur-lg border-border/20">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="flex items-center gap-2">
@@ -59,16 +66,22 @@ export default function HistoryPage() {
         </div>
       )}
 
-      {isLoaded && history.length === 0 && (
+      {isLoaded && filteredHistory.length === 0 && (
         <div className="flex flex-col items-center justify-center h-64 border-2 border-dashed rounded-lg">
-          <p className="text-muted-foreground">Your history is empty.</p>
-          <p className="text-sm text-muted-foreground/80">Creations from the tools will appear here.</p>
+          {history.length === 0 ? (
+            <>
+              <p className="text-muted-foreground">Your history is empty.</p>
+              <p className="text-sm text-muted-foreground/80">Creations from the tools will appear here.</p>
+            </>
+          ) : (
+            <p className="text-muted-foreground">No history items found matching "{searchQuery}".</p>
+          )}
         </div>
       )}
 
-      {isLoaded && history.length > 0 && (
+      {isLoaded && filteredHistory.length > 0 && (
         <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-          {history.map((item) => {
+          {filteredHistory.map((item) => {
             const Icon = toolIcons[item.tool] || History;
             return (
               <Card key={item.id} className="flex flex-col bg-card/50 backdrop-blur-lg border-border/20">

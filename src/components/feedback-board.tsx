@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowBigUp, Flag, Lightbulb, MessageSquarePlus, Sparkles, Trophy, Rocket, Bug, Trash2 } from 'lucide-react';
+import { ArrowBigUp, Flag, Lightbulb, MessageSquarePlus, Sparkles, Trophy, Rocket, Bug, Trash2, Reply, Check, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Dialog,
@@ -39,11 +39,14 @@ interface FeedbackItem {
     type: 'bug' | 'suggestion';
     title: string;
     description: string;
-    status: 'open' | 'in-progress' | 'resolved' | 'closed';
+    status: 'pending' | 'open' | 'in-progress' | 'resolved' | 'closed';
     upvotes: number;
     upvotedBy: string[];
     userId: string;
+    userName: string;
     createdAt: any;
+    adminReply?: string;
+    adminReplyAt?: any;
 }
 
 export function FeedbackBoard() {
@@ -61,6 +64,9 @@ export function FeedbackBoard() {
     // State for mounted check to prevent hydration mismatch
     const [mounted, setMounted] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [replyingTo, setReplyingTo] = useState<string | null>(null);
+    const [replyText, setReplyText] = useState('');
+    const [isReplying, setIsReplying] = useState(false);
 
     useEffect(() => {
         setMounted(true);
@@ -149,10 +155,11 @@ export function FeedbackBoard() {
                 type: newItemType,
                 title: newItemTitle,
                 description: newItemDesc,
-                status: 'open',
+                status: 'pending',
                 upvotes: 0,
                 upvotedBy: [],
                 userId: user.uid,
+                userName: user.displayName || user.email?.split('@')[0] || 'User',
                 createdAt: serverTimestamp()
             });
 
@@ -252,13 +259,66 @@ export function FeedbackBoard() {
         }
     };
 
-    const StatusBadge = ({ status }: { status: string }) => {
+    const handleSaveReply = async (itemId: string) => {
+        if (!firestore || !isAdmin) return;
+        if (!replyText.trim()) {
+            setReplyingTo(null);
+            return;
+        }
+
+        setIsReplying(true);
+        try {
+            await updateDoc(doc(firestore, 'feedback', itemId), {
+                adminReply: replyText,
+                adminReplyAt: serverTimestamp()
+            });
+            toast({ title: "Reply Saved", description: "Your response is now visible to the community." });
+            setReplyingTo(null);
+            setReplyText('');
+        } catch (error) {
+            console.error("Error saving reply:", error);
+            toast({ title: "Failed to save", description: "An error occurred.", variant: "destructive" });
+        } finally {
+            setIsReplying(false);
+        }
+    };
+
+    const handleStatusChange = async (itemId: string, newStatus: string) => {
+        if (!firestore || !isAdmin) return;
+        try {
+            await updateDoc(doc(firestore, 'feedback', itemId), { status: newStatus });
+            toast({ title: "Status Updated", description: `Item is now ${newStatus.replace('-', ' ')}.` });
+        } catch (error) {
+            console.error("Error updating status:", error);
+            toast({ title: "Update failed", variant: "destructive" });
+        }
+    };
+
+    const StatusBadge = ({ status, itemId }: { status: string, itemId?: string }) => {
         const styles = {
+            'pending': 'bg-slate-500/10 text-slate-500 border-slate-500/20',
             'open': 'bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 border-blue-500/20',
             'in-progress': 'bg-amber-500/10 text-amber-500 hover:bg-amber-500/20 border-amber-500/20',
             'resolved': 'bg-green-500/10 text-green-500 hover:bg-green-500/20 border-green-500/20',
-            'closed': 'bg-slate-500/10 text-slate-500 hover:bg-slate-500/20 border-slate-500/20',
+            'closed': 'bg-red-500/10 text-red-500 hover:bg-red-500/20 border-red-500/20',
         }[status] || 'bg-slate-500/10 text-slate-500';
+
+        if (isAdmin && itemId) {
+            return (
+                <Select value={status} onValueChange={(val) => handleStatusChange(itemId, val)}>
+                    <SelectTrigger className={`h-7 px-2 text-[10px] w-auto gap-1 border-0 bg-transparent hover:bg-transparent focus:ring-0 font-bold uppercase tracking-wider ${styles}`}>
+                        <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="pending">Pending</SelectItem>
+                        <SelectItem value="open">Open</SelectItem>
+                        <SelectItem value="in-progress">In-Progress</SelectItem>
+                        <SelectItem value="resolved">Resolved</SelectItem>
+                        <SelectItem value="closed">Closed</SelectItem>
+                    </SelectContent>
+                </Select>
+            );
+        }
 
         return (
             <Badge variant="outline" className={`${styles} capitalize transition-colors`}>
@@ -318,12 +378,12 @@ export function FeedbackBoard() {
                                         {/* 2. Content Column */}
                                         <div className="flex-1 min-w-0 space-y-2">
                                             <div className="flex flex-wrap items-center gap-2">
-                                                <StatusBadge status={item.status} />
+                                                <StatusBadge status={item.status} itemId={item.id} />
                                                 <span className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground/60">
                                                     {item.createdAt?.seconds ? new Date(item.createdAt.seconds * 1000).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : 'Just now'}
                                                 </span>
                                                 <span className="text-[10px] uppercase font-bold tracking-widest text-primary/60">
-                                                    BY {authorMap[item.userId] || '...'}
+                                                    BY {item.userName || authorMap[item.userId] || '...'}
                                                 </span>
                                             </div>
 
@@ -335,6 +395,53 @@ export function FeedbackBoard() {
                                                     {item.description}
                                                 </p>
                                             </div>
+
+                                            {/* Admin Reply Section */}
+                                            {(item.adminReply || replyingTo === item.id) && (
+                                                <div className="mt-4 pl-4 border-l-2 border-primary/30 py-1 space-y-2">
+                                                    <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.15em] text-primary">
+                                                        <div className="w-4 h-4 rounded-full bg-primary/20 flex items-center justify-center p-0.5">
+                                                            <svg viewBox="0 0 420 420" className="w-full h-full"><path d="M128 341.333C128 304.6 154.6 278 181.333 278H234.667C261.4 278 288 304.6 288 341.333V341.333C288 378.067 261.4 404.667 234.667 404.667H181.333C154.6 404.667 128 378.067 128 341.333V341.333Z" fill="currentColor" /></svg>
+                                                        </div>
+                                                        Admin Response
+                                                    </div>
+
+                                                    {replyingTo === item.id ? (
+                                                        <div className="space-y-3 pt-2">
+                                                            <Textarea
+                                                                placeholder="Type your official response..."
+                                                                className="min-h-[80px] text-sm bg-background/40 border-primary/20 focus:border-primary/50 resize-none"
+                                                                value={replyText}
+                                                                onChange={(e) => setReplyText(e.target.value)}
+                                                                autoFocus
+                                                            />
+                                                            <div className="flex justify-end gap-2">
+                                                                <Button
+                                                                    size="sm"
+                                                                    variant="ghost"
+                                                                    className="h-8 text-[10px] px-3 font-bold uppercase transition-all"
+                                                                    onClick={() => { setReplyingTo(null); setReplyText(''); }}
+                                                                >
+                                                                    Cancel
+                                                                </Button>
+                                                                <Button
+                                                                    size="sm"
+                                                                    className="h-8 text-[10px] px-3 font-bold uppercase shadow-lg shadow-primary/20"
+                                                                    onClick={() => handleSaveReply(item.id)}
+                                                                    disabled={isReplying}
+                                                                >
+                                                                    {isReplying ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <Check className="w-3 h-3 mr-1" />}
+                                                                    Save Reply
+                                                                </Button>
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <p className="text-sm text-foreground/80 italic font-medium leading-relaxed">
+                                                            "{item.adminReply}"
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            )}
                                         </div>
 
                                         {/* 3. Actions Column */}
@@ -347,6 +454,19 @@ export function FeedbackBoard() {
                                                     onClick={() => setItemToDelete(item.id)}
                                                 >
                                                     <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            )}
+                                            {isAdmin && !replyingTo && (
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-9 w-9 text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all rounded-lg"
+                                                    onClick={() => {
+                                                        setReplyingTo(item.id);
+                                                        setReplyText(item.adminReply || '');
+                                                    }}
+                                                >
+                                                    <Reply className="h-4 w-4" />
                                                 </Button>
                                             )}
                                         </div>

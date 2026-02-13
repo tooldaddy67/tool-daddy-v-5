@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Sparkles } from "lucide-react";
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 
 export function HeroSection() {
     return (
@@ -26,7 +26,7 @@ export function HeroSection() {
                         </p>
                     </div>
 
-                    <motion.div
+                    <m.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.5, delay: 0.2 }}
@@ -37,7 +37,7 @@ export function HeroSection() {
                                 Explore Tools <ArrowRight className="ml-2 h-4 w-4" />
                             </Button>
                         </Link>
-                    </motion.div>
+                    </m.div>
                 </div>
             </div>
         </section>

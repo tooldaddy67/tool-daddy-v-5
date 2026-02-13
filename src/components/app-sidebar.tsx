@@ -14,7 +14,7 @@ import {
   SidebarSeparator,
   useSidebar,
 } from '@/components/ui/sidebar';
-import { History, BookOpen, LayoutDashboard } from 'lucide-react';
+import { History, BookOpen, LayoutDashboard, MessageSquare } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { TOOL_CATEGORIES } from '@/lib/constants';
 import { cn } from '@/lib/utils';
@@ -23,6 +23,9 @@ import { useState, useEffect, useMemo } from 'react';
 import { UserAuthButton } from './user-auth-button';
 import { useFirebase } from '@/firebase';
 import { useSettings } from '@/components/settings-provider';
+import dynamic from 'next/dynamic';
+
+const FeedbackModal = dynamic(() => import('@/components/feedback-modal').then(mod => mod.FeedbackModal));
 
 const BOOTSTRAP_ADMIN_EMAILS = ['admin@tooldaddy.com'];
 
@@ -96,7 +99,10 @@ export default function AppSidebar() {
           className="flex items-center gap-2 px-4 py-4 group-data-[state=collapsed]:justify-center group-data-[state=collapsed]:px-0"
         >
           <Logo className="group-data-[state=collapsed]:w-7 group-data-[state=collapsed]:h-7" />
-          <span className="font-bold text-lg font-headline truncate group-data-[state=collapsed]:hidden">
+          <span
+            className="font-bold text-lg font-headline truncate group-data-[state=collapsed]:hidden bg-clip-text text-transparent bg-gradient-to-b from-white via-white/90 to-white/40"
+            style={{ WebkitBoxReflect: 'below -6px linear-gradient(transparent, rgba(255,255,255,0.15))' } as any}
+          >
             {settings.siteTitle || 'Tool Daddy'}
           </span>
         </Link>
@@ -202,6 +208,20 @@ export default function AppSidebar() {
               >
                 <History className="shrink-0" />
                 <span className="group-data-[state=collapsed]:hidden">History</span>
+              </SidebarMenuButton>
+            </Link>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <Link href="/feedback" prefetch={false} className="w-full">
+              <SidebarMenuButton
+                isActive={pathname === '/feedback'}
+                tooltip={isCollapsed ? {
+                  children: 'Feedback',
+                  className: 'bg-accent text-accent-foreground',
+                } : undefined}
+              >
+                <MessageSquare className="shrink-0" />
+                <span className="group-data-[state=collapsed]:hidden">Feedback Board</span>
               </SidebarMenuButton>
             </Link>
           </SidebarMenuItem>

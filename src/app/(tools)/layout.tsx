@@ -1,15 +1,62 @@
 
+"use client";
+
+import { MobileHeader } from "@/components/mobile/mobile-header";
+import { usePathname } from "next/navigation";
+import { DesktopOnlyRoast } from "@/components/mobile/desktop-only-roast";
+
+const RESTRICTED_MOBILE_TOOLS = [
+  "/simple-notepad",
+  "/drawing-canvas",
+  "/ipv4-subnet-calculator",
+  "/ipv4-address-converter",
+  "/ipv4-range-expander",
+  "/mac-address-lookup",
+  "/mac-address-generator",
+  "/ipv6-ula-generator",
+  "/token-generator",
+  "/hash-text",
+  "/bcrypt-generator",
+  "/uuids-generator",
+  "/ulid-generator",
+  "/encrypt-decrypt-text",
+  "/bip39-generator",
+  "/hmac-generator",
+  "/rsa-key-generator",
+  "/password-strength-analyser",
+  "/pdf-signature-checker",
+  "/date-time-converter",
+  "/math-evaluator",
+  "/dna-to-mrna-converter",
+  "/japanese-name-converter",
+  "/benchmark-builder",
+  "/metadata-extractor",
+  "/about",
+  "/buy-me-a-coffee"
+];
 
 export default function ToolsLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const pathname = usePathname();
+  const isRestricted = RESTRICTED_MOBILE_TOOLS.some(path => pathname === path);
+
   return (
     <div className="flex-1 w-full h-full relative">
-      {children}
+      <div className="md:hidden">
+        <MobileHeader />
+      </div>
+      <div className="md:mt-0 mt-8">
+        <div className="hidden md:block">
+          {children}
+        </div>
+        <div className="md:hidden">
+          {isRestricted ? <DesktopOnlyRoast /> : children}
+        </div>
+      </div>
     </div>
   );
 }
 
-    

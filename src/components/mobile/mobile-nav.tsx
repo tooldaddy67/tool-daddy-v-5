@@ -2,47 +2,92 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Grid, Heart, User } from "lucide-react";
+import { Home, Grid, History, Settings, LogIn } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-const NAV_ITEMS = [
-    { label: "Home", href: "/", icon: Home },
-    { label: "Tools", href: "/tools", icon: Grid },
-    { label: "Favorites", href: "/favorites", icon: Heart },
-    { label: "Profile", href: "/profile", icon: User },
-];
+import { useSettings } from "@/components/settings-provider";
+import { useUser } from "@/firebase";
+import { UserAuthButton } from "@/components/user-auth-button";
 
 export function MobileNav() {
     const pathname = usePathname();
+    const { setSettingsOpen } = useSettings();
+    const { user } = useUser();
+
+    const isActive = (href: string) => {
+        if (href === '/') return pathname === '/';
+        return pathname.startsWith(href);
+    };
 
     return (
-        <div className="fixed bottom-0 left-0 right-0 z-50 bg-[#0B0B0F]/95 backdrop-blur-xl border-t border-white/5 md:hidden pb-safe">
-            <div className="flex items-center justify-around h-20 px-4">
-                {NAV_ITEMS.map((item) => {
-                    const isActive = pathname === item.href;
-                    return (
-                        <Link
-                            key={item.href}
-                            href={item.href}
-                            className="flex flex-col items-center justify-center w-full gap-1 group"
-                        >
-                            <div className={cn(
-                                "flex items-center justify-center w-12 h-12 rounded-full transition-all duration-300",
-                                isActive
-                                    ? "bg-primary text-primary-foreground shadow-[0_0_20px_-5px_hsl(var(--primary))]"
-                                    : "text-muted-foreground group-hover:text-foreground group-hover:bg-white/5"
-                            )}>
-                                <item.icon className={cn("w-5 h-5", isActive && "fill-current")} />
+        <div className="fixed bottom-6 left-4 right-4 z-50 md:hidden">
+            <div className="bg-background/40 backdrop-blur-2xl border border-white/10 rounded-full shadow-2xl h-16 px-6 flex items-center justify-between">
+                <Link
+                    href="/"
+                    className={cn(
+                        "relative p-3 rounded-full transition-all duration-300 hover:bg-muted font-medium",
+                        isActive('/') ? "text-primary" : "text-muted-foreground"
+                    )}
+                >
+                    <Home className={cn("w-6 h-6", isActive('/') && "fill-current/20")} />
+                    {isActive('/') && (
+                        <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary shadow-sm" />
+                    )}
+                </Link>
+
+                <div className="w-[1px] h-6 bg-border/20" />
+
+                <Link
+                    href="/tools"
+                    className={cn(
+                        "relative p-3 rounded-full transition-all duration-300 hover:bg-muted font-medium",
+                        isActive('/tools') ? "text-primary" : "text-muted-foreground"
+                    )}
+                >
+                    <Grid className={cn("w-6 h-6", isActive('/tools') && "fill-current/20")} />
+                    {isActive('/tools') && (
+                        <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary shadow-sm" />
+                    )}
+                </Link>
+
+                <div className="w-[1px] h-6 bg-border/20" />
+
+                <Link
+                    href="/history"
+                    className={cn(
+                        "relative p-3 rounded-full transition-all duration-300 hover:bg-muted font-medium",
+                        isActive('/history') ? "text-primary" : "text-muted-foreground"
+                    )}
+                >
+                    <History className={cn("w-6 h-6", isActive('/history') && "fill-current/20")} />
+                    {isActive('/history') && (
+                        <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary shadow-sm" />
+                    )}
+                </Link>
+
+                <div className="w-[1px] h-6 bg-border/20" />
+
+                {user && !user.isAnonymous ? (
+                    <Link
+                        href="/settings"
+                        className={cn(
+                            "relative p-3 rounded-full transition-all duration-300 hover:bg-muted font-medium",
+                            isActive('/settings') ? "text-primary" : "text-muted-foreground"
+                        )}
+                    >
+                        <Settings className={cn("w-6 h-6", isActive('/settings') && "fill-current/20")} />
+                        {isActive('/settings') && (
+                            <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary shadow-sm" />
+                        )}
+                    </Link>
+                ) : (
+                    <UserAuthButton
+                        customTrigger={
+                            <div className="relative p-3 rounded-full transition-all duration-300 hover:bg-muted font-medium text-muted-foreground hover:text-primary">
+                                <LogIn className="w-6 h-6" />
                             </div>
-                            <span className={cn(
-                                "text-[10px] font-medium transition-colors duration-300",
-                                isActive ? "text-primary" : "text-muted-foreground"
-                            )}>
-                                {item.label}
-                            </span>
-                        </Link>
-                    );
-                })}
+                        }
+                    />
+                )}
             </div>
         </div>
     );

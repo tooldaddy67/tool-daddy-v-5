@@ -133,6 +133,16 @@
   will-change: transform, opacity;
 }
 
+.liquid-glass {
+  backdrop-filter: none !important;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.02) 50%, transparent 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.1),
+    0 10px 30px rgba(0, 0, 0, 0.4) !important;
+  transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
 .contain-content {
   content-visibility: auto;
   contain-intrinsic-size: 1px 500px;
@@ -218,43 +228,42 @@
 .tool-island::before {
   content: '';
   position: absolute;
-  inset: 0;
+  inset: -10px;
   border-radius: inherit;
   opacity: 0;
   pointer-events: none;
   z-index: -1;
-  box-shadow: 0 0 15px 4px var(--_glow);
-  transition: opacity 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+  background: radial-gradient(circle at center, var(--_glow) 0%, transparent 70%);
+  filter: blur(20px);
+  transition: opacity 0.5s cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 .group:hover .tool-island,
 .tool-island.group:hover {
   border-color: var(--_glow) !important;
-  transform: translateY(-4px) scale(1.01);
+  transform: translateY(-8px) scale(1.02);
+  box-shadow:
+    0 20px 40px rgba(0, 0, 0, 0.6),
+    0 0 20px -5px var(--_glow) !important;
 }
 
 .group:hover .tool-island::before,
 .tool-island.group:hover::before {
-  opacity: calc(0.7 * var(--accent-gradient, 1));
-  animation: tool-island-breathe calc(3s / var(--anim-speed, 1)) ease-in-out infinite;
-}
-
-/* Fallback for when accent-gradient is 0 */
-[style*="--accent-gradient: 0"] .tool-island::before {
-  display: none !important;
+  opacity: 0.6;
+  animation: tool-island-breathe 4s ease-in-out infinite;
 }
 
 @keyframes tool-island-breathe {
 
   0%,
   100% {
-    opacity: 0.7;
-    transform: scale(1.01);
+    opacity: 0.6;
+    transform: scale(1);
   }
 
   50% {
-    opacity: 0.4;
-    transform: scale(1);
+    opacity: 0.3;
+    transform: scale(1.1);
   }
 }
 

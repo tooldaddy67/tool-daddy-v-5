@@ -18,6 +18,8 @@ import Image from 'next/image';
 import { useHistory } from '@/hooks/use-history';
 import { useFirebase } from '@/firebase';
 import { sendNotification } from '@/lib/send-notification';
+import { useToolAd } from '@/hooks/use-tool-ad';
+import AdModal from '@/components/ad-modal';
 
 
 export default function QrCodeGenerator() {
@@ -26,6 +28,7 @@ export default function QrCodeGenerator() {
   const { toast } = useToast();
   const { addToHistory } = useHistory();
   const { firestore, user } = useFirebase();
+  const { isAdOpen, setIsAdOpen, showAd, handleAdFinish, duration, title } = useToolAd('standard');
 
   const generateQrCode = () => {
     if (!text.trim()) {
@@ -36,6 +39,11 @@ export default function QrCodeGenerator() {
       });
       return;
     }
+
+    showAd(performGenerate);
+  };
+
+  const performGenerate = () => {
     // Using a free API to generate QR codes
     const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=${encodeURIComponent(
       text
@@ -129,6 +137,13 @@ export default function QrCodeGenerator() {
           )}
         </CardContent>
       </Card>
+      <AdModal
+        isOpen={isAdOpen}
+        onClose={() => setIsAdOpen(false)}
+        onAdFinish={handleAdFinish}
+        title={title}
+        duration={duration}
+      />
     </div>
   );
 }

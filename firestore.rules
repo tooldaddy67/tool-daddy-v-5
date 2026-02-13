@@ -79,12 +79,13 @@ service cloud.firestore {
     match /feedback/{feedbackId} {
       allow read: if true;
       allow create: if request.auth != null;
-      allow update: if request.auth != null && (
+      allow update: if isAdmin() || (request.auth != null && (
         // Allow updating upvotes/upvotedBy (voting)
         (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['upvotes', 'upvotedBy'])) ||
-        // Allow author to update content (optional, but good)
+        // Allow author to update content
         resource.data.userId == request.auth.uid
-      );
+      ));
+      allow delete: if isAdmin() || (request.auth != null && resource.data.userId == request.auth.uid);
     }
 
     match /users/{userId} {

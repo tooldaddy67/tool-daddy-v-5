@@ -16,20 +16,24 @@ import {
     DialogFooter,
     DialogHeader,
     DialogTitle,
+    DialogTrigger,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useUser, useAuth, useFirebase } from '@/firebase';
-import { signOut, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink } from 'firebase/auth';
+import { signOut, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink, updateProfile } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { LogIn, LogOut, User as UserIcon, Loader2, Sparkles, UserPlus, CheckCircle2, ShieldCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useSettings } from '@/components/settings-provider';
-import { updateProfile } from 'firebase/auth';
 
-export function UserAuthButton() {
+interface UserAuthButtonProps {
+    customTrigger?: React.ReactNode;
+}
+
+export function UserAuthButton({ customTrigger }: UserAuthButtonProps) {
     const { user, isUserLoading } = useUser();
     const auth = useAuth();
     const { firestore } = useFirebase();
@@ -250,19 +254,24 @@ export function UserAuthButton() {
             {user && !user.isAnonymous ? (
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="relative h-10 w-auto rounded-full flex items-center gap-2 pl-2 pr-4 hover:bg-muted/50 transition-colors">
-                            <Avatar className="h-8 w-8 border border-primary/20">
-                                <AvatarImage src={user.photoURL || ''} alt={user.displayName || 'User'} />
-                                <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">
-                                    {(user.displayName || user.email || 'U').charAt(0).toUpperCase()}
-                                </AvatarFallback>
-                            </Avatar>
-                            <div className="flex flex-col items-start text-sm auth-text">
-                                <span className="font-semibold text-foreground/80 max-w-[100px] truncate">
-                                    {user.displayName || 'User'}
-                                </span>
-                            </div>
-                        </Button>
+                        {/* If custom trigger is provided, use it, otherwise use default button */}
+                        {customTrigger ? (
+                            <div role="button" className="cursor-pointer">{customTrigger}</div>
+                        ) : (
+                            <Button variant="ghost" className="relative h-10 w-auto rounded-full flex items-center gap-2 pl-2 pr-4 hover:bg-muted/50 transition-colors">
+                                <Avatar className="h-8 w-8 border border-primary/20">
+                                    <AvatarImage src={user.photoURL || ''} alt={user.displayName || 'User'} />
+                                    <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">
+                                        {(user.displayName || user.email || 'U').charAt(0).toUpperCase()}
+                                    </AvatarFallback>
+                                </Avatar>
+                                <div className="flex flex-col items-start text-sm auth-text">
+                                    <span className="font-semibold text-foreground/80 max-w-[100px] truncate">
+                                        {user.displayName || 'User'}
+                                    </span>
+                                </div>
+                            </Button>
+                        )}
                     </DropdownMenuTrigger>
                     <DropdownMenuContent className="w-56" align="end" forceMount>
                         <DropdownMenuLabel className="font-normal">
@@ -292,10 +301,17 @@ export function UserAuthButton() {
                     </DropdownMenuContent>
                 </DropdownMenu>
             ) : (
-                <Button onClick={() => setIsAuthDialogOpen(true)} variant="default" size="sm" className="gap-2">
-                    <LogIn className="h-4 w-4" />
-                    <span className="hidden sm:inline auth-text">Sign In</span>
-                </Button>
+                // Not logged in
+                customTrigger ? (
+                    <div onClick={() => setIsAuthDialogOpen(true)} role="button" aria-label="Sign In">
+                        {customTrigger}
+                    </div>
+                ) : (
+                    <Button onClick={() => setIsAuthDialogOpen(true)} variant="default" size="sm" className="gap-2">
+                        <LogIn className="h-4 w-4" />
+                        <span className="hidden sm:inline auth-text">Sign In</span>
+                    </Button>
+                )
             )}
 
             <Dialog open={isAuthDialogOpen} onOpenChange={setIsAuthDialogOpen}>

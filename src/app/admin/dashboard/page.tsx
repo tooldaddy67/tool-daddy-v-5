@@ -84,7 +84,7 @@ export default function AdminDashboard() {
     const [data, setData] = useState<AnalyticsData | null>(null);
 
     const fetchAnalytics = useCallback(async () => {
-        if (!user || !auth) return;
+        if (!user || !auth || user.isAnonymous) return;
 
         setLoading(true);
         setError(null);
@@ -92,13 +92,14 @@ export default function AdminDashboard() {
         try {
             const token = await user.getIdToken();
             const res = await fetch('/api/admin/analytics', {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                },
+                headers: { 'Authorization': `Bearer ${token}` },
             });
 
             if (!res.ok) {
-                const errData = await res.json();
+                const errData = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
+                if (res.status === 403) {
+                    throw new Error(errData.message || errData.error || 'Forbidden: You do not have admin access.');
+                }
                 throw new Error(errData.error || `HTTP ${res.status}`);
             }
 
@@ -113,11 +114,11 @@ export default function AdminDashboard() {
     }, [user, auth]);
 
     useEffect(() => {
-        if (!isUserLoading && !user) {
+        if (!isUserLoading && (!user || user.isAnonymous)) {
             router.push('/');
             return;
         }
-        if (user) {
+        if (user && !user.isAnonymous) {
             fetchAnalytics();
         }
     }, [user, isUserLoading, router, fetchAnalytics]);

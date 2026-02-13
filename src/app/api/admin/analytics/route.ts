@@ -3,7 +3,10 @@ import { adminAuth, adminFirestore } from '@/lib/firebase-admin';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limiter';
 
 // Bootstrap admin emails — used before custom claims are set up
-const BOOTSTRAP_ADMIN_EMAILS = ['admin@tooldaddy.com'];
+const BOOTSTRAP_ADMIN_EMAILS = [
+    'admin@tooldaddy.com',
+    ...(process.env.NEXT_PUBLIC_ADMIN_EMAILS?.split(',') || [])
+];
 
 function isAdminByToken(decodedToken: { admin?: boolean; email?: string }): boolean {
     if (decodedToken.admin === true) return true;
@@ -13,15 +16,18 @@ function isAdminByToken(decodedToken: { admin?: boolean; email?: string }): bool
 
 async function checkFirestoreAdmin(uid: string): Promise<boolean> {
     try {
+        if (!adminFirestore) return false;
         const userDoc = await adminFirestore.collection('users').doc(uid).get();
         return userDoc.exists && userDoc.data()?.isAdmin === true;
-    } catch {
+    } catch (e) {
+        console.error(`Admin check failed for UID ${uid}:`, e);
         return false;
     }
 }
 
 export async function GET(request: NextRequest) {
     try {
+        console.log('Analytics API: Start request');
         // Rate limit: 10 requests per minute
         const ip = await getClientIp();
         if (!checkRateLimit(`analytics:${ip}`, 10, 60 * 1000)) {
@@ -35,11 +41,25 @@ export async function GET(request: NextRequest) {
 
         const token = authHeader.split('Bearer ')[1];
         const decodedToken = await adminAuth.verifyIdToken(token);
+        const uid = decodedToken.uid;
+        const email = decodedToken.email;
+
+        console.log(`Analytics API: Checking admin status for UID: ${uid}, Email: ${email}`);
 
         // Check admin via: custom claim → bootstrap email → Firestore isAdmin field
-        if (!isAdminByToken(decodedToken) && !(await checkFirestoreAdmin(decodedToken.uid))) {
-            return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+        const isBootstrap = isAdminByToken(decodedToken);
+        const isFirestoreAdmin = await checkFirestoreAdmin(uid);
+
+        if (!isBootstrap && !isFirestoreAdmin) {
+            console.warn(`Access Denied: UID ${uid} (${email}) is not an admin.`);
+            return NextResponse.json({
+                error: 'Forbidden',
+                message: 'You do not have administrative privileges.',
+                debug: { uid, email }
+            }, { status: 403 });
         }
+
+        console.log(`Access Granted: UID ${uid} (Bootstrap: ${isBootstrap}, Firestore: ${isFirestoreAdmin})`);
 
         // --- Aggregate Analytics Data ---
 

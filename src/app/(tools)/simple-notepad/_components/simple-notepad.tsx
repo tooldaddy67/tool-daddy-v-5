@@ -273,12 +273,6 @@ export default function SimpleNotepad() {
     if (selection && selection.rangeCount > 0 && editor.contains(selection.getRangeAt(0).commonAncestorContainer)) {
       const range = selection.getRangeAt(0);
 
-      // If selection is collapsed, hide toolbar.
-      if (range.collapsed) {
-        if (toolbar.visible) setToolbar(t => ({ ...t, visible: false }));
-        return;
-      }
-
       // Update active style for dropdown
       const block = document.queryCommandValue('formatBlock');
       const styleMap: { [key: string]: string } = {
@@ -288,40 +282,8 @@ export default function SimpleNotepad() {
         h3: 'Heading 3',
       };
       setActiveStyle(styleMap[block.toLowerCase()] || 'Paragraph');
-
-      const rect = range.getBoundingClientRect();
-      const editorContainerRect = editor.parentElement!.getBoundingClientRect();
-
-      const TOOLBAR_HEIGHT = 42;
-      const TOOLBAR_OFFSET = 8;
-      const halfToolbarWidth = 200; // Approximate half width of the toolbar
-
-      let top = rect.top - editorContainerRect.top - TOOLBAR_HEIGHT - TOOLBAR_OFFSET;
-      let left = rect.left - editorContainerRect.left + rect.width / 2;
-
-      // If toolbar would be off-screen at the top, show it below
-      if (top < 0) {
-        top = rect.bottom - editorContainerRect.top + TOOLBAR_OFFSET;
-      }
-
-      // Clamp left position to stay within the editor bounds
-      if (left < halfToolbarWidth) {
-        left = halfToolbarWidth;
-      }
-      if (left > editorContainerRect.width - halfToolbarWidth) {
-        left = editorContainerRect.width - halfToolbarWidth;
-      }
-
-      setToolbar({
-        visible: true,
-        top: top,
-        left: left,
-      });
-
-    } else {
-      if (toolbar.visible) setToolbar(t => ({ ...t, visible: false }));
     }
-  }, [toolbar.visible]);
+  }, []);
 
 
   useEffect(() => {
@@ -333,33 +295,25 @@ export default function SimpleNotepad() {
     return () => document.removeEventListener('mouseup', handleMouseUp);
   }, [handleSelectionChange]);
 
+  // Fixed Toolbar styling
   const ToolbarComponent = () => {
     const handleToolbarMouseDown = (e: React.MouseEvent) => {
-      e.preventDefault();
+      e.preventDefault(); // Prevent losing focus from editor
     };
 
     return (
       <div
-        data-toolbar="true"
-        className={cn(
-          "absolute z-10 flex items-center gap-1 rounded-lg border bg-background/80 p-1 shadow-lg backdrop-blur-sm transition-all duration-150",
-          toolbar.visible ? "visible opacity-100" : "invisible opacity-0"
-        )}
-        style={{
-          top: `${toolbar.top}px`,
-          left: `${toolbar.left}px`,
-          transform: 'translateX(-50%)',
-        }}
+        className="flex items-center gap-1 p-2 border-b bg-muted/20 backdrop-blur-sm sticky top-0 z-20 w-full overflow-x-auto"
         onMouseDown={handleToolbarMouseDown}
       >
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button size="sm" variant="ghost" className="w-24 justify-between pr-2" title="Font">
-              <span>Font</span>
+            <Button size="sm" variant="ghost" className="w-24 justify-between" title="Font">
+              <span className="truncate">Font</span>
               <ChevronDown className="h-4 w-4 opacity-50" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent onFocusOutside={e => e.preventDefault()} className="max-h-60 overflow-y-auto">
+          <DropdownMenuContent onFocusOutside={e => e.preventDefault()} className="max-h-60 overflow-y-auto z-50">
             {FONT_LIST.map(font => (
               <DropdownMenuItem
                 key={font.name}
@@ -376,12 +330,12 @@ export default function SimpleNotepad() {
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button size="sm" variant="ghost" className="w-32 justify-between pr-2" title="Text Styles">
+            <Button size="sm" variant="ghost" className="w-32 justify-between" title="Text Styles">
               <span className="truncate">{activeStyle}</span>
               <ChevronDown className="h-4 w-4 opacity-50" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent onFocusOutside={e => e.preventDefault()}>
+          <DropdownMenuContent onFocusOutside={e => e.preventDefault()} className="z-50">
             <DropdownMenuItem onSelect={() => applyBlockFormat('p')}>
               <Pilcrow className="h-4 w-4 mr-2" /> Paragraph
             </DropdownMenuItem>
@@ -399,10 +353,10 @@ export default function SimpleNotepad() {
 
         <div className="w-[1px] h-6 bg-border mx-1"></div>
 
-        <Button size="icon" className="h-8 w-8" variant="ghost" onClick={() => applyFormat('bold')} title="Bold">
+        <Button size="icon" className="h-8 w-8 shrink-0" variant="ghost" onClick={() => applyFormat('bold')} title="Bold">
           <Bold className="h-4 w-4" />
         </Button>
-        <Button size="icon" className="h-8 w-8" variant="ghost" onClick={() => applyFormat('italic')} title="Italic">
+        <Button size="icon" className="h-8 w-8 shrink-0" variant="ghost" onClick={() => applyFormat('italic')} title="Italic">
           <Italic className="h-4 w-4" />
         </Button>
 
@@ -410,11 +364,11 @@ export default function SimpleNotepad() {
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button size="icon" className="h-8 w-8" variant="ghost" title="Highlight color">
+            <Button size="icon" className="h-8 w-8 shrink-0" variant="ghost" title="Highlight color">
               <Paintbrush className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent onFocusOutside={e => e.preventDefault()}>
+          <DropdownMenuContent onFocusOutside={e => e.preventDefault()} className="z-50">
             <DropdownMenuItem onSelect={() => applyFormat('hiliteColor', '#ca8a0480')}>
               <Highlighter className="h-4 w-4 mr-2 text-yellow-400" /> Yellow
             </DropdownMenuItem>
@@ -442,21 +396,12 @@ export default function SimpleNotepad() {
 
         <div className="w-[1px] h-6 bg-border mx-1"></div>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button size="icon" className="h-8 w-8" variant="ghost" title="Lists">
-              <List className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent onFocusOutside={e => e.preventDefault()}>
-            <DropdownMenuItem onSelect={() => applyFormat('insertUnorderedList')}>
-              <List className="h-4 w-4 mr-2" /> Bulleted List
-            </DropdownMenuItem>
-            <DropdownMenuItem onSelect={() => applyFormat('insertOrderedList')}>
-              <ListOrdered className="h-4 w-4 mr-2" /> Numbered List
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <Button size="icon" className="h-8 w-8 shrink-0" variant="ghost" onClick={() => applyFormat('insertUnorderedList')} title="Bulleted List">
+          <List className="h-4 w-4" />
+        </Button>
+        <Button size="icon" className="h-8 w-8 shrink-0" variant="ghost" onClick={() => applyFormat('insertOrderedList')} title="Numbered List">
+          <ListOrdered className="h-4 w-4" />
+        </Button>
       </div>
     )
   };
@@ -465,7 +410,7 @@ export default function SimpleNotepad() {
     <>
       <div className={cn("w-full h-full p-2 md:p-6", isFullScreen && "p-0 md:p-0")}>
         <Card className={cn(
-          "w-full h-full flex flex-col bg-card/50 backdrop-blur-lg border-border/20 transition-all duration-300",
+          "w-full h-full flex flex-col bg-card/50 backdrop-blur-lg border-border/20 transition-all duration-300 max-w-full overflow-x-hidden",
           isFullScreen && "fixed inset-0 z-40 rounded-none border-none"
         )}>
           <CardHeader className="flex flex-col sm:flex-row justify-between items-start gap-4 sm:gap-0">
@@ -540,14 +485,14 @@ export default function SimpleNotepad() {
             </div>
           </CardHeader>
           <CardContent className="flex-grow flex flex-col gap-4">
-            <div className="border border-input rounded-md flex-grow relative min-h-[70vh]">
+            <div className="border border-input rounded-md flex-grow flex flex-col relative min-h-[70vh] overflow-hidden max-w-full">
               <ToolbarComponent />
               <div
                 ref={editorRef}
                 contentEditable={true}
                 onInput={handleInput}
                 suppressContentEditableWarning={true}
-                className="prose prose-sm dark:prose-invert max-w-none p-4 bg-background focus:outline-none absolute inset-0 overflow-y-auto"
+                className="prose prose-sm dark:prose-invert max-w-none p-6 bg-background focus:outline-none flex-grow overflow-y-auto break-words whitespace-pre-wrap"
                 data-placeholder="Start typing..."
               />
               <Button variant="ghost" size="icon" onClick={() => setIsFullScreen(!isFullScreen)} className="absolute bottom-3 right-3 z-10" title={isFullScreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}>
