@@ -8,6 +8,7 @@ import { ChevronDown, ChevronUp } from "lucide-react";
 
 interface MobileToolsGridProps {
     searchQuery: string;
+    initialCategory?: string;
 }
 
 const ICON_VARIANTS = [
@@ -22,7 +23,7 @@ const ICON_VARIANTS = [
     { bg: 'bg-orange-500/10', border: 'border-orange-500/20', text: 'text-orange-400', glow: 'rgba(249, 115, 22, 0.5)' },
 ];
 
-export function MobileToolsGrid({ searchQuery }: MobileToolsGridProps) {
+export function MobileToolsGrid({ searchQuery, initialCategory }: MobileToolsGridProps) {
     const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({});
 
     const toggleCategory = (slug: string) => {
@@ -34,6 +35,11 @@ export function MobileToolsGrid({ searchQuery }: MobileToolsGridProps) {
 
     // Flatten tools for search and filter mobile-ready ones
     const allTools = ALL_TOOLS_CATEGORIES.flatMap(cat => cat.tools).filter(t => !t.isExternal && !t.desktopOnly);
+
+    // Filter categories if initialCategory is provided
+    const displayCategories = initialCategory
+        ? ALL_TOOLS_CATEGORIES.filter(cat => cat.slug === initialCategory)
+        : ALL_TOOLS_CATEGORIES;
 
     const filteredTools = searchQuery
         ? allTools.filter(t =>
@@ -65,11 +71,14 @@ export function MobileToolsGrid({ searchQuery }: MobileToolsGridProps) {
                 </div>
             ) : (
                 <div className="space-y-8 px-5">
-                    {ALL_TOOLS_CATEGORIES.map((category) => {
+                    {displayCategories.map((category) => {
                         const mobileReadyTools = category.tools.filter(t => !t.isExternal && !t.desktopOnly);
                         if (mobileReadyTools.length === 0) return null;
 
-                        const isExpanded = expandedCategories[category.slug];
+                        // Auto-expand if only one category is shown
+                        const isSingleCategory = displayCategories.length === 1;
+                        const isExpanded = isSingleCategory || expandedCategories[category.slug];
+
                         const displayTools = isExpanded ? mobileReadyTools : mobileReadyTools.slice(0, 2);
                         const hasMore = mobileReadyTools.length > 2;
                         const currentCategoryIndex = toolIndex;
@@ -96,7 +105,7 @@ export function MobileToolsGrid({ searchQuery }: MobileToolsGridProps) {
                                     ))}
                                 </div>
 
-                                {hasMore && (
+                                {hasMore && !isSingleCategory && (
                                     <button
                                         onClick={() => toggleCategory(category.slug)}
                                         className="w-full flex items-center justify-center gap-1.5 py-1 text-xs font-semibold text-primary/70 hover:text-primary transition-colors active:scale-95 duration-200"

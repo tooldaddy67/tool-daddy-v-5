@@ -61,23 +61,23 @@ export function NotificationsPopover() {
     return (
         <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
-                <Button variant="ghost" size="icon" className="relative h-10 w-10 text-white hover:bg-white/10 rounded-full transition-all">
+                <Button variant="ghost" size="icon" className="relative h-10 w-10 text-muted-foreground hover:bg-muted/50 rounded-full transition-all">
                     <Bell className="h-5 w-5" />
                     {unreadCount > 0 && (
-                        <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ring-2 ring-[#112240]">
+                        <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground ring-2 ring-background">
                             {unreadCount > 9 ? '9+' : unreadCount}
                         </span>
                     )}
                 </Button>
             </PopoverTrigger>
-            <PopoverContent align="end" className="w-[320px] p-0 bg-[#1a2c4e] border-white/10 shadow-2xl rounded-2xl overflow-hidden">
-                <div className="flex items-center justify-between border-b border-white/5 px-4 py-3 bg-white/5">
-                    <h4 className="text-sm font-bold uppercase tracking-tighter text-white">Notifications</h4>
+            <PopoverContent align="end" className="w-[320px] p-0 bg-popover border-border shadow-2xl rounded-2xl overflow-hidden">
+                <div className="flex items-center justify-between border-b border-border/50 px-4 py-3 bg-muted/50">
+                    <h4 className="text-sm font-bold uppercase tracking-tighter text-foreground">Notifications</h4>
                     {unreadCount > 0 && (
                         <Button
                             variant="ghost"
                             size="sm"
-                            className="h-auto px-2 py-1 text-[10px] font-black uppercase text-muted-foreground hover:text-white hover:bg-transparent"
+                            className="h-auto px-2 py-1 text-[10px] font-black uppercase text-muted-foreground hover:text-primary hover:bg-transparent"
                             onClick={handleMarkAllRead}
                         >
                             <Check className="mr-1 h-3 w-3" />
@@ -92,28 +92,29 @@ export function NotificationsPopover() {
                         </div>
                     ) : !notifications || notifications.length === 0 ? (
                         <div className="py-20 text-center space-y-2 opacity-50">
-                            <Bell className="h-8 w-8 text-white mx-auto mb-2 opacity-20" />
-                            <p className="text-[10px] text-white uppercase font-black tracking-widest">No notifications</p>
+                            <Bell className="h-8 w-8 text-muted-foreground mx-auto mb-2 opacity-20" />
+                            <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest">No notifications</p>
                         </div>
                     ) : (
-                        <div className="divide-y divide-white/5">
+                        <div className="divide-y divide-border/50">
                             {notifications.map((notif: any) => (
                                 <div
                                     key={notif.id}
                                     className={cn(
                                         "px-4 py-4 space-y-1 transition-colors cursor-default",
-                                        !notif.read ? "bg-primary/10 border-l-2 border-primary" : "hover:bg-white/5"
+                                        !notif.read ? "bg-primary/5 border-l-2 border-primary" : "hover:bg-muted/50"
                                     )}
                                 >
-                                    <h5 className={cn("text-xs font-bold text-white leading-tight", notif.read && "text-white/60")}>
+                                    <h5 className={cn("text-xs font-bold text-foreground leading-tight", notif.read && "text-muted-foreground")}>
                                         {notif.title}
                                     </h5>
-                                    <p className="text-[10px] text-white/40 leading-relaxed font-medium">
+                                    <p className="text-[10px] text-muted-foreground leading-relaxed font-medium">
                                         {notif.message}
                                     </p>
                                     {notif.createdAt && (
-                                        <p className="text-[9px] text-white/20 font-medium pt-0.5">
-                                            {timeAgo(notif.createdAt.toDate())}
+                                        <p className="text-[9px] text-muted-foreground/60 font-medium pt-0.5">
+                                            {/* @ts-ignore - formatting fallback is safe enough */}
+                                            {notif.createdAt?.toDate ? timeAgo(notif.createdAt.toDate()) : 'recently'}
                                         </p>
                                     )}
                                 </div>

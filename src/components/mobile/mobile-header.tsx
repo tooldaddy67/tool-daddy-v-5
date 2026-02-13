@@ -20,7 +20,7 @@ const Logo = ({ className }: { className?: string }) => (
         <title>Tool Daddy Logo</title>
         <path d="M128 341.333C128 304.6 154.6 278 181.333 278H234.667C261.4 278 288 304.6 288 341.333V341.333C288 378.067 261.4 404.667 234.667 404.667H181.333C154.6 404.667 128 378.067 128 341.333V341.333Z" fill="#F87171" />
         <path d="M288 170.667C288 133.933 314.6 107.333 341.333 107.333H384V404.667H341.333C314.6 404.667 288 378.067 288 341.333V170.667Z" fill="#F87171" />
-        <path d="M150 256C183.5 204 250 204 282 256C314 308 380.5 308 414 256" stroke="white" strokeWidth="20" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M150 256C183.5 204 250 204 282 256C314 308 380.5 308 414 256" stroke="currentColor" strokeWidth="20" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
 );
 
@@ -52,12 +52,12 @@ export function MobileHeader({ searchQuery, setSearchQuery }: MobileHeaderProps)
     }
 
     return (
-        <header className="fixed top-0 left-0 right-0 z-50 bg-background/40 backdrop-blur-2xl border-b border-white/10 shadow-lg bg-gradient-to-b from-white/10 to-transparent">
+        <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-2xl border-b border-border shadow-sm">
             <div className="flex items-center gap-3 px-4 h-14 w-full">
                 {/* Logo and Title */}
                 <div className="flex items-center gap-2 shrink-0 group cursor-pointer" onClick={() => router.push('/')}>
-                    <Logo className="w-6 h-6" />
-                    <span className="font-bold text-lg tracking-tight text-white">
+                    <Logo className="w-6 h-6 text-foreground" />
+                    <span className="font-bold text-lg tracking-tight text-foreground">
                         ToolDaddy
                     </span>
                 </div>
@@ -71,7 +71,7 @@ export function MobileHeader({ searchQuery, setSearchQuery }: MobileHeaderProps)
                             value={setSearchQuery ? searchQuery : localQuery}
                             onChange={handleSearch}
                             onKeyDown={handleKeyDown}
-                            className="h-9 w-full bg-accent/50 border-transparent focus-visible:bg-background focus-visible:border-primary pl-9 rounded-full text-sm"
+                            className="h-9 w-full bg-muted/50 border-transparent focus-visible:bg-background focus-visible:border-primary pl-9 rounded-full text-sm placeholder:text-muted-foreground"
                         />
                     </div>
                     <NotificationsPopover />
