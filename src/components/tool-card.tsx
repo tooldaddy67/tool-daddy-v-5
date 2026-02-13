@@ -30,8 +30,8 @@ export default function ToolCard({ href, name, description, icon: Icon, isExtern
   const cardContent = (
     <Card
       className={cn(
-        "h-full liquid-glass tool-island transition-all duration-300",
-        "border-white/5 shadow-2xl"
+        "h-full bg-secondary/30 backdrop-blur-sm transition-all duration-300",
+        "border-white/5 shadow-lg group-hover:border-primary/20"
       )}
       style={{ '--glow-color': variant.glow } as React.CSSProperties}
     >
@@ -45,16 +45,13 @@ export default function ToolCard({ href, name, description, icon: Icon, isExtern
           <Icon className="h-6 w-6" />
         </div>
         <div className="pt-1 flex-1 min-w-0">
-          <CardTitle
-            className="font-headline text-lg sm:text-xl leading-tight line-clamp-2 bg-clip-text text-transparent bg-gradient-to-b from-white via-white/90 to-white/40"
-            style={{ WebkitBoxReflect: 'below -4px linear-gradient(transparent, rgba(255,255,255,0.15))' } as any}
-          >
+          <CardTitle className="font-headline text-lg sm:text-xl leading-tight line-clamp-2 text-white">
             {name}
           </CardTitle>
         </div>
       </CardHeader>
       <CardContent>
-        <p className="text-sm text-muted-foreground">{description}</p>
+        <p className="text-sm text-muted-foreground/80">{description}</p>
       </CardContent>
     </Card>
   )

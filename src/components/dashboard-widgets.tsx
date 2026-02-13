@@ -53,7 +53,7 @@ function HistoryWidget() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
         >
-            <Card className="h-full glass-panel tool-island transition-all group" style={{ '--glow-color': 'rgba(168, 85, 247, 0.4)' } as React.CSSProperties}>
+            <Card className="h-full bg-secondary/30 border-white/5 transition-all group">
                 <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
                     <CardTitle className="text-sm font-medium flex items-center gap-2">
                         <div
@@ -124,7 +124,7 @@ function NotesWidget() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.1 }}
         >
-            <Card className="h-full glass-panel tool-island transition-all group" style={{ '--glow-color': 'rgba(59, 130, 246, 0.4)' } as React.CSSProperties}>
+            <Card className="h-full bg-secondary/30 border-white/5 transition-all group">
                 <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
                     <CardTitle className="text-sm font-medium flex items-center gap-2">
                         <div
@@ -183,7 +183,7 @@ function TasksWidget() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.2 }}
         >
-            <Card className="h-full glass-panel tool-island transition-all group" style={{ '--glow-color': 'rgba(16, 185, 129, 0.4)' } as React.CSSProperties}>
+            <Card className="h-full bg-secondary/30 border-white/5 transition-all group">
                 <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
                     <CardTitle className="text-sm font-medium flex items-center gap-2">
                         <div

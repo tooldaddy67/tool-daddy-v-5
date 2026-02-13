@@ -14,6 +14,8 @@ export interface Tool {
     icon: LucideIcon;
     isNew?: boolean;
     isPopular?: boolean;
+    isExternal?: boolean;
+    desktopOnly?: boolean;
 }
 
 export interface ToolCategory {
@@ -35,7 +37,7 @@ export const ALL_TOOLS_CATEGORIES: ToolCategory[] = [
             { name: "Video to Audio", description: "Extract MP3 from video", href: "/video-to-audio-converter", icon: Music },
             { name: "YouTube Downloader", description: "Download videos", href: "/youtube-downloader", icon: Download, isPopular: true },
             { name: "YouTube to Audio", description: "Convert YT to MP3", href: "/youtube-to-audio", icon: Music },
-            { name: "AI Image Enhancer", description: "Upscale & fix images", href: "/ai-image-enhancer", icon: Wand2, isNew: true },
+            { name: "AI Image Enhancer", description: "Upscale & fix images", href: "/ai-image-enhancer", icon: Wand2, isNew: true, desktopOnly: true },
             { name: "Metadata Extractor", description: "View Exif data", href: "/metadata-extractor", icon: FileText },
         ]
     },
@@ -46,7 +48,7 @@ export const ALL_TOOLS_CATEGORIES: ToolCategory[] = [
         tools: [
             { name: "AI Text Humanizer", description: "Make AI text natural", href: "/ai-text-humanizer", icon: Bot, isPopular: true },
             { name: "AI Playlist Maker", description: "Generate playlists", href: "/ai-playlist-maker", icon: Music, isNew: true },
-            { name: "Simple Notepad", description: "Distraction-free writing", href: "/simple-notepad", icon: FileText, isPopular: true },
+            { name: "Simple Notepad", description: "Distraction-free writing", href: "/simple-notepad", icon: FileText, isPopular: true, desktopOnly: true },
         ]
     },
     {

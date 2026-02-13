@@ -5,6 +5,7 @@ import { Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { NotificationsPopover } from "./notifications-popover";
 
 
 const Logo = ({ className }: { className?: string }) => (
@@ -56,24 +57,24 @@ export function MobileHeader({ searchQuery, setSearchQuery }: MobileHeaderProps)
                 {/* Logo and Title */}
                 <div className="flex items-center gap-2 shrink-0 group cursor-pointer" onClick={() => router.push('/')}>
                     <Logo className="w-6 h-6" />
-                    <span
-                        className="font-bold text-lg tracking-tight bg-clip-text text-transparent bg-gradient-to-b from-white via-white/90 to-white/40"
-                        style={{ WebkitBoxReflect: 'below -6px linear-gradient(transparent, rgba(255,255,255,0.15))' } as any}
-                    >
+                    <span className="font-bold text-lg tracking-tight text-white">
                         ToolDaddy
                     </span>
                 </div>
 
-                {/* Compact Search Bar */}
-                <div className="flex-1 min-w-0 relative">
-                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                        placeholder="Search..."
-                        value={setSearchQuery ? searchQuery : localQuery}
-                        onChange={handleSearch}
-                        onKeyDown={handleKeyDown}
-                        className="h-9 w-full bg-accent/50 border-transparent focus-visible:bg-background focus-visible:border-primary pl-9 rounded-full text-base"
-                    />
+                {/* Compact Search Bar & Notifications */}
+                <div className="flex-1 flex items-center gap-2 min-w-0">
+                    <div className="flex-1 min-w-0 relative">
+                        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <Input
+                            placeholder="Search..."
+                            value={setSearchQuery ? searchQuery : localQuery}
+                            onChange={handleSearch}
+                            onKeyDown={handleKeyDown}
+                            className="h-9 w-full bg-accent/50 border-transparent focus-visible:bg-background focus-visible:border-primary pl-9 rounded-full text-sm"
+                        />
+                    </div>
+                    <NotificationsPopover />
                 </div>
             </div>
         </header>

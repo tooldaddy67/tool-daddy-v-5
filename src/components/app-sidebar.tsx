@@ -89,7 +89,7 @@ export default function AppSidebar() {
 
   return (
     <Sidebar
-      className="border-r border-border/20 glass-panel transition-all duration-300"
+      className="border-r border-border/20 bg-background/95 transition-all duration-300"
       collapsible="icon"
       variant="sidebar"
     >
@@ -99,10 +99,7 @@ export default function AppSidebar() {
           className="flex items-center gap-2 px-4 py-4 group-data-[state=collapsed]:justify-center group-data-[state=collapsed]:px-0"
         >
           <Logo className="group-data-[state=collapsed]:w-7 group-data-[state=collapsed]:h-7" />
-          <span
-            className="font-bold text-lg font-headline truncate group-data-[state=collapsed]:hidden bg-clip-text text-transparent bg-gradient-to-b from-white via-white/90 to-white/40"
-            style={{ WebkitBoxReflect: 'below -6px linear-gradient(transparent, rgba(255,255,255,0.15))' } as any}
-          >
+          <span className="font-bold text-lg font-headline truncate group-data-[state=collapsed]:hidden text-white">
             {settings.siteTitle || 'Tool Daddy'}
           </span>
         </Link>

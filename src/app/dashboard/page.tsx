@@ -92,12 +92,9 @@ export default function DashboardPage() {
             </div>
 
             <Tabs defaultValue="overview" className="space-y-6">
-                <TabsList className="grid w-full grid-cols-3 lg:w-[400px]">
+                <TabsList className="grid w-full grid-cols-2 lg:w-[300px]">
                     <TabsTrigger value="overview">
                         <LayoutDashboard className="mr-2 h-4 w-4" /> Overview
-                    </TabsTrigger>
-                    <TabsTrigger value="history">
-                        <Clock className="mr-2 h-4 w-4" /> History
                     </TabsTrigger>
                     <TabsTrigger value="settings">
                         <Settings className="mr-2 h-4 w-4" /> Settings
@@ -140,47 +137,6 @@ export default function DashboardPage() {
                     </Card>
                 </TabsContent>
 
-                {/* History Tab */}
-                <TabsContent value="history" className="space-y-6">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Tool Usage History</CardTitle>
-                            <CardDescription>
-                                A detailed log of your activities.
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="space-y-4">
-                                {isLoadingHistory ? (
-                                    <div className="flex justify-center py-8">
-                                        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                                    </div>
-                                ) : history.length > 0 ? (
-                                    history.map((item) => (
-                                        <div key={item.id} className="flex flex-col md:flex-row md:items-center justify-between p-4 rounded-lg border bg-muted/20 gap-4">
-                                            <div>
-                                                <h4 className="font-semibold">{item.tool}</h4>
-                                                <div className="text-xs text-muted-foreground space-y-1 mt-1">
-                                                    <p>{formatDistanceToNow(item.timestamp, { addSuffix: true })}</p>
-                                                    {/* Render specific data keys cleanly */}
-                                                    {item.data && Object.keys(item.data).map(key => (
-                                                        key !== 'timestamp' && (
-                                                            <span key={key} className="mr-3 inline-block bg-muted px-2 py-0.5 rounded text-[10px] uppercase tracking-wider">
-                                                                {key}
-                                                            </span>
-                                                        )
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))
-                                ) : (
-                                    <p className="text-center py-8 text-muted-foreground">No history found.</p>
-                                )}
-                            </div>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
 
                 {/* Settings Tab */}
                 <TabsContent value="settings" className="space-y-6">

@@ -16,7 +16,7 @@ import Link from 'next/link';
 import { ALL_TOOLS } from '@/lib/constants';
 import { Fragment } from 'react';
 import { HomeIcon, Settings, BookOpen, History } from 'lucide-react';
-import { ThemeToggle } from './theme-toggle';
+import { ThemeToggle } from '@/components/theme-toggle';
 import { NotificationBell } from './notification-bell';
 import { SettingsDialog } from './settings-dialog';
 import { Button } from '@/components/ui/button';
@@ -34,12 +34,9 @@ export default function PageHeader() {
   return (
     <>
       <header className={cn(
-        "hidden md:flex sticky top-0 z-50 h-16 items-center gap-4 border-b border-white/10 px-4 md:px-6 transition-all duration-300 shadow-[0_4px_30px_rgba(0,0,0,0.1)] backdrop-filter-none relative overflow-hidden",
+        "hidden md:flex sticky top-0 z-50 h-16 items-center gap-4 border-b border-white/10 px-4 md:px-6 transition-all duration-300 shadow-sm relative overflow-hidden",
         settings.sidebarStyle === 'mini' && "md:pl-2"
       )}>
-        {/* Liquid Gloss Overlay */}
-        <div className="absolute inset-0 z-0 bg-gradient-to-b from-white/10 to-transparent pointer-events-none" />
-
         <div className="relative z-10 md:hidden">
           <SidebarTrigger />
         </div>
@@ -59,10 +56,7 @@ export default function PageHeader() {
                 )}
                 <BreadcrumbItem>
                   {isHome ? (
-                    <BreadcrumbPage
-                      className="font-bold bg-clip-text text-transparent bg-gradient-to-b from-white via-white/90 to-white/40"
-                      style={{ WebkitBoxReflect: 'below -4px linear-gradient(transparent, rgba(255,255,255,0.15))' } as any}
-                    >
+                    <BreadcrumbPage className="font-bold text-white">
                       Home
                     </BreadcrumbPage>
                   ) : (
@@ -73,10 +67,7 @@ export default function PageHeader() {
                   <Fragment>
                     <BreadcrumbSeparator />
                     <BreadcrumbItem>
-                      <BreadcrumbPage
-                        className="font-bold bg-clip-text text-transparent bg-gradient-to-b from-white via-white/90 to-white/40"
-                        style={{ WebkitBoxReflect: 'below -4px linear-gradient(transparent, rgba(255,255,255,0.15))' } as any}
-                      >
+                      <BreadcrumbPage className="font-bold text-white">
                         {currentTool.name}
                       </BreadcrumbPage>
                     </BreadcrumbItem>

@@ -32,8 +32,8 @@ export function MobileToolsGrid({ searchQuery }: MobileToolsGridProps) {
         }));
     };
 
-    // Flatten tools for search
-    const allTools = ALL_TOOLS_CATEGORIES.flatMap(cat => cat.tools);
+    // Flatten tools for search and filter mobile-ready ones
+    const allTools = ALL_TOOLS_CATEGORIES.flatMap(cat => cat.tools).filter(t => !t.isExternal && !t.desktopOnly);
 
     const filteredTools = searchQuery
         ? allTools.filter(t =>
@@ -66,11 +66,14 @@ export function MobileToolsGrid({ searchQuery }: MobileToolsGridProps) {
             ) : (
                 <div className="space-y-8 px-5">
                     {ALL_TOOLS_CATEGORIES.map((category) => {
+                        const mobileReadyTools = category.tools.filter(t => !t.isExternal && !t.desktopOnly);
+                        if (mobileReadyTools.length === 0) return null;
+
                         const isExpanded = expandedCategories[category.slug];
-                        const displayTools = isExpanded ? category.tools : category.tools.slice(0, 2);
-                        const hasMore = category.tools.length > 2;
+                        const displayTools = isExpanded ? mobileReadyTools : mobileReadyTools.slice(0, 2);
+                        const hasMore = mobileReadyTools.length > 2;
                         const currentCategoryIndex = toolIndex;
-                        toolIndex += category.tools.length;
+                        toolIndex += mobileReadyTools.length;
 
                         return (
                             <div key={category.slug} className="space-y-4">
@@ -129,9 +132,8 @@ function ToolCard({ tool, variantIndex = 0 }: { tool: Tool; variantIndex: number
         <Link
             href={tool.href}
             className={cn(
-                "group relative flex flex-col gap-3 p-4 overflow-hidden transition-all duration-300",
-                "glass-panel tool-island", // Theme classes
-                "border-border/20 shadow-sm hover:shadow-lg"
+                "group relative flex flex-col gap-3 p-4 overflow-hidden transition-all duration-300 rounded-3xl",
+                "bg-secondary/20 border border-white/5 shadow-sm hover:shadow-lg hover:border-primary/20"
             )}
             style={{ '--glow-color': variant.glow } as React.CSSProperties}
         >

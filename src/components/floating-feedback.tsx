@@ -27,7 +27,7 @@ export function FloatingFeedback() {
 
     return (
         <div className={cn(
-            "fixed bottom-24 right-6 z-[45] transition-all duration-500 md:bottom-10",
+            "fixed bottom-32 right-6 z-[45] transition-all duration-500 md:bottom-10",
             isVisible ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0 pointer-events-none"
         )}>
             <Link href="/feedback">

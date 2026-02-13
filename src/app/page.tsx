@@ -1,57 +1,57 @@
 "use client"
 
-import { ArrowDown, Sparkles } from 'lucide-react';
-import { useUser } from '@/firebase';
-import { cn } from '@/lib/utils';
-import { HeroSection } from '@/components/home/hero-section';
-// Dynamic imports to reduce initial bundle size and TBT
+import Link from 'next/link';
 import dynamic from 'next/dynamic';
+import { useUser } from '@/firebase';
+import ToolGrid from '@/components/tool-grid';
+import { MobileHome } from '@/components/mobile/mobile-home';
 
 const DashboardWidgets = dynamic(() => import('@/components/dashboard-widgets').then(mod => mod.DashboardWidgets), {
   loading: () => <div className="min-h-[200px] w-full animate-pulse bg-muted/10 rounded-xl" />,
   ssr: false
 });
 
-const BentoGrid = dynamic(() => import('@/components/home/bento-grid').then(mod => mod.BentoGrid));
-
-const FeaturedTools = dynamic(() => import('@/components/home/featured-tools').then(mod => mod.FeaturedTools));
-
-import { MobileHome } from '@/components/mobile/mobile-home';
-
 export default function Home() {
-  const { user, isUserLoading } = useUser();
-  // Show dashboard skeleton while loading, or if we have a user (anonymous or real)
-  const showDashboard = isUserLoading || !!user;
+  const { user } = useUser();
 
   return (
     <>
       <MobileHome />
-      <div className="hidden md:flex flex-col w-full min-h-screen">
-        <main className="flex-1">
-          {/* New Hero Section */}
-          <HeroSection />
+      <div className="hidden md:flex flex-col w-full min-h-screen py-12 px-6">
+        <main className="flex-1 w-full max-w-7xl mx-auto space-y-24">
+          {/* Desktop Branding Hero */}
+          <section className="text-center space-y-6 pt-12">
+            <h1 className="text-6xl font-black tracking-tighter uppercase font-headline">
+              <span className="text-white">Tool</span>{" "}
+              <span className="text-cyan-400">Daddy</span>
+            </h1>
+            <p className="text-lg font-medium text-muted-foreground max-w-2xl mx-auto uppercase tracking-[0.2em]">
+              The ultimate free online tool suite. <br />
+              Image compression, video conversion, AI tools, and more.
+            </p>
+          </section>
 
-          {/* Bento Grid Features */}
-          <BentoGrid />
+          {/* Featured Collections / Tools Section */}
+          <div className="space-y-20">
+            {/* Show activity if logged in */}
+            {user && (
+              <section className="space-y-8">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-3xl font-black text-white uppercase tracking-tighter">Jump Back In</h2>
+                  <Link href="/history" className="text-sm font-bold text-muted-foreground hover:text-white transition-colors uppercase">View Full History</Link>
+                </div>
+                <DashboardWidgets />
+              </section>
+            )}
 
-          {/* Dashboard / Featured Tools Section */}
-          <div className="relative w-full bg-background/50 backdrop-blur-sm">
-
-            <div className="space-y-12">
-              {showDashboard && (
-                <section className="px-4 md:px-6 py-12 max-w-7xl mx-auto border-b border-white/5 min-h-[400px]">
-                  <div className="flex flex-col items-center justify-center text-center space-y-4 mb-8">
-                    <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl font-headline">Your Dashboard</h2>
-                    <p className="text-muted-foreground">Quick access to your recent activities.</p>
-                  </div>
-                  <DashboardWidgets />
-                </section>
-              )}
-
-              {/* Featured Tools & Link to All */}
-              <FeaturedTools />
-
-            </div>
+            {/* The Main Tool Grid - Full available tools */}
+            <section className="space-y-12">
+              <div className="flex flex-col items-center text-center space-y-4 mb-16">
+                <h2 className="text-4xl font-black tracking-tight uppercase font-headline">Explore All Utilities</h2>
+                <div className="h-1 w-20 bg-cyan-400 rounded-full" />
+              </div>
+              <ToolGrid />
+            </section>
           </div>
         </main>
       </div>

@@ -65,8 +65,7 @@ export default function NotFound() {
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.6, ease: "easeOut" }}
-                            className="relative w-full max-w-2xl p-8 md:p-12 overflow-hidden glass-panel tool-island border-border/20 shadow-2xl rounded-[var(--radius)]"
-                            style={{ '--glow-color': 'var(--primary)' } as React.CSSProperties}
+                            className="relative w-full max-w-2xl p-8 md:p-12 overflow-hidden bg-secondary/30 backdrop-blur-sm border-white/5 shadow-2xl rounded-[var(--radius)]"
                         >
                             <div className="absolute top-0 right-0 p-4 opacity-10 select-none">
                                 <h1 className="text-9xl font-black tracking-tighter font-headline">404</h1>

@@ -60,6 +60,7 @@ export type Tool = {
   href: string;
   icon: LucideIcon;
   isExternal?: boolean;
+  desktopOnly?: boolean;
 };
 
 export type ToolCategory = {
@@ -76,6 +77,7 @@ export const TOOL_CATEGORIES: ToolCategory[] = [
         description: 'A simple notepad for quick notes with rich text support.',
         href: '/simple-notepad',
         icon: Notebook,
+        desktopOnly: true,
       },
       {
         name: 'Timer & Stopwatch',
@@ -106,6 +108,7 @@ export const TOOL_CATEGORIES: ToolCategory[] = [
         href: '/ai-image-enhancer',
         icon: Sparkles,
         isExternal: false,
+        desktopOnly: true,
       },
       {
         name: 'AI Playlist Maker',
@@ -179,6 +182,7 @@ export const TOOL_CATEGORIES: ToolCategory[] = [
         description: 'A minimalist canvas for quick sketches and notes.',
         href: '/drawing-canvas',
         icon: Pencil,
+        desktopOnly: true,
       },
       {
         name: 'Color Palette Generator',
@@ -302,6 +306,7 @@ export const TOOL_CATEGORIES: ToolCategory[] = [
         description: 'Generate public and private RSA key pairs in PEM format.',
         href: '/rsa-key-generator',
         icon: FileKey,
+        desktopOnly: true,
       },
       {
         name: 'Password Strength Analyser',
@@ -314,6 +319,7 @@ export const TOOL_CATEGORIES: ToolCategory[] = [
         description: 'Verify the digital signatures and integrity of PDF documents.',
         href: '/pdf-signature-checker',
         icon: FileBadge,
+        desktopOnly: true,
       },
       {
         name: 'Date-Time Converter',
@@ -360,6 +366,7 @@ export const TOOL_CATEGORIES: ToolCategory[] = [
         description: 'Create and run performance benchmarks for your code.',
         href: '/benchmark-builder',
         icon: Zap,
+        desktopOnly: true,
       },
     ]
   },

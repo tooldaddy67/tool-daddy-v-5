@@ -2,15 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Grid, History, Settings, LogIn } from "lucide-react";
+import { Home, Grid, History, Settings, User, LogIn } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useSettings } from "@/components/settings-provider";
+import { motion } from "framer-motion";
 import { useUser } from "@/firebase";
 import { UserAuthButton } from "@/components/user-auth-button";
 
 export function MobileNav() {
     const pathname = usePathname();
-    const { setSettingsOpen } = useSettings();
     const { user } = useUser();
 
     const isActive = (href: string) => {
@@ -18,76 +17,82 @@ export function MobileNav() {
         return pathname.startsWith(href);
     };
 
+    const navItems = [
+        { href: '/', icon: Home, label: 'Home' },
+        { href: '/tools', icon: Grid, label: 'Tools' },
+        { href: '/history', icon: History, label: 'History' },
+        { href: '/settings', icon: Settings, label: 'Settings' },
+    ];
+
     return (
-        <div className="fixed bottom-6 left-4 right-4 z-50 md:hidden">
-            <div className="bg-background/40 backdrop-blur-2xl border border-white/10 rounded-full shadow-2xl h-16 px-6 flex items-center justify-between">
-                <Link
-                    href="/"
-                    className={cn(
-                        "relative p-3 rounded-full transition-all duration-300 hover:bg-muted font-medium",
-                        isActive('/') ? "text-primary" : "text-muted-foreground"
-                    )}
-                >
-                    <Home className={cn("w-6 h-6", isActive('/') && "fill-current/20")} />
-                    {isActive('/') && (
-                        <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary shadow-sm" />
-                    )}
-                </Link>
-
-                <div className="w-[1px] h-6 bg-border/20" />
-
-                <Link
-                    href="/tools"
-                    className={cn(
-                        "relative p-3 rounded-full transition-all duration-300 hover:bg-muted font-medium",
-                        isActive('/tools') ? "text-primary" : "text-muted-foreground"
-                    )}
-                >
-                    <Grid className={cn("w-6 h-6", isActive('/tools') && "fill-current/20")} />
-                    {isActive('/tools') && (
-                        <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary shadow-sm" />
-                    )}
-                </Link>
-
-                <div className="w-[1px] h-6 bg-border/20" />
-
-                <Link
-                    href="/history"
-                    className={cn(
-                        "relative p-3 rounded-full transition-all duration-300 hover:bg-muted font-medium",
-                        isActive('/history') ? "text-primary" : "text-muted-foreground"
-                    )}
-                >
-                    <History className={cn("w-6 h-6", isActive('/history') && "fill-current/20")} />
-                    {isActive('/history') && (
-                        <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary shadow-sm" />
-                    )}
-                </Link>
-
-                <div className="w-[1px] h-6 bg-border/20" />
-
-                {user && !user.isAnonymous ? (
+        <div className="fixed bottom-0 left-0 right-0 z-[100] md:hidden px-4 pb-6 bg-gradient-to-t from-background via-background/80 to-transparent pointer-events-none">
+            <div className="bg-secondary/95 backdrop-blur-xl border border-white/10 rounded-[2rem] shadow-2xl h-20 flex items-center justify-around px-2 pointer-events-auto max-w-md mx-auto">
+                {navItems.map((item) => (
                     <Link
-                        href="/settings"
+                        key={item.href}
+                        href={item.href}
                         className={cn(
-                            "relative p-3 rounded-full transition-all duration-300 hover:bg-muted font-medium",
-                            isActive('/settings') ? "text-primary" : "text-muted-foreground"
+                            "flex flex-col items-center gap-1.5 p-2 transition-all duration-300 relative group",
+                            isActive(item.href) ? "text-primary scale-110" : "text-muted-foreground"
                         )}
                     >
-                        <Settings className={cn("w-6 h-6", isActive('/settings') && "fill-current/20")} />
-                        {isActive('/settings') && (
-                            <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary shadow-sm" />
+                        <div className={cn(
+                            "p-2 rounded-2xl transition-all duration-300",
+                            isActive(item.href) && "bg-primary/10"
+                        )}>
+                            <item.icon className={cn("w-5 h-5", isActive(item.href) && "fill-current/20")} />
+                        </div>
+                        <span className={cn(
+                            "text-[9px] font-black uppercase tracking-widest transition-all",
+                            isActive(item.href) ? "opacity-100" : "opacity-40"
+                        )}>
+                            {item.label}
+                        </span>
+                        {isActive(item.href) && (
+                            <motion.div
+                                layoutId="activeNav"
+                                className="absolute -top-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary shadow-[0_0_10px_rgba(var(--primary),0.5)]"
+                            />
                         )}
                     </Link>
-                ) : (
-                    <UserAuthButton
-                        customTrigger={
-                            <div className="relative p-3 rounded-full transition-all duration-300 hover:bg-muted font-medium text-muted-foreground hover:text-primary">
-                                <LogIn className="w-6 h-6" />
+                ))}
+
+                {/* Account / Auth Item */}
+                <div className="flex flex-col items-center gap-1.5 p-2">
+                    {user && !user.isAnonymous ? (
+                        <Link
+                            href="/dashboard"
+                            className={cn(
+                                "flex flex-col items-center gap-1.5 transition-all duration-300",
+                                isActive('/dashboard') ? "text-primary scale-110" : "text-muted-foreground"
+                            )}
+                        >
+                            <div className={cn(
+                                "p-2 rounded-2xl transition-all duration-300",
+                                isActive('/dashboard') && "bg-primary/10"
+                            )}>
+                                <User className="w-5 h-5" />
                             </div>
-                        }
-                    />
-                )}
+                            <span className={cn(
+                                "text-[9px] font-black uppercase tracking-widest transition-all",
+                                isActive('/dashboard') ? "opacity-100" : "opacity-40"
+                            )}>
+                                Profile
+                            </span>
+                        </Link>
+                    ) : (
+                        <UserAuthButton
+                            customTrigger={
+                                <div className="flex flex-col items-center gap-1.5 text-muted-foreground hover:text-primary transition-all">
+                                    <div className="p-2 rounded-2xl">
+                                        <LogIn className="w-5 h-5" />
+                                    </div>
+                                    <span className="text-[9px] font-black uppercase tracking-widest opacity-40">Login</span>
+                                </div>
+                            }
+                        />
+                    )}
+                </div>
             </div>
         </div>
     );
