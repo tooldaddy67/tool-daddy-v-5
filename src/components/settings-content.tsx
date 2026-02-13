@@ -194,7 +194,13 @@ export function SettingsContent({ isDialog = false, onClose }: SettingsContentPr
     };
 
     return (
-        <div className={cn("flex flex-col h-full bg-background/95 backdrop-blur-2xl overflow-hidden", !isDialog && "min-h-screen")}>
+        <div
+            className={cn("flex flex-col h-full overflow-hidden", !isDialog && "min-h-screen")}
+            style={{
+                backdropFilter: 'blur(var(--glass-blur, 12px))',
+                background: 'hsl(var(--background) / var(--glass-opacity, 0.9))',
+            } as React.CSSProperties}
+        >
             <div className={cn("px-6 py-4 border-b border-border/50 flex items-center justify-between bg-muted/20", !isDialog && "pt-8 pb-6")}>
                 <div className="flex items-center gap-2 text-xl font-bold font-headline">
                     <Settings className="h-5 w-5 text-primary" />
@@ -446,7 +452,23 @@ export function SettingsContent({ isDialog = false, onClose }: SettingsContentPr
                                     </Label>
                                     <div className="flex gap-1 bg-background/40 p-1 rounded-lg">
                                         {(['low', 'medium', 'high'] as BlurIntensity[]).map((b) => (
-                                            <Button key={b} variant={settings.blurIntensity === b ? 'default' : 'ghost'} size="sm" className="flex-1 text-[10px] h-7 rounded-md capitalize" onClick={() => updateSettings({ blurIntensity: b })}>{b}</Button>
+                                            <Button
+                                                key={b}
+                                                variant={settings.blurIntensity === b ? 'default' : 'ghost'}
+                                                size="sm"
+                                                className="flex-1 text-[10px] h-7 rounded-md capitalize"
+                                                onClick={() => {
+                                                    const BLUR_PRESETS = { low: '4px', medium: '16px', high: '32px' };
+
+                                                    // 1. Immediate Visual Update
+                                                    document.documentElement.style.setProperty('--glass-blur', BLUR_PRESETS[b]);
+
+                                                    // 2. Persist
+                                                    updateSettings({ blurIntensity: b });
+                                                }}
+                                            >
+                                                {b}
+                                            </Button>
                                         ))}
                                     </div>
                                 </div>
@@ -456,7 +478,28 @@ export function SettingsContent({ isDialog = false, onClose }: SettingsContentPr
                                     </Label>
                                     <div className="flex gap-1 bg-background/40 p-1 rounded-lg">
                                         {(['sharp', 'smooth', 'round'] as BorderStyle[]).map((s) => (
-                                            <Button key={s} variant={settings.borderStyle === s ? 'default' : 'ghost'} size="sm" className="flex-1 text-[10px] h-7 rounded-md capitalize" onClick={() => updateSettings({ borderStyle: s })}>{s}</Button>
+                                            <Button
+                                                key={s}
+                                                variant={settings.borderStyle === s ? 'default' : 'ghost'}
+                                                size="sm"
+                                                className="flex-1 text-[10px] h-7 rounded-md capitalize"
+                                                onClick={() => {
+                                                    const CORNER_PRESETS = { sharp: 0, smooth: 12, round: 24 }; // Pixels
+                                                    const newRadius = CORNER_PRESETS[s];
+
+                                                    // 1. Update React State & Persistence
+                                                    updateSettings({
+                                                        borderStyle: s,
+                                                        cardRoundness: newRadius
+                                                    });
+
+                                                    // 2. Force Immediate CSS Update (Bypasses React Cycle lag)
+                                                    document.documentElement.style.setProperty('--radius', `${newRadius}px`);
+                                                    document.documentElement.style.setProperty('--card-radius', `${newRadius}px`);
+                                                }}
+                                            >
+                                                {s}
+                                            </Button>
                                         ))}
                                     </div>
                                 </div>
@@ -478,6 +521,65 @@ export function SettingsContent({ isDialog = false, onClose }: SettingsContentPr
                                         {(['dark', 'mesh', 'pulse'] as BGStyle[]).map((bg) => (
                                             <Button key={bg} variant={settings.bgStyle === bg ? 'default' : 'ghost'} size="sm" className="flex-1 text-[10px] h-7 rounded-md capitalize" onClick={() => updateSettings({ bgStyle: bg })}>{bg}</Button>
                                         ))}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Granular Card Customization */}
+                            <div className="space-y-4 pt-2">
+                                <Label className="flex items-center gap-2 text-xs font-bold uppercase opacity-50">
+                                    <Layers className="w-3 h-3 text-primary" /> Card Customization
+                                </Label>
+                                <div className="bg-muted/30 p-4 rounded-xl border border-border/50 grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
+                                    <div className="space-y-2">
+                                        <div className="flex justify-between">
+                                            <Label className="text-[10px] font-medium">Roundness</Label>
+                                            <span className="text-[10px] text-muted-foreground">{settings.cardRoundness}px</span>
+                                        </div>
+                                        <Slider
+                                            value={[settings.cardRoundness]}
+                                            min={0}
+                                            max={60}
+                                            step={1}
+                                            onValueChange={([v]) => {
+                                                updateSettings({ cardRoundness: v });
+                                                document.documentElement.style.setProperty('--radius', `${v}px`);
+                                                document.documentElement.style.setProperty('--card-radius', `${v}px`);
+                                            }}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <div className="flex justify-between">
+                                            <Label className="text-[10px] font-medium">Glass Opacity</Label>
+                                            <span className="text-[10px] text-muted-foreground">{settings.glassOpacity}%</span>
+                                        </div>
+                                        <Slider
+                                            value={[settings.glassOpacity]}
+                                            min={0}
+                                            max={100}
+                                            step={1}
+                                            onValueChange={([v]) => updateSettings({ glassOpacity: v })}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <div className="flex justify-between">
+                                            <Label className="text-[10px] font-medium">Glow Strength</Label>
+                                            <span className="text-[10px] text-muted-foreground">{settings.cardGlowStrength}%</span>
+                                        </div>
+                                        <Slider
+                                            value={[settings.cardGlowStrength]}
+                                            min={0}
+                                            max={100}
+                                            step={1}
+                                            onValueChange={([v]) => updateSettings({ cardGlowStrength: v })}
+                                        />
+                                    </div>
+                                    <div className="flex items-center justify-between pt-2">
+                                        <Label className="text-[10px] font-medium">Text Glow Effect</Label>
+                                        <Switch
+                                            checked={settings.textGlow}
+                                            onCheckedChange={(v) => updateSettings({ textGlow: v })}
+                                        />
                                     </div>
                                 </div>
                             </div>

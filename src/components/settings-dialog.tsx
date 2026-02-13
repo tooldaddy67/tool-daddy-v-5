@@ -181,7 +181,13 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[800px] h-[80vh] flex flex-col border-primary/20 bg-background/95 backdrop-blur-2xl p-0 overflow-hidden">
+            <DialogContent
+                className="sm:max-w-[800px] h-[80vh] flex flex-col border-primary/20 p-0 overflow-hidden"
+                style={{
+                    backdropFilter: 'blur(var(--glass-blur, 12px))',
+                    background: 'hsl(var(--background) / var(--glass-opacity, 0.9))',
+                } as React.CSSProperties}
+            >
                 <div className="px-6 py-4 border-b border-border/50 flex items-center justify-between bg-muted/20">
                     <DialogTitle className="flex items-center gap-2 text-xl font-bold font-headline">
                         <Settings className="h-5 w-5 text-primary" />

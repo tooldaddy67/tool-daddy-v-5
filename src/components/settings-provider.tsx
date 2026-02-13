@@ -35,6 +35,11 @@ interface UserSettings {
     accentGradient: boolean;
     dataPersistence: boolean;
     notifications: boolean;
+    // Granular Customization
+    cardRoundness: number;
+    glassOpacity: number;
+    cardGlowStrength: number;
+    textGlow: boolean;
 }
 
 interface SettingsContextType {
@@ -65,6 +70,11 @@ const defaultSettings: UserSettings = {
     accentGradient: false,
     dataPersistence: true,
     notifications: true,
+    // Defaults
+    cardRoundness: 48, // ~3rem
+    glassOpacity: 90,
+    cardGlowStrength: 40,
+    textGlow: false,
 };
 
 export const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
@@ -96,7 +106,7 @@ const COLOR_THEMES: Record<ColorTheme, { primary: string; primaryForeground: str
 };
 
 const BLUR_MAP: Record<BlurIntensity, string> = { low: '2px', medium: '20px', high: '40px' };
-const RADIUS_MAP: Record<BorderStyle, string> = { sharp: '0px', smooth: '0.8rem', round: '1.5rem' };
+// Radius logic moved entirely to slider & button actions
 const DENSITY_MAP: Record<UIDensity, string> = { compact: '0.9', standard: '1', cozy: '1.1' };
 
 export function SettingsProvider({ children }: { children: React.ReactNode }) {
@@ -153,7 +163,12 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
                 enableSound: cloudSettings.enableSound ?? prev.enableSound ?? true,
                 showCursorEffect: cloudSettings.showCursorEffect ?? prev.showCursorEffect ?? false,
                 showGrain: cloudSettings.showGrain ?? prev.showGrain ?? false,
-                showScrollIndicator: cloudSettings.showScrollIndicator ?? prev.showScrollIndicator ?? true
+                showScrollIndicator: cloudSettings.showScrollIndicator ?? prev.showScrollIndicator ?? true,
+                // New settings sync
+                cardRoundness: cloudSettings.cardRoundness ?? prev.cardRoundness ?? 48,
+                glassOpacity: cloudSettings.glassOpacity ?? prev.glassOpacity ?? 90,
+                cardGlowStrength: cloudSettings.cardGlowStrength ?? prev.cardGlowStrength ?? 40,
+                textGlow: cloudSettings.textGlow ?? prev.textGlow ?? false,
             }));
             localStorage.setItem('tool-dady-settings', JSON.stringify({ ...localSettings, ...cloudSettings }));
         }
@@ -189,12 +204,24 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
         root.style.setProperty('--sidebar-primary', colors.primary);
         root.style.setProperty('--sidebar-ring', colors.primary);
         root.style.setProperty('--accent-gradient', localSettings.accentGradient ? '1' : '0');
+
+        // Effects Attributes
+        root.setAttribute('data-grain', localSettings.showGrain ? 'true' : 'false');
+        root.setAttribute('data-glow', localSettings.accentGradient ? 'true' : 'false');
+
         root.style.setProperty('--anim-speed', localSettings.animSpeed.toString());
 
         root.style.setProperty('--glass-blur', BLUR_MAP[localSettings.blurIntensity]);
-        root.style.setProperty('--radius', RADIUS_MAP[localSettings.borderStyle]);
+        // UNIFIED RADIUS: Slider controls global radius
+        root.style.setProperty('--radius', `${localSettings.cardRoundness}px`);
         root.style.setProperty('--spacing-multiplier', DENSITY_MAP[localSettings.uiDensity]);
         root.style.setProperty('--anim-speed', localSettings.animSpeed.toString());
+
+        // Granular customization
+        root.style.setProperty('--card-radius', `${localSettings.cardRoundness}px`);
+        root.style.setProperty('--glass-opacity', `${localSettings.glassOpacity / 100}`);
+        root.style.setProperty('--card-glow-strength', `${localSettings.cardGlowStrength / 100}`);
+        root.style.setProperty('--text-glow', localSettings.textGlow ? '0 0 10px var(--primary)' : 'none');
     }, [localSettings, isLocalLoaded, isDesktop]);
 
     const updateSettings = async (newSettings: Partial<UserSettings>) => {

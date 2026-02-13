@@ -56,7 +56,7 @@ export default function PageHeader() {
                 )}
                 <BreadcrumbItem>
                   {isHome ? (
-                    <BreadcrumbPage className="font-bold text-white">
+                    <BreadcrumbPage className="font-bold text-foreground">
                       Home
                     </BreadcrumbPage>
                   ) : (
@@ -67,7 +67,7 @@ export default function PageHeader() {
                   <Fragment>
                     <BreadcrumbSeparator />
                     <BreadcrumbItem>
-                      <BreadcrumbPage className="font-bold text-white">
+                      <BreadcrumbPage className="font-bold text-foreground">
                         {currentTool.name}
                       </BreadcrumbPage>
                     </BreadcrumbItem>

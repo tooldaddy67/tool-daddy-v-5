@@ -9,11 +9,14 @@ export default function ToolGrid() {
   return (
     <>
       {TOOL_CATEGORIES.map((category) => (
-        <div key={category.name} className="space-y-6">
-          <h2 className="text-2xl sm:text-3xl font-bold font-headline tracking-tight">
-            {category.name}
-          </h2>
-          <div className="grid grid-cols-1 gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div key={category.name} className="space-y-12">
+          <div className="flex items-center gap-4">
+            <div className="h-10 w-1.5 bg-red-500 rounded-full" />
+            <h2 className="text-3xl font-black font-headline tracking-tighter uppercase">
+              {category.name}
+            </h2>
+          </div>
+          <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
             {category.tools.map((tool) => {
               const currentIndex = toolIndex++;
               return (

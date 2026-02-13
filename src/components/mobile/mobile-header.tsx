@@ -58,7 +58,7 @@ export function MobileHeader({ searchQuery, setSearchQuery }: MobileHeaderProps)
                 <div className="flex items-center gap-2 shrink-0 group cursor-pointer" onClick={() => router.push('/')}>
                     <Logo className="w-6 h-6 text-foreground" />
                     <span className="font-bold text-lg tracking-tight text-foreground">
-                        ToolDaddy
+                        Tool Daddy
                     </span>
                 </div>
 

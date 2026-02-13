@@ -44,14 +44,17 @@ export default function ToolsPage() {
                 />
             </div>
 
-            <div className="hidden md:block container px-4 md:px-6 md:mt-0 mt-8">
-                <div className="flex flex-col items-center justify-center text-center space-y-4 mb-12">
-                    <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl font-headline">All Tools</h1>
-                    <p className="text-muted-foreground max-w-[600px] text-lg">
-                        Explore our full suite of productivity, media, and creative utilities.
-                    </p>
+            <div className="hidden md:block w-full min-h-screen mesh-bg relative">
+                <div className="container px-8 py-24 mx-auto space-y-20 relative z-10">
+                    <div className="flex flex-col items-center justify-center text-center space-y-6 mb-16">
+                        <h1 className="text-6xl font-black tracking-tighter uppercase font-headline">All Tools</h1>
+                        <div className="h-1.5 w-20 bg-red-500 rounded-full" />
+                        <p className="text-muted-foreground max-w-[600px] text-xl font-medium uppercase tracking-widest opacity-70">
+                            The Complete Suite
+                        </p>
+                    </div>
+                    <ToolGridLoader />
                 </div>
-                <ToolGridLoader />
             </div>
         </div>
     );
