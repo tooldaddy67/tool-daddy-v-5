@@ -54,15 +54,15 @@ const defaultSettings: UserSettings = {
     displayName: '',
     siteTitle: 'Tool Daddy',
     fontPair: 'tech',
-    colorTheme: 'purple',
-    primaryColor: '271 91% 65%',
-    blurIntensity: 'medium',
+    colorTheme: 'green',
+    primaryColor: '142 70% 45%',
+    blurIntensity: 'high',
     uiDensity: 'standard',
     borderStyle: 'smooth',
     bgStyle: 'dark',
     animSpeed: 1,
     sidebarStyle: 'full',
-    cardStyle: 'glass',
+    cardStyle: 'neo',
     showCursorEffect: false,
     showGrain: false,
     showScrollIndicator: false,
@@ -170,7 +170,13 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
                 }
 
                 // Apply defaults for other fields if missing
-                mergedSettings.dataPersistence = cloudSettings.dataPersistence ?? prev.dataPersistence ?? true;
+                // FORCE ADJUSTMENT: Guests cannot have data persistence
+                if (!user || user.isAnonymous) {
+                    mergedSettings.dataPersistence = false;
+                } else {
+                    mergedSettings.dataPersistence = cloudSettings.dataPersistence ?? prev.dataPersistence ?? true;
+                }
+
                 mergedSettings.notifications = cloudSettings.notifications ?? prev.notifications ?? true;
                 mergedSettings.primaryColor = cloudSettings.primaryColor ?? prev.primaryColor ?? '271 91% 65%';
                 mergedSettings.siteTitle = cloudSettings.siteTitle ?? prev.siteTitle ?? 'Tool Daddy';
@@ -247,6 +253,11 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
         // Automatically sync cardRoundness when borderStyle changes
         if (newSettings.borderStyle) {
             newSettings.cardRoundness = RADIUS_MAP[newSettings.borderStyle];
+        }
+
+        // Prevent guests from enabling data persistence
+        if ((!user || user.isAnonymous) && newSettings.dataPersistence === true) {
+            newSettings.dataPersistence = false;
         }
 
         const updated = { ...localSettings, ...newSettings };

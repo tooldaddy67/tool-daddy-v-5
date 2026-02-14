@@ -16,13 +16,14 @@ interface DynamicToolCardProps {
   icon: LucideIcon;
   isExternal?: boolean;
   variantIndex?: number;
+  compact?: boolean;
 }
 
 const CardSkeleton = () => (
   <div className="flex flex-col h-full rounded-lg border bg-card p-6 shadow-sm space-y-4">
     <div className="flex flex-row items-center gap-4">
-        <Skeleton className="h-12 w-12 rounded-lg" />
-        <Skeleton className="h-6 w-3/4" />
+      <Skeleton className="h-12 w-12 rounded-lg" />
+      <Skeleton className="h-6 w-3/4" />
     </div>
     <Skeleton className="h-4 w-full" />
     <Skeleton className="h-4 w-2/3" />

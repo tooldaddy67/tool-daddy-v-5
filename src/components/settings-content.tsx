@@ -212,7 +212,9 @@ export function SettingsContent({ isDialog = false, onClose }: SettingsContentPr
                 <div className="px-6 pt-4">
                     <TabsList className="flex w-full overflow-x-auto sm:grid sm:grid-cols-3 h-auto p-1 gap-2 sm:gap-1 no-scrollbar bg-muted/40 rounded-full">
                         <TabsTrigger value="general" className="flex-1 min-w-[100px] flex-shrink-0 px-3 py-2 rounded-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-xs sm:text-sm font-medium transition-all">General</TabsTrigger>
-                        <TabsTrigger value="privacy" className="flex-1 min-w-[120px] flex-shrink-0 px-3 py-2 rounded-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-xs sm:text-sm font-medium transition-all">Privacy & Account</TabsTrigger>
+                        {user && !user.isAnonymous && (
+                            <TabsTrigger value="privacy" className="flex-1 min-w-[120px] flex-shrink-0 px-3 py-2 rounded-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-xs sm:text-sm font-medium transition-all">Privacy & Account</TabsTrigger>
+                        )}
                         <TabsTrigger value="help" className="flex-1 min-w-[100px] flex-shrink-0 px-3 py-2 rounded-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-xs sm:text-sm font-medium transition-all">Help & Guide</TabsTrigger>
                     </TabsList>
                 </div>
@@ -652,228 +654,230 @@ export function SettingsContent({ isDialog = false, onClose }: SettingsContentPr
                         </div>
                     </TabsContent>
 
-                    <TabsContent value="privacy" className="space-y-6 mt-0">
-                        <div className="text-sm text-muted-foreground mb-4">
-                            Manage how your data is stored and used.
-                        </div>
-
-                        <div className="space-y-6">
-                            {/* Data Persistence */}
-                            <div className="flex items-center justify-between p-4 rounded-xl border border-border/50 bg-muted/30 hover:bg-muted/40 transition-colors">
-                                <div className="space-y-1">
-                                    <div className="flex items-center gap-2 font-semibold">
-                                        <Database className="w-4 h-4 text-primary" />
-                                        Data Persistence
-                                    </div>
-                                    <p className="text-xs text-muted-foreground">
-                                        Save your palettes, todo lists, and history to the cloud. Disabling this will delete your cloud data.
-                                    </p>
-                                </div>
-                                <Switch
-                                    checked={settings.dataPersistence}
-                                    onCheckedChange={(checked) => {
-                                        if (checked) {
-                                            handleDataPersistenceChange(true);
-                                        } else {
-                                            setShowDisablePersistenceDialog(true);
-                                        }
-                                    }}
-                                />
+                    {user && !user.isAnonymous && (
+                        <TabsContent value="privacy" className="space-y-6 mt-0">
+                            <div className="text-sm text-muted-foreground mb-4">
+                                Manage how your data is stored and used.
                             </div>
 
-                            <AlertDialog open={showDisablePersistenceDialog} onOpenChange={setShowDisablePersistenceDialog}>
-                                <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                        <AlertDialogTitle>Disable Cloud Storage?</AlertDialogTitle>
-                                        <AlertDialogDescription>
-                                            This will <strong>permanently delete</strong> all your saved data (History, Palettes, Todos) from our servers.
-                                            Future data will not be saved. This action cannot be undone.
-                                        </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                        <AlertDialogAction
-                                            onClick={async (e) => {
-                                                e.preventDefault(); // Prevent auto-close to show loading state if needed, though we use isDeletingData
-                                                await confirmDisablePersistence();
-                                                setShowDisablePersistenceDialog(false);
-                                            }}
-                                            className="bg-destructive hover:bg-destructive/90"
-                                        >
-                                            {isDeletingData ? 'Deleting...' : 'Yes, Delete My Data'}
-                                        </AlertDialogAction>
-                                    </AlertDialogFooter>
-                                </AlertDialogContent>
-                            </AlertDialog>
-
-                            {/* Notifications */}
-                            <div className="flex items-center justify-between p-4 rounded-xl border border-border/50 bg-muted/30 hover:bg-muted/40 transition-colors">
-                                <div className="space-y-1">
-                                    <div className="flex items-center gap-2 font-semibold">
-                                        <Bell className="w-4 h-4 text-primary" />
-                                        Notifications
+                            <div className="space-y-6">
+                                {/* Data Persistence */}
+                                <div className="flex items-center justify-between p-4 rounded-xl border border-border/50 bg-muted/30 hover:bg-muted/40 transition-colors">
+                                    <div className="space-y-1">
+                                        <div className="flex items-center gap-2 font-semibold">
+                                            <Database className="w-4 h-4 text-primary" />
+                                            Data Persistence
+                                        </div>
+                                        <p className="text-xs text-muted-foreground">
+                                            Save your palettes, todo lists, and history to the cloud. Disabling this will delete your cloud data.
+                                        </p>
                                     </div>
-                                    <p className="text-xs text-muted-foreground">
-                                        Receive updates and alerts from Tool Daddy.
-                                    </p>
-                                </div>
-                                <Switch
-                                    checked={settings.notifications}
-                                    onCheckedChange={(checked) => updateSettings({ notifications: checked })}
-                                />
-                            </div>
-
-                            {/* Account Management & Admin */}
-                            <div className="space-y-3 pt-4">
-                                <h3 className="text-xs font-bold uppercase opacity-50 tracking-wider">Account Management</h3>
-                                <div className="grid grid-cols-1 gap-3">
-                                    {isAdmin && (
-                                        <Button
-                                            variant="outline"
-                                            className="w-full justify-between h-12 bg-primary/5 border-primary/20 hover:bg-primary/10 group"
-                                            onClick={() => {
-                                                if (onClose) onClose();
-                                                router.push('/admin/dashboard');
-                                            }}
-                                        >
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                                                    <ShieldCheck className="w-4 h-4 text-primary" />
-                                                </div>
-                                                <div className="text-left">
-                                                    <span className="block text-sm font-bold">Admin Dashboard</span>
-                                                    <span className="text-[10px] text-muted-foreground">Manage site systems</span>
-                                                </div>
-                                            </div>
-                                            <ChevronRight className="w-4 h-4 opacity-50 group-hover:translate-x-0.5 transition-transform" />
-                                        </Button>
-                                    )}
-
-                                    <Button
-                                        variant="outline"
-                                        className="w-full justify-between h-12 bg-muted/30 border-border/50 hover:bg-muted/50 group"
-                                        onClick={async () => {
-                                            try {
-                                                await auth.signOut();
-                                                if (onClose) onClose();
-                                                toast({ title: "Logged Out", description: "Come back soon!" });
-                                                router.push('/');
-                                            } catch (error) {
-                                                toast({ title: "Error", description: "Failed to log out", variant: "destructive" });
+                                    <Switch
+                                        checked={settings.dataPersistence}
+                                        onCheckedChange={(checked) => {
+                                            if (checked) {
+                                                handleDataPersistenceChange(true);
+                                            } else {
+                                                setShowDisablePersistenceDialog(true);
                                             }
                                         }}
-                                    >
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center">
-                                                <LogOut className="w-4 h-4" />
-                                            </div>
-                                            <div className="text-left">
-                                                <span className="block text-sm font-bold">Sign Out</span>
-                                                <span className="text-[10px] text-muted-foreground">End your session</span>
-                                            </div>
-                                        </div>
-                                        <ChevronRight className="w-4 h-4 opacity-50 group-hover:translate-x-0.5 transition-transform" />
-                                    </Button>
+                                    />
                                 </div>
-                            </div>
 
-                            {/* Privacy Policy */}
-                            <Dialog>
-                                <DialogTrigger asChild>
-                                    <button className="w-full flex items-center justify-between p-4 rounded-xl border border-border/50 bg-muted/30 hover:bg-muted/40 transition-colors text-left">
-                                        <div className="space-y-1">
-                                            <div className="flex items-center gap-2 font-semibold">
-                                                <Shield className="w-4 h-4 text-primary" />
-                                                Privacy Policy
-                                            </div>
-                                            <p className="text-xs text-muted-foreground">
-                                                Read about how we handle your data and privacy.
-                                            </p>
-                                        </div>
-                                        <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                                    </button>
-                                </DialogTrigger>
-                                <DialogContent className="w-[calc(100%-2rem)] sm:max-w-[600px] h-[80vh] sm:h-[70vh] flex flex-col border-primary/20 bg-background/95 backdrop-blur-3xl p-0 overflow-hidden rounded-3xl sm:rounded-xl">
-                                    <div className="px-6 py-4 pt-8 sm:pt-4 border-b border-border/50 flex items-center justify-between bg-muted/20">
-                                        <DialogTitle className="flex items-center gap-2 text-xl font-bold font-headline">
-                                            <Shield className="h-5 w-5 text-primary" />
-                                            Privacy Policy
-                                        </DialogTitle>
-                                    </div>
-                                    <ScrollArea className="flex-1 px-6 py-4">
-                                        <div className="space-y-4 text-sm text-foreground/80">
-                                            <p className="font-bold text-xs text-muted-foreground uppercase tracking-wider mb-2">Last Updated: October 2026</p>
-
-                                            <p>
-                                                At Tool Daddy, we prioritize your privacy. We believe in transparency and user control. We calculate nothing, store only what you ask us to, and sell nothing.
-                                            </p>
-
-                                            <div className="space-y-2">
-                                                <h3 className="font-bold text-primary">1. Data Collection</h3>
-                                                <p>We collect minimal information to provide our services:</p>
-                                                <ul className="list-disc list-inside pl-2 space-y-1 text-muted-foreground">
-                                                    <li><strong>Authentication:</strong> Your email and basic profile info (via Firebase Auth) to identify you.</li>
-                                                    <li><strong>User Content:</strong> Data generated by you (todo lists, color palettes, history) is stored in our database for your convenience.</li>
-                                                </ul>
-                                            </div>
-
-                                            <div className="space-y-2">
-                                                <h3 className="font-bold text-primary">2. Data Usage</h3>
-                                                <p>Your data is used solely to provide the functionality of the application. We do not analyze, sell, or share your personal data with third parties.</p>
-                                            </div>
-
-                                            <div className="space-y-2">
-                                                <h3 className="font-bold text-primary">3. Data Persistence</h3>
-                                                <p>By default, your generated content is saved to the cloud so you can access it from any device. You can disable this feature at any time in the settings. Disabling persistence will permanently delete your cloud data.</p>
-                                            </div>
-
-                                            <div className="space-y-2">
-                                                <h3 className="font-bold text-primary">4. User Rights</h3>
-                                                <p>You have full control over your data. You can:</p>
-                                                <ul className="list-disc list-inside pl-2 space-y-1 text-muted-foreground">
-                                                    <li><strong>Access:</strong> View your data at any time.</li>
-                                                    <li><strong>Delete:</strong> Permanently delete your account and all associated data via the "Delete Account" button in settings.</li>
-                                                </ul>
-                                            </div>
-                                        </div>
-                                    </ScrollArea>
-                                    <DialogFooter className="px-6 py-4 border-t border-border/50 bg-muted/20">
-                                    </DialogFooter>
-                                </DialogContent>
-                            </Dialog>
-
-                            {/* Delete Account */}
-                            <div className="p-4 rounded-xl border border-destructive/20 bg-destructive/5 space-y-3 mt-8">
-                                <div className="flex items-center gap-2 font-semibold text-destructive">
-                                    <Trash2 className="w-4 h-4" />
-                                    Danger Zone
-                                </div>
-                                <p className="text-xs text-muted-foreground">
-                                    Permanently delete your account and all data.
-                                </p>
-
-                                <AlertDialog>
-                                    <AlertDialogTrigger asChild>
-                                        <Button variant="destructive" className="w-full">Delete Account</Button>
-                                    </AlertDialogTrigger>
+                                <AlertDialog open={showDisablePersistenceDialog} onOpenChange={setShowDisablePersistenceDialog}>
                                     <AlertDialogContent>
                                         <AlertDialogHeader>
-                                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                            <AlertDialogTitle>Disable Cloud Storage?</AlertDialogTitle>
                                             <AlertDialogDescription>
-                                                This action cannot be undone. This will permanently delete your account and remove your data from our servers.
+                                                This will <strong>permanently delete</strong> all your saved data (History, Palettes, Todos) from our servers.
+                                                Future data will not be saved. This action cannot be undone.
                                             </AlertDialogDescription>
                                         </AlertDialogHeader>
                                         <AlertDialogFooter>
                                             <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                            <AlertDialogAction onClick={handleDeleteAccount} className="bg-destructive hover:bg-destructive/90">
-                                                {isDeletingAccount ? 'Goodbye...' : 'Yes, Delete Account'}
+                                            <AlertDialogAction
+                                                onClick={async (e) => {
+                                                    e.preventDefault(); // Prevent auto-close to show loading state if needed, though we use isDeletingData
+                                                    await confirmDisablePersistence();
+                                                    setShowDisablePersistenceDialog(false);
+                                                }}
+                                                className="bg-destructive hover:bg-destructive/90"
+                                            >
+                                                {isDeletingData ? 'Deleting...' : 'Yes, Delete My Data'}
                                             </AlertDialogAction>
                                         </AlertDialogFooter>
                                     </AlertDialogContent>
                                 </AlertDialog>
+
+                                {/* Notifications */}
+                                <div className="flex items-center justify-between p-4 rounded-xl border border-border/50 bg-muted/30 hover:bg-muted/40 transition-colors">
+                                    <div className="space-y-1">
+                                        <div className="flex items-center gap-2 font-semibold">
+                                            <Bell className="w-4 h-4 text-primary" />
+                                            Notifications
+                                        </div>
+                                        <p className="text-xs text-muted-foreground">
+                                            Receive updates and alerts from Tool Daddy.
+                                        </p>
+                                    </div>
+                                    <Switch
+                                        checked={settings.notifications}
+                                        onCheckedChange={(checked) => updateSettings({ notifications: checked })}
+                                    />
+                                </div>
+
+                                {/* Account Management & Admin */}
+                                <div className="space-y-3 pt-4">
+                                    <h3 className="text-xs font-bold uppercase opacity-50 tracking-wider">Account Management</h3>
+                                    <div className="grid grid-cols-1 gap-3">
+                                        {isAdmin && (
+                                            <Button
+                                                variant="outline"
+                                                className="w-full justify-between h-12 bg-primary/5 border-primary/20 hover:bg-primary/10 group"
+                                                onClick={() => {
+                                                    if (onClose) onClose();
+                                                    router.push('/admin/dashboard');
+                                                }}
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                                                        <ShieldCheck className="w-4 h-4 text-primary" />
+                                                    </div>
+                                                    <div className="text-left">
+                                                        <span className="block text-sm font-bold">Admin Dashboard</span>
+                                                        <span className="text-[10px] text-muted-foreground">Manage site systems</span>
+                                                    </div>
+                                                </div>
+                                                <ChevronRight className="w-4 h-4 opacity-50 group-hover:translate-x-0.5 transition-transform" />
+                                            </Button>
+                                        )}
+
+                                        <Button
+                                            variant="outline"
+                                            className="w-full justify-between h-12 bg-muted/30 border-border/50 hover:bg-muted/50 group"
+                                            onClick={async () => {
+                                                try {
+                                                    await auth.signOut();
+                                                    if (onClose) onClose();
+                                                    toast({ title: "Logged Out", description: "Come back soon!" });
+                                                    router.push('/');
+                                                } catch (error) {
+                                                    toast({ title: "Error", description: "Failed to log out", variant: "destructive" });
+                                                }
+                                            }}
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center">
+                                                    <LogOut className="w-4 h-4" />
+                                                </div>
+                                                <div className="text-left">
+                                                    <span className="block text-sm font-bold">Sign Out</span>
+                                                    <span className="text-[10px] text-muted-foreground">End your session</span>
+                                                </div>
+                                            </div>
+                                            <ChevronRight className="w-4 h-4 opacity-50 group-hover:translate-x-0.5 transition-transform" />
+                                        </Button>
+                                    </div>
+                                </div>
+
+                                {/* Privacy Policy */}
+                                <Dialog>
+                                    <DialogTrigger asChild>
+                                        <button className="w-full flex items-center justify-between p-4 rounded-xl border border-border/50 bg-muted/30 hover:bg-muted/40 transition-colors text-left">
+                                            <div className="space-y-1">
+                                                <div className="flex items-center gap-2 font-semibold">
+                                                    <Shield className="w-4 h-4 text-primary" />
+                                                    Privacy Policy
+                                                </div>
+                                                <p className="text-xs text-muted-foreground">
+                                                    Read about how we handle your data and privacy.
+                                                </p>
+                                            </div>
+                                            <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                                        </button>
+                                    </DialogTrigger>
+                                    <DialogContent className="w-[calc(100%-2rem)] sm:max-w-[600px] h-[80vh] sm:h-[70vh] flex flex-col border-primary/20 bg-background/95 backdrop-blur-3xl p-0 overflow-hidden rounded-3xl sm:rounded-xl">
+                                        <div className="px-6 py-4 pt-8 sm:pt-4 border-b border-border/50 flex items-center justify-between bg-muted/20">
+                                            <DialogTitle className="flex items-center gap-2 text-xl font-bold font-headline">
+                                                <Shield className="h-5 w-5 text-primary" />
+                                                Privacy Policy
+                                            </DialogTitle>
+                                        </div>
+                                        <ScrollArea className="flex-1 px-6 py-4">
+                                            <div className="space-y-4 text-sm text-foreground/80">
+                                                <p className="font-bold text-xs text-muted-foreground uppercase tracking-wider mb-2">Last Updated: October 2026</p>
+
+                                                <p>
+                                                    At Tool Daddy, we prioritize your privacy. We believe in transparency and user control. We calculate nothing, store only what you ask us to, and sell nothing.
+                                                </p>
+
+                                                <div className="space-y-2">
+                                                    <h3 className="font-bold text-primary">1. Data Collection</h3>
+                                                    <p>We collect minimal information to provide our services:</p>
+                                                    <ul className="list-disc list-inside pl-2 space-y-1 text-muted-foreground">
+                                                        <li><strong>Authentication:</strong> Your email and basic profile info (via Firebase Auth) to identify you.</li>
+                                                        <li><strong>User Content:</strong> Data generated by you (todo lists, color palettes, history) is stored in our database for your convenience.</li>
+                                                    </ul>
+                                                </div>
+
+                                                <div className="space-y-2">
+                                                    <h3 className="font-bold text-primary">2. Data Usage</h3>
+                                                    <p>Your data is used solely to provide the functionality of the application. We do not analyze, sell, or share your personal data with third parties.</p>
+                                                </div>
+
+                                                <div className="space-y-2">
+                                                    <h3 className="font-bold text-primary">3. Data Persistence</h3>
+                                                    <p>By default, your generated content is saved to the cloud so you can access it from any device. You can disable this feature at any time in the settings. Disabling persistence will permanently delete your cloud data.</p>
+                                                </div>
+
+                                                <div className="space-y-2">
+                                                    <h3 className="font-bold text-primary">4. User Rights</h3>
+                                                    <p>You have full control over your data. You can:</p>
+                                                    <ul className="list-disc list-inside pl-2 space-y-1 text-muted-foreground">
+                                                        <li><strong>Access:</strong> View your data at any time.</li>
+                                                        <li><strong>Delete:</strong> Permanently delete your account and all associated data via the "Delete Account" button in settings.</li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </ScrollArea>
+                                        <DialogFooter className="px-6 py-4 border-t border-border/50 bg-muted/20">
+                                        </DialogFooter>
+                                    </DialogContent>
+                                </Dialog>
+
+                                {/* Delete Account */}
+                                <div className="p-4 rounded-xl border border-destructive/20 bg-destructive/5 space-y-3 mt-8">
+                                    <div className="flex items-center gap-2 font-semibold text-destructive">
+                                        <Trash2 className="w-4 h-4" />
+                                        Danger Zone
+                                    </div>
+                                    <p className="text-xs text-muted-foreground">
+                                        Permanently delete your account and all data.
+                                    </p>
+
+                                    <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                            <Button variant="destructive" className="w-full">Delete Account</Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                            <AlertDialogHeader>
+                                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                                <AlertDialogDescription>
+                                                    This action cannot be undone. This will permanently delete your account and remove your data from our servers.
+                                                </AlertDialogDescription>
+                                            </AlertDialogHeader>
+                                            <AlertDialogFooter>
+                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                <AlertDialogAction onClick={handleDeleteAccount} className="bg-destructive hover:bg-destructive/90">
+                                                    {isDeletingAccount ? 'Goodbye...' : 'Yes, Delete Account'}
+                                                </AlertDialogAction>
+                                            </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                    </AlertDialog>
+                                </div>
                             </div>
-                        </div>
-                    </TabsContent>
+                        </TabsContent>
+                    )}
 
                     <TabsContent value="help" className="space-y-6 mt-0">
                         <div className="space-y-4">

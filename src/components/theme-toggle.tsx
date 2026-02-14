@@ -31,8 +31,8 @@ export function ThemeToggle() {
                 <DropdownMenuItem onClick={() => setTheme("dark")} className="rounded-lg transition-colors cursor-pointer capitalize font-bold text-xs uppercase tracking-tighter">
                     Dark
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setTheme("system")} className="rounded-lg transition-colors cursor-pointer capitalize font-bold text-xs uppercase tracking-tighter">
-                    System
+                <DropdownMenuItem onClick={() => setTheme("grayscale")} className="rounded-lg transition-colors cursor-pointer capitalize font-bold text-xs uppercase tracking-tighter">
+                    Grayscale
                 </DropdownMenuItem>
             </DropdownMenuContent>
         </DropdownMenu>

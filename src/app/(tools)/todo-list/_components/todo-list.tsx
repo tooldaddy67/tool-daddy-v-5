@@ -3,6 +3,7 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ListTodo, Trash2, Plus, Copy, Download, Edit, MoreVertical, Loader2, Calendar as CalendarIcon, ChevronDown, Tv2 } from 'lucide-react';
+import { TimePicker } from '@/components/ui/time-picker';
 import { useFirebase, useCollection, useMemoFirebase, FirebaseClientProvider } from '@/firebase';
 import { useSettings } from '@/components/settings-provider';
 import { collection, query, orderBy, doc, serverTimestamp, writeBatch, Timestamp } from 'firebase/firestore';
@@ -558,16 +559,22 @@ function TodoListManager() {
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0">
               <Calendar mode="single" selected={newTaskDueDate} onSelect={setNewTaskDueDate} initialFocus />
-              {newTaskDueDate && (
-                <div className="p-3 border-t">
-                  <Input
-                    type="time"
-                    value={newTaskDueTime}
-                    onChange={(e) => setNewTaskDueTime(e.target.value)}
-                    disabled={isLoading || !activeListId}
-                  />
-                </div>
-              )}
+              <div className="p-3 border-t">
+                <TimePicker
+                  date={newTaskDueDate ? (() => {
+                    const d = new Date(newTaskDueDate);
+                    const [h, m] = newTaskDueTime.split(':').map(Number);
+                    d.setHours(h || 12);
+                    d.setMinutes(m || 0);
+                    return d;
+                  })() : undefined}
+                  setDate={(date) => {
+                    if (date) {
+                      setNewTaskDueTime(format(date, 'HH:mm'));
+                    }
+                  }}
+                />
+              </div>
             </PopoverContent>
           </Popover>
           <Button onClick={handleAddTask} disabled={!newTaskText.trim() || isLoading || !activeListId} variant="purple">
@@ -647,16 +654,27 @@ function TodoListManager() {
                               onSelect={setEditingTaskDueDate}
                               initialFocus
                             />
-                            {editingTaskDueDate && (
-                              <div className="p-3 border-t">
-                                <Input
-                                  type="time"
-                                  value={editingTaskDueTime}
-                                  onChange={(e) => setEditingTaskDueTime(e.target.value)}
-                                  className="w-full"
-                                />
-                              </div>
-                            )}
+                            <div className="p-3 border-t">
+                              <TimePicker
+                                date={editingTaskDueDate ? (() => {
+                                  const d = new Date(editingTaskDueDate);
+                                  const [h, m] = editingTaskDueTime.split(':').map(Number);
+                                  d.setHours(h || 12);
+                                  d.setMinutes(m || 0);
+                                  return d;
+                                })() : undefined}
+                                setDate={(date) => {
+                                  if (date) {
+                                    setEditingTaskDueTime(format(date, 'HH:mm'));
+                                    // Optionally update the due date here if you want time changes to reflect immediately, 
+                                    // but we are storing time in a separate state `editingTaskDueTime`.
+                                    // Actually, TimePicker returns a Date object. 
+                                    // The logic in `handleSaveEditing` combines `editingTaskDueDate` and `editingTaskDueTime`.
+                                    // So we just need to update `editingTaskDueTime`.
+                                  }
+                                }}
+                              />
+                            </div>
                           </PopoverContent>
                         </Popover>
                       </div>

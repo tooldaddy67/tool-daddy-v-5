@@ -40,8 +40,8 @@ export default function ToolCard({ href, name, description, icon: Icon, isExtern
       style={{
         '--hover-shadow-color': 'var(--primary)',
         height: compact ? 'auto' : 'calc(320px * var(--spacing-multiplier))',
-        minHeight: compact ? '200px' : undefined,
-        padding: compact ? '1rem' : 'calc(2rem * var(--spacing-multiplier))',
+        minHeight: compact ? '160px' : undefined,
+        padding: compact ? '1.25rem' : 'calc(2rem * var(--spacing-multiplier))',
         borderRadius: 'var(--radius)',
         ...style
       } as React.CSSProperties}

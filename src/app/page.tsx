@@ -5,11 +5,15 @@ import dynamic from 'next/dynamic';
 import { useUser } from '@/firebase';
 import ToolGrid from '@/components/tool-grid';
 import { MobileHome } from '@/components/mobile/mobile-home';
+import DynamicToolCard from '@/components/dynamic-tool-card';
+import { Sparkles, Minimize, Shuffle, ChevronDown } from 'lucide-react';
 
 const DashboardWidgets = dynamic(() => import('@/components/dashboard-widgets').then(mod => mod.DashboardWidgets), {
   loading: () => <div className="min-h-[200px] w-full animate-pulse bg-muted/10 rounded-xl" />,
   ssr: false
 });
+
+import { DesktopDashboard } from '@/components/desktop-dashboard';
 
 export default function Home() {
   const { user } = useUser();
@@ -37,28 +41,50 @@ export default function Home() {
             </div>
           </section>
 
-          {/* Featured Collections / Tools Section */}
-          <div className="space-y-32">
-            {/* Show activity if logged in */}
-            {user && (
-              <section className="space-y-12">
-                <div className="flex items-center justify-between border-b border-zinc-100 dark:border-white/5 pb-6">
-                  <h2 className="text-3xl font-black text-foreground uppercase tracking-tight">Jump Back In</h2>
-                  <Link href="/history" className="text-xs font-bold text-muted-foreground hover:text-primary transition-colors uppercase tracking-widest">View Full History</Link>
-                </div>
-                <DashboardWidgets />
-              </section>
-            )}
+          {/* Desktop Dashboard UI */}
+          <DesktopDashboard />
 
-            {/* The Main Tool Grid - Full available tools */}
-            <section className="space-y-16">
-              <div className="flex flex-col items-center text-center space-y-4">
-                <h2 className="text-4xl font-black tracking-tighter uppercase font-headline">Explore All Utilities</h2>
-                <div className="h-1.5 w-16 bg-red-500 rounded-full" />
-              </div>
-              <ToolGrid />
-            </section>
-          </div>
+          {/* Explore Our Tools Section */}
+          <section className="space-y-12 py-12">
+            <div className="flex flex-col items-center text-center space-y-4">
+              <h2 className="text-4xl font-bold tracking-tight font-headline">Explore Our Tools</h2>
+              <p className="text-muted-foreground max-w-2xl text-lg">
+                Discover a wide range of utilities designed to boost your productivity.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <DynamicToolCard
+                name="AI Image Enhancer"
+                description="Upscale and enhance your images before being redirected."
+                href="/ai-image-enhancer"
+                icon={Sparkles}
+                isExternal={false}
+                variantIndex={0}
+              />
+              <DynamicToolCard
+                name="Image Compressor"
+                description="Reduce image file size while maintaining quality."
+                href="/image-compressor"
+                icon={Minimize}
+                variantIndex={1}
+              />
+              <DynamicToolCard
+                name="Token Generator"
+                description="Generate random strings with customizable character sets."
+                href="/token-generator"
+                icon={Shuffle}
+                variantIndex={2}
+              />
+            </div>
+
+            <div className="flex justify-center">
+              <Link href="/tools" className="group flex flex-col items-center gap-2 text-muted-foreground hover:text-primary transition-colors">
+                <span className="text-lg font-medium">Explore More Tools</span>
+                <ChevronDown className="w-6 h-6 animate-bounce group-hover:text-primary" />
+              </Link>
+            </div>
+          </section>
         </main>
       </div>
     </>

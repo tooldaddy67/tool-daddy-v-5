@@ -3,9 +3,24 @@
 
 import { TOOL_CATEGORIES } from '@/lib/constants';
 import DynamicToolCard from '@/components/dynamic-tool-card';
+import { useSettings } from '@/components/settings-provider';
 
 export default function ToolGrid() {
+  const { settings } = useSettings();
   let toolIndex = 0;
+
+  const getGridClass = () => {
+    switch (settings.uiDensity) {
+      case 'cozy':
+        return 'grid-cols-1';
+      case 'compact': // Revert to 3 cols for wider cards, matching standard but with compact height
+        return 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3';
+      case 'standard':
+      default:
+        return 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3';
+    }
+  };
+
   return (
     <>
       {TOOL_CATEGORIES.map((category) => (
@@ -16,7 +31,7 @@ export default function ToolGrid() {
               {category.name}
             </h2>
           </div>
-          <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
+          <div className={`grid gap-10 ${getGridClass()}`}>
             {category.tools.map((tool) => {
               const currentIndex = toolIndex++;
               return (
@@ -28,6 +43,7 @@ export default function ToolGrid() {
                   icon={tool.icon}
                   isExternal={tool.isExternal}
                   variantIndex={currentIndex}
+                  compact={settings.uiDensity === 'compact'}
                 />
               );
             })}
