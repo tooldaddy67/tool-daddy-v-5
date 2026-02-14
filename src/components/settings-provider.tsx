@@ -71,7 +71,7 @@ const defaultSettings: UserSettings = {
     dataPersistence: true,
     notifications: true,
     // Defaults
-    cardRoundness: 48, // ~3rem
+    cardRoundness: 12, // ~0.75rem
     glassOpacity: 90,
     cardGlowStrength: 40,
     textGlow: false,
@@ -106,7 +106,7 @@ const COLOR_THEMES: Record<ColorTheme, { primary: string; primaryForeground: str
 };
 
 const BLUR_MAP: Record<BlurIntensity, string> = { low: '2px', medium: '20px', high: '40px' };
-// Radius logic moved entirely to slider & button actions
+const RADIUS_MAP: Record<BorderStyle, number> = { sharp: 0, smooth: 12, round: 24 };
 const DENSITY_MAP: Record<UIDensity, string> = { compact: '0.9', standard: '1', cozy: '1.1' };
 
 export function SettingsProvider({ children }: { children: React.ReactNode }) {
@@ -139,7 +139,12 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
         const stored = localStorage.getItem('tool-dady-settings');
         if (stored) {
             try {
-                setLocalSettings(prev => ({ ...prev, ...JSON.parse(stored) }));
+                const parsed = JSON.parse(stored);
+                // Sanitize: If Sharp, force 0 radius
+                if (parsed.borderStyle === 'sharp' && parsed.cardRoundness !== 0) {
+                    parsed.cardRoundness = 0;
+                }
+                setLocalSettings(prev => ({ ...prev, ...parsed }));
             } catch (e) {
                 console.error('Failed to parse settings', e);
             }
@@ -150,26 +155,45 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     // Sync Cloud to Local
     useEffect(() => {
         if (cloudSettings) {
-            setLocalSettings(prev => ({
-                ...prev,
-                ...cloudSettings,
-                dataPersistence: cloudSettings.dataPersistence ?? prev.dataPersistence ?? true,
-                notifications: cloudSettings.notifications ?? prev.notifications ?? true,
-                primaryColor: cloudSettings.primaryColor ?? prev.primaryColor ?? '271 91% 65%',
-                siteTitle: cloudSettings.siteTitle ?? prev.siteTitle ?? 'Tool Daddy',
-                sidebarStyle: cloudSettings.sidebarStyle ?? prev.sidebarStyle ?? 'full',
-                cardStyle: cloudSettings.cardStyle ?? prev.cardStyle ?? 'glass',
-                accentGradient: cloudSettings.accentGradient ?? prev.accentGradient ?? true,
-                enableSound: cloudSettings.enableSound ?? prev.enableSound ?? true,
-                showCursorEffect: cloudSettings.showCursorEffect ?? prev.showCursorEffect ?? false,
-                showGrain: cloudSettings.showGrain ?? prev.showGrain ?? false,
-                showScrollIndicator: cloudSettings.showScrollIndicator ?? prev.showScrollIndicator ?? true,
-                // New settings sync
-                cardRoundness: cloudSettings.cardRoundness ?? prev.cardRoundness ?? 48,
-                glassOpacity: cloudSettings.glassOpacity ?? prev.glassOpacity ?? 90,
-                cardGlowStrength: cloudSettings.cardGlowStrength ?? prev.cardGlowStrength ?? 40,
-                textGlow: cloudSettings.textGlow ?? prev.textGlow ?? false,
-            }));
+            setLocalSettings(prev => {
+                const mergedSettings = {
+                    ...prev,
+                    ...cloudSettings,
+                };
+
+                // Ensure cardRoundness is consistent if missing in cloud but borderStyle is present
+                // This handles the case where users have "sharp" selected but no roundness value saved
+                if (cloudSettings.cardRoundness === undefined && cloudSettings.borderStyle) {
+                    mergedSettings.cardRoundness = RADIUS_MAP[cloudSettings.borderStyle];
+                }
+
+                // FORCE ADJUSTMENT: If style is 'sharp', radius MUST be 0.
+                // This fixes legacy state where users selected 'sharp' but have a non-zero radius saved.
+                if (mergedSettings.borderStyle === 'sharp' && mergedSettings.cardRoundness !== 0) {
+                    mergedSettings.cardRoundness = 0;
+                }
+
+                // Apply defaults for other fields if missing
+                mergedSettings.dataPersistence = cloudSettings.dataPersistence ?? prev.dataPersistence ?? true;
+                mergedSettings.notifications = cloudSettings.notifications ?? prev.notifications ?? true;
+                mergedSettings.primaryColor = cloudSettings.primaryColor ?? prev.primaryColor ?? '271 91% 65%';
+                mergedSettings.siteTitle = cloudSettings.siteTitle ?? prev.siteTitle ?? 'Tool Daddy';
+                mergedSettings.sidebarStyle = cloudSettings.sidebarStyle ?? prev.sidebarStyle ?? 'full';
+                mergedSettings.cardStyle = cloudSettings.cardStyle ?? prev.cardStyle ?? 'glass';
+                mergedSettings.accentGradient = cloudSettings.accentGradient ?? prev.accentGradient ?? true;
+                mergedSettings.enableSound = cloudSettings.enableSound ?? prev.enableSound ?? true;
+                mergedSettings.showCursorEffect = cloudSettings.showCursorEffect ?? prev.showCursorEffect ?? false;
+                mergedSettings.showGrain = cloudSettings.showGrain ?? prev.showGrain ?? false;
+                mergedSettings.showScrollIndicator = cloudSettings.showScrollIndicator ?? prev.showScrollIndicator ?? true;
+
+                // Fallbacks for granular settings
+                mergedSettings.cardRoundness = mergedSettings.cardRoundness ?? prev.cardRoundness ?? 12;
+                mergedSettings.glassOpacity = cloudSettings.glassOpacity ?? prev.glassOpacity ?? 90;
+                mergedSettings.cardGlowStrength = cloudSettings.cardGlowStrength ?? prev.cardGlowStrength ?? 40;
+                mergedSettings.textGlow = cloudSettings.textGlow ?? prev.textGlow ?? false;
+
+                return mergedSettings;
+            });
             localStorage.setItem('tool-dady-settings', JSON.stringify({ ...localSettings, ...cloudSettings }));
         }
     }, [cloudSettings]);
@@ -215,7 +239,6 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
         // UNIFIED RADIUS: Slider controls global radius
         root.style.setProperty('--radius', `${localSettings.cardRoundness}px`);
         root.style.setProperty('--spacing-multiplier', DENSITY_MAP[localSettings.uiDensity]);
-        root.style.setProperty('--anim-speed', localSettings.animSpeed.toString());
 
         // Granular customization
         root.style.setProperty('--card-radius', `${localSettings.cardRoundness}px`);
