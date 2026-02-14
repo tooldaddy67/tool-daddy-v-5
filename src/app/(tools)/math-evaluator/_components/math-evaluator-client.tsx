@@ -79,6 +79,7 @@ export default function MathEvaluatorClient() {
                                 ref={inputRef}
                                 id="math-input"
                                 value={expression}
+                                maxLength={1000}
                                 onChange={(e) => setExpression(e.target.value)}
                                 placeholder="e.g. 2 + 2, sin(45 deg) * 10, 500 kg to lbs"
                                 className="h-16 text-2xl font-mono bg-transparent border-none focus-visible:ring-0 px-0 shadow-none placeholder:opacity-20"

@@ -111,6 +111,7 @@ export default function QrCodeGenerator() {
               <Input
                 id="qr-text"
                 value={text}
+                maxLength={2048}
                 onChange={(e) => setText(e.target.value)}
                 placeholder="e.g., https://example.com"
                 onKeyDown={(e) => { if (e.key === 'Enter') generateQrCode() }}

@@ -1,47 +1,58 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Hash, Copy, Check, RefreshCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import CryptoJS from 'crypto-js';
+import { cn } from '@/lib/utils';
 
 export default function HashText() {
     const [input, setInput] = useState('');
-    const [algorithm, setAlgorithm] = useState('SHA256');
+    const [algorithm, setAlgorithm] = useState('SHA-256');
     const [result, setResult] = useState('');
     const { toast } = useToast();
     const [copiedField, setCopiedField] = useState(false);
+    const [loading, setLoading] = useState(false);
 
-    const computeHash = () => {
+    const computeHash = async () => {
         if (!input) {
             setResult('');
             return;
         }
 
+        setLoading(true);
         try {
-            let hashed = '';
-            const enc = CryptoJS.enc.Hex;
-            switch (algorithm) {
-                case 'MD5': hashed = CryptoJS.MD5(input).toString(enc); break;
-                case 'SHA1': hashed = CryptoJS.SHA1(input).toString(enc); break;
-                case 'SHA256': hashed = CryptoJS.SHA256(input).toString(enc); break;
-                case 'SHA512': hashed = CryptoJS.SHA512(input).toString(enc); break;
-                case 'SHA3': hashed = CryptoJS.SHA3(input).toString(enc); break;
-                case 'RIPEMD160': hashed = CryptoJS.RIPEMD160(input).toString(enc); break;
-                default: hashed = CryptoJS.SHA256(input).toString(enc);
-            }
-            setResult(hashed);
+            const encoder = new TextEncoder();
+            const data = encoder.encode(input);
+
+            // Web Crypto API supports: SHA-1, SHA-256, SHA-384, SHA-512
+            // For others like MD5, we might need a fallback or remove them if strict Web Crypto is required.
+            // However, browsers generally only support SHAs in SubtleCrypto.
+            // If the user wants MD5, we must keep a library or custom impl. 
+            // The prompt asked for "Hash Generator (SHA-1/256/384/512 via Web Crypto API)". 
+            // It did not explicitly ask for MD5, but the old tool had it. 
+            // I will keep only the requested Web Crypto supported ones for this "native" tool 
+            // to ensure strict compliance with "via Web Crypto API".
+
+            const hashBuffer = await window.crypto.subtle.digest(algorithm, data);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            const hashHex = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
+
+            setResult(hashHex);
         } catch (error) {
+            console.error(error);
             toast({
                 title: 'Hashing Error',
-                description: 'Failed to compute hash.',
+                description: 'Failed to compute hash. Note: MD5/RIPEMD are not supported by Web Crypto API.',
                 variant: 'destructive',
             });
+            setResult('Error: Algorithm likely not supported by your browser\'s native Web Crypto API.');
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -63,8 +74,8 @@ export default function HashText() {
                 <div className="p-4 rounded-2xl bg-primary/10 mb-4">
                     <Hash className="h-10 w-10 text-primary" />
                 </div>
-                <h1 className="text-4xl font-bold font-headline mb-2">Hash Text</h1>
-                <p className="text-muted-foreground">Generate cryptographic hashes for any text using various algorithms.</p>
+                <h1 className="text-4xl font-bold font-headline mb-2">Hash Generator (Web Crypto)</h1>
+                <p className="text-muted-foreground">Generate cryptographic hashes using your browser's native Web Crypto API.</p>
             </div>
 
             <div className="grid grid-cols-1 gap-8">
@@ -92,18 +103,16 @@ export default function HashText() {
                                         <SelectValue placeholder="Select algorithm" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="SHA256">SHA-256 (Recommended)</SelectItem>
-                                        <SelectItem value="SHA512">SHA-512</SelectItem>
-                                        <SelectItem value="SHA1">SHA-1</SelectItem>
-                                        <SelectItem value="SHA3">SHA-3</SelectItem>
-                                        <SelectItem value="MD5">MD5</SelectItem>
-                                        <SelectItem value="RIPEMD160">RIPEMD-160</SelectItem>
+                                        <SelectItem value="SHA-256">SHA-256 (Recommended)</SelectItem>
+                                        <SelectItem value="SHA-512">SHA-512</SelectItem>
+                                        <SelectItem value="SHA-384">SHA-384</SelectItem>
+                                        <SelectItem value="SHA-1">SHA-1 (Legacy)</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
-                            <Button className="sm:mt-8 h-10 px-8" onClick={computeHash}>
-                                <RefreshCw className="mr-2 h-4 w-4" />
-                                Refresh Hash
+                            <Button className="sm:mt-8 h-10 px-8" onClick={computeHash} disabled={loading}>
+                                <RefreshCw className={cn("mr-2 h-4 w-4", loading && "animate-spin")} />
+                                {loading ? 'Hashing...' : 'Refresh Hash'}
                             </Button>
                         </div>
                     </CardContent>

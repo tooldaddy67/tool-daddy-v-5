@@ -16,7 +16,7 @@ export default function UuidGenerator() {
     const [isCopied, setIsCopied] = useState(false);
 
     const generate = () => {
-        const newUuids = Array.from({ length: Math.min(count, 100) }, () => uuidv4());
+        const newUuids = Array.from({ length: Math.min(count, 1000) }, () => uuidv4());
         setUuids(newUuids);
     };
 
@@ -46,14 +46,20 @@ export default function UuidGenerator() {
                 <CardContent className="pt-6">
                     <div className="flex flex-col sm:flex-row gap-4 items-end">
                         <div className="flex-1 space-y-2">
-                            <Label htmlFor="count">Quantity to Generate (Max 100)</Label>
+                            <Label htmlFor="count">Quantity to Generate (Max 1000)</Label>
                             <Input
                                 id="count"
                                 type="number"
                                 min="1"
-                                max="100"
+                                max="1000"
                                 value={count}
-                                onChange={(e) => setCount(parseInt(e.target.value) || 1)}
+                                onChange={(e) => {
+                                    const val = parseInt(e.target.value);
+                                    if (isNaN(val)) setCount(1);
+                                    else if (val > 1000) setCount(1000);
+                                    else if (val < 1) setCount(1);
+                                    else setCount(val);
+                                }}
                             />
                         </div>
                         <Button className="h-12 px-8 flex gap-2" onClick={generate}>

@@ -1,4 +1,3 @@
-
 import {
   Sparkles,
   Bot,
@@ -52,6 +51,11 @@ import {
   Clock,
   GraduationCap,
   Compass,
+  Network,
+  Database,
+  FileText,
+  Globe,
+  GitCompare,
 } from 'lucide-react';
 
 export type Tool = {
@@ -61,6 +65,7 @@ export type Tool = {
   icon: LucideIcon;
   isExternal?: boolean;
   desktopOnly?: boolean;
+  isMobileFriendly?: boolean;
 };
 
 export type ToolCategory = {
@@ -193,19 +198,186 @@ export const TOOL_CATEGORIES: ToolCategory[] = [
     ]
   },
   {
-    name: 'General Tools',
+    name: 'Data Tools',
     tools: [
       {
-        name: 'QR Code Generator',
-        description: 'Create and customize QR codes for URLs, text, and more.',
-        href: '/qr-code-generator',
-        icon: QrCode,
+        name: 'JSON Formatter',
+        description: 'Format, validate, and beautify your JSON data.',
+        href: '/json-formatter',
+        icon: FileSearch,
+        isMobileFriendly: true,
+      },
+      {
+        name: 'JSON Tree Viewer',
+        description: 'Visualize your JSON data in an interactive tree format.',
+        href: '/json-tree-viewer',
+        icon: Network,
+        desktopOnly: true,
+      },
+      {
+        name: 'YAML ↔ JSON',
+        description: 'Convert between YAML and JSON formats.',
+        href: '/yaml-json-converter',
+        icon: Replace,
+        desktopOnly: true,
+      },
+      {
+        name: 'SQL Formatter',
+        description: 'Format and beautify your SQL queries.',
+        href: '/sql-formatter',
+        icon: Database,
+        desktopOnly: true,
+      },
+    ]
+  },
+  {
+    name: 'Encoding Tools',
+    tools: [
+      {
+        name: 'Base64 Encoder',
+        description: 'Encode and decode text to Base64.',
+        href: '/base64-encoder',
+        icon: Lock,
+        isMobileFriendly: true,
+      },
+      {
+        name: 'URL Encoder',
+        description: 'Encode and decode URLs safely.',
+        href: '/url-encoder',
+        icon: LinkIcon,
+        isMobileFriendly: true,
+      },
+    ]
+  },
+  {
+    name: 'Security Tools',
+    tools: [
+      {
+        name: 'JWT Decoder',
+        description: 'Decode and inspect JSON Web Tokens.',
+        href: '/jwt-decoder',
+        icon: ShieldCheck,
+        isMobileFriendly: true,
+      },
+      {
+        name: 'Hash Generator',
+        description: 'Generate cryptographic hashes (SHA-256, SHA-512, etc.) using Web Crypto.',
+        href: '/hash-text',
+        icon: Hash,
+        isMobileFriendly: true,
       },
       {
         name: 'Password Generator',
         description: 'Create strong, secure, and random passwords.',
         href: '/password-generator',
         icon: KeyRound,
+        isMobileFriendly: true,
+      },
+    ]
+  },
+  {
+    name: 'DevOps Tools',
+    tools: [
+      {
+        name: 'Cron Expression Parser',
+        description: 'Parse cron expressions into human-readable descriptions.',
+        href: '/cron-parser',
+        icon: Clock,
+        isMobileFriendly: true,
+      },
+      {
+        name: 'PostgreSQL Config',
+        description: 'Generate optimized PostgreSQL configuration.',
+        href: '/pg-config-generator',
+        icon: Database,
+        desktopOnly: true,
+      },
+    ]
+  },
+  {
+    name: 'Generator Tools',
+    tools: [
+      {
+        name: 'UUIDs Generator',
+        description: 'Generate Universally Unique Identifiers (UUID) version 4.',
+        href: '/uuids-generator',
+        icon: Fingerprint,
+        isMobileFriendly: true,
+      },
+      {
+        name: 'QR Code Generator',
+        description: 'Create and customize QR codes for URLs, text, and more.',
+        href: '/qr-code-generator',
+        icon: QrCode,
+        isMobileFriendly: true,
+      },
+      {
+        name: 'Lorem Ipsum Generator',
+        description: 'Generate placeholder text for your designs.',
+        href: '/lorem-ipsum',
+        icon: FileText,
+        isMobileFriendly: true,
+      },
+      {
+        name: 'Token Generator',
+        description: 'Generate random strings with customizable character sets.',
+        href: '/token-generator',
+        icon: Shuffle,
+        isMobileFriendly: true,
+      },
+      {
+        name: 'ULID Generator',
+        description: 'Generate Universally Unique Lexicographically Sortable Identifiers.',
+        href: '/ulid-generator',
+        icon: ListOrdered,
+        isMobileFriendly: true,
+      },
+      {
+        name: 'BIP39 Passphrase',
+        description: 'Generate secure BIP39 mnemonic passphrases.',
+        href: '/bip39-generator',
+        icon: AlignLeft,
+        isMobileFriendly: true,
+      },
+    ]
+  },
+  {
+    name: 'Text & Reference',
+    tools: [
+      {
+        name: 'Regex Tester',
+        description: 'Test and debug Regular Expressions.',
+        href: '/regex-tester',
+        icon: Search,
+        desktopOnly: true,
+      },
+      {
+        name: 'Text Diff Checker',
+        description: 'Compare two text blocks and highlight differences.',
+        href: '/text-diff',
+        icon: GitCompare,
+        desktopOnly: true,
+      },
+      {
+        name: 'Color Converter',
+        description: 'Convert between HEX, RGB, HSL, and CMYK.',
+        href: '/color-converter',
+        icon: Palette,
+        isMobileFriendly: true,
+      },
+      {
+        name: 'HTTP Status Codes',
+        description: 'Reference list of HTTP status codes and meanings.',
+        href: '/http-status-codes',
+        icon: Globe,
+        isMobileFriendly: true,
+      },
+      {
+        name: 'Unix Timestamp',
+        description: 'Convert between Unix timestamps and dates.',
+        href: '/date-time-converter',
+        icon: Clock,
+        isMobileFriendly: true,
       },
     ]
   },
@@ -254,46 +426,16 @@ export const TOOL_CATEGORIES: ToolCategory[] = [
     name: 'IT & Development',
     tools: [
       {
-        name: 'Token Generator',
-        description: 'Generate random strings with customizable character sets.',
-        href: '/token-generator',
-        icon: Shuffle,
-      },
-      {
-        name: 'Hash Text',
-        description: 'Compute cryptographic hashes like MD5, SHA-1, SHA-256 for your text.',
-        href: '/hash-text',
-        icon: Hash,
-      },
-      {
         name: 'Bcrypt Generator',
         description: 'Hash and verify passwords using the secure Bcrypt algorithm.',
         href: '/bcrypt-generator',
         icon: ShieldCheck,
       },
       {
-        name: 'UUIDs Generator',
-        description: 'Generate Universally Unique Identifiers (UUID) version 4.',
-        href: '/uuids-generator',
-        icon: Fingerprint,
-      },
-      {
-        name: 'ULID Generator',
-        description: 'Generate Universally Unique Lexicographically Sortable Identifiers.',
-        href: '/ulid-generator',
-        icon: ListOrdered,
-      },
-      {
         name: 'Encrypt / Decrypt Text',
         description: 'Securely encrypt and decrypt text using AES encryption.',
         href: '/encrypt-decrypt-text',
         icon: Lock,
-      },
-      {
-        name: 'BIP39 Passphrase Generator',
-        description: 'Generate secure BIP39 mnemonic passphrases for crypto wallets.',
-        href: '/bip39-generator',
-        icon: AlignLeft,
       },
       {
         name: 'HMAC Generator',
@@ -348,7 +490,7 @@ export const TOOL_CATEGORIES: ToolCategory[] = [
         name: 'ETA Calculator',
         description: 'Estimate time of arrival based on distance and speed.',
         href: '/eta-calculator',
-        icon: Clock,
+        icon: ClockIcon,
       },
     ]
   },
@@ -435,7 +577,6 @@ export const TOOL_CATEGORIES: ToolCategory[] = [
   {
     name: 'Support',
     tools: [
-
       {
         name: 'About Us',
         description: 'Learn more about the team behind Tool Daddy.',
