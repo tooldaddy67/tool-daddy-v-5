@@ -9,6 +9,9 @@ interface ToolCardProps {
   icon: LucideIcon;
   isExternal?: boolean;
   variantIndex?: number;
+  compact?: boolean;
+  className?: string;
+  style?: React.CSSProperties;
 }
 
 const ICON_VARIANTS = [
@@ -23,7 +26,7 @@ const ICON_VARIANTS = [
   { bg: 'bg-orange-500/10', text: 'text-orange-500', btn: 'bg-orange-600 hover:bg-orange-700', shadow: '249, 115, 22' },
 ];
 
-export default function ToolCard({ href, name, description, icon: Icon, isExternal, variantIndex = 0 }: ToolCardProps) {
+export default function ToolCard({ href, name, description, icon: Icon, isExternal, variantIndex = 0, compact = false, className, style }: ToolCardProps) {
   const variant = ICON_VARIANTS[variantIndex % ICON_VARIANTS.length];
 
   const cardContent = (
@@ -31,13 +34,16 @@ export default function ToolCard({ href, name, description, icon: Icon, isExtern
       className={cn(
         "tool-island flex flex-col justify-between transition-all duration-500",
         "bg-card border border-border",
-        "shadow-sm hover:-translate-y-2 group relative overflow-visible"
+        "shadow-sm hover:-translate-y-2 group relative overflow-visible",
+        className
       )}
       style={{
         '--hover-shadow-color': 'var(--primary)',
-        height: 'calc(320px * var(--spacing-multiplier))',
-        padding: 'calc(2rem * var(--spacing-multiplier))',
+        height: compact ? 'auto' : 'calc(320px * var(--spacing-multiplier))',
+        minHeight: compact ? '200px' : undefined,
+        padding: compact ? '1rem' : 'calc(2rem * var(--spacing-multiplier))',
         borderRadius: 'var(--radius)',
+        ...style
       } as React.CSSProperties}
     >
       {/* Dynamic Background Glow on Hover */}
@@ -50,27 +56,39 @@ export default function ToolCard({ href, name, description, icon: Icon, isExtern
       />
 
       {/* Top Bar - Icon & Status */}
-      <div className="flex items-center justify-between mb-4">
+      <div className={cn("flex items-center justify-between", compact ? "mb-3" : "mb-4")}>
         <div
-          className={cn("p-2.5 flex items-center justify-center transition-transform group-hover:scale-110 bg-primary/10")}
+          className={cn(
+            "flex items-center justify-center transition-transform group-hover:scale-110 bg-primary/10",
+            compact ? "p-2" : "p-2.5"
+          )}
           style={{ borderRadius: 'calc(var(--radius) * 0.7)' }}
         >
-          <Icon className={cn("h-5 w-5 text-primary")} />
+          <Icon className={cn("text-primary", compact ? "h-4 w-4" : "h-5 w-5")} />
         </div>
-        <div className="w-8 h-8 rounded-full bg-zinc-100 dark:bg-white/5 flex items-center justify-center opacity-40 group-hover:opacity-100 transition-opacity">
-          <Check className="w-4 h-4 text-muted-foreground" />
+        <div className={cn(
+          "rounded-full bg-zinc-100 dark:bg-white/5 flex items-center justify-center opacity-40 group-hover:opacity-100 transition-opacity",
+          compact ? "w-6 h-6" : "w-8 h-8"
+        )}>
+          <Check className={cn("text-muted-foreground", compact ? "w-3 h-3" : "w-4 h-4")} />
         </div>
       </div>
 
       {/* Title & Description (30% Secondary/Text) */}
-      <div className="space-y-3 mb-4 flex-1 overflow-hidden">
+      <div className={cn("space-y-2 flex-1 overflow-hidden", compact ? "mb-3" : "mb-4 space-y-3")}>
         <h3
-          className="text-xl font-bold tracking-tight text-foreground group-hover:text-primary transition-colors leading-[1.2]"
+          className={cn(
+            "font-bold tracking-tight text-foreground group-hover:text-primary transition-colors leading-[1.2]",
+            compact ? "text-sm" : "text-xl"
+          )}
           style={{ textShadow: 'var(--text-glow)' }}
         >
           {name}
         </h3>
-        <p className="text-muted-foreground text-[13px] leading-relaxed line-clamp-2">
+        <p className={cn(
+          "text-muted-foreground leading-relaxed line-clamp-2",
+          compact ? "text-[10px]" : "text-[13px]"
+        )}>
           {description}
         </p>
       </div>
@@ -79,14 +97,15 @@ export default function ToolCard({ href, name, description, icon: Icon, isExtern
       <div className="w-full">
         <div
           className={cn(
-            "w-full h-11 flex items-center justify-center gap-2",
+            "w-full flex items-center justify-center gap-2",
             "font-bold transition-all active:scale-[0.98]",
-            "bg-primary text-primary-foreground hover:bg-primary/90"
+            "bg-primary text-primary-foreground hover:bg-primary/90",
+            compact ? "h-8 text-[10px]" : "h-11 text-sm"
           )}
           style={{ borderRadius: 'calc(var(--radius) * 0.7)' }}
         >
-          <span className="text-sm tracking-tight">Launch tool</span>
-          <ArrowUpRight className="w-4 h-4 opacity-70 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+          <span className="tracking-tight">Launch</span>
+          <ArrowUpRight className={cn("opacity-70 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform", compact ? "w-3 h-3" : "w-4 h-4")} />
         </div>
       </div>
     </div>

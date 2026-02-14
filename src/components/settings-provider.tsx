@@ -135,16 +135,12 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     const { data: cloudSettings, isLoading: isCloudLoading } = useDoc<UserSettings>(settingsDocRef);
 
     // Load from localStorage on mount
+    // Load from localStorage on mount
     useEffect(() => {
         const stored = localStorage.getItem('tool-dady-settings');
         if (stored) {
             try {
-                const parsed = JSON.parse(stored);
-                // Sanitize: If Sharp, force 0 radius
-                if (parsed.borderStyle === 'sharp' && parsed.cardRoundness !== 0) {
-                    parsed.cardRoundness = 0;
-                }
-                setLocalSettings(prev => ({ ...prev, ...parsed }));
+                setLocalSettings(prev => ({ ...prev, ...JSON.parse(stored) }));
             } catch (e) {
                 console.error('Failed to parse settings', e);
             }
@@ -248,6 +244,11 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     }, [localSettings, isLocalLoaded, isDesktop]);
 
     const updateSettings = async (newSettings: Partial<UserSettings>) => {
+        // Automatically sync cardRoundness when borderStyle changes
+        if (newSettings.borderStyle) {
+            newSettings.cardRoundness = RADIUS_MAP[newSettings.borderStyle];
+        }
+
         const updated = { ...localSettings, ...newSettings };
         setLocalSettings(updated);
         localStorage.setItem('tool-dady-settings', JSON.stringify(updated));

@@ -197,10 +197,10 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
 
                 <Tabs defaultValue="general" className="flex-1 flex flex-col overflow-hidden">
                     <div className="px-6 pt-4">
-                        <TabsList className="flex w-full overflow-x-auto sm:grid sm:grid-cols-3 h-auto p-0 sm:p-1 gap-2 sm:gap-1 no-scrollbar bg-transparent sm:bg-muted">
-                            <TabsTrigger value="general" className="flex-shrink-0 px-4 py-2 rounded-full sm:rounded-sm border border-border/50 sm:border-transparent bg-background/50 sm:bg-transparent data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:data-[state=active]:bg-background sm:data-[state=active]:text-foreground shadow-none">General</TabsTrigger>
-                            <TabsTrigger value="privacy" className="flex-shrink-0 px-4 py-2 rounded-full sm:rounded-sm border border-border/50 sm:border-transparent bg-background/50 sm:bg-transparent data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:data-[state=active]:bg-background sm:data-[state=active]:text-foreground shadow-none">Privacy & Account</TabsTrigger>
-                            <TabsTrigger value="help" className="flex-shrink-0 px-4 py-2 rounded-full sm:rounded-sm border border-border/50 sm:border-transparent bg-background/50 sm:bg-transparent data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:data-[state=active]:bg-background sm:data-[state=active]:text-foreground shadow-none">Help & Guide</TabsTrigger>
+                        <TabsList className="flex w-full overflow-x-auto sm:grid sm:grid-cols-3 h-auto p-1 gap-2 sm:gap-1 no-scrollbar bg-muted/40 rounded-full">
+                            <TabsTrigger value="general" className="flex-1 min-w-[100px] flex-shrink-0 px-3 py-2 rounded-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-xs sm:text-sm font-medium transition-all">General</TabsTrigger>
+                            <TabsTrigger value="privacy" className="flex-1 min-w-[120px] flex-shrink-0 px-3 py-2 rounded-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-xs sm:text-sm font-medium transition-all">Privacy & Account</TabsTrigger>
+                            <TabsTrigger value="help" className="flex-1 min-w-[100px] flex-shrink-0 px-3 py-2 rounded-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-xs sm:text-sm font-medium transition-all">Help & Guide</TabsTrigger>
                         </TabsList>
                     </div>
 

@@ -27,7 +27,7 @@ export default function Home() {
                 <span className="text-zinc-400">for Digital Tools</span>
               </h1>
               <p className="text-lg font-medium text-muted-foreground max-w-2xl mx-auto uppercase tracking-[0.3em] opacity-80">
-                Performance. Privacy. Precision.
+                <span style={{ color: '#D8B4FE' }}>Performance.</span> <span style={{ color: '#D35400' }}>Privacy.</span> <span style={{ color: '#D2B1A3' }}>Precision.</span>
               </p>
             </div>
             <div className="flex items-center justify-center gap-4 pt-4">
