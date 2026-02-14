@@ -20,49 +20,35 @@ export default function ToolsPage() {
 
     return (
         <div className="min-h-screen md:py-24 py-12">
-            <div className="md:hidden">
+            <div className="md:hidden pt-14">
                 <MobileHeader searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
 
-                <div className="flex flex-col items-center justify-center text-center space-y-6 my-8 px-4 relative">
+                {/* Main Hero Header - Optimized for Mobile */}
+                <div className="flex flex-col items-center justify-center text-center space-y-6 my-10 px-4 relative">
                     {categoryFilter && (
                         <Button
                             variant="ghost"
                             size="sm"
-                            className="absolute left-4 top-0 -mt-2 text-muted-foreground"
+                            className="absolute left-6 top-0 -mt-2 text-muted-foreground"
                             onClick={() => router.push('/tools')}
                         >
                             <ArrowLeft className="w-4 h-4 mr-1" /> Back
                         </Button>
                     )}
-                    <div className="space-y-2">
-                        <h1 className="text-4xl font-bold tracking-tighter font-headline">
-                            {categoryFilter ? categoryFilter.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'All Tools'}
-                        </h1>
-                        <p className="text-muted-foreground text-sm text-center px-4 opacity-70">
-                            Explore our full suite of productivity, media, and creative utilities.
+                    <div className="space-y-4">
+                        <div className="space-y-1 relative z-10">
+                            <h1 className="text-4xl font-black tracking-tighter text-white uppercase leading-tight block opacity-100">
+                                {categoryFilter ? categoryFilter.replace(/-/g, ' ') : 'All Tools'}
+                            </h1>
+                            <div className="h-1.5 w-16 bg-primary mx-auto rounded-full shadow-[0_0_15px_hsl(var(--primary)/0.3)]" />
+                        </div>
+                        <p className="text-muted-foreground text-[12px] font-black uppercase tracking-[0.3em] text-center opacity-60">
+                            {categoryFilter ? 'Standardized Suite' : 'The Complete Suite'}
                         </p>
                     </div>
 
-                    {/* Category Filter Chips */}
-                    {!categoryFilter && (
-                        <div className="w-full overflow-x-auto flex gap-2 px-2 pb-2 scrollbar-hide no-scrollbar">
-                            {ALL_TOOLS_CATEGORIES.map((cat) => (
-                                <button
-                                    key={cat.slug}
-                                    onClick={() => router.push(`/tools?category=${cat.slug}`)}
-                                    className={cn(
-                                        "flex-shrink-0 px-4 py-2 rounded-full text-xs font-bold transition-all border",
-                                        "bg-secondary/50 border-border/40 text-muted-foreground",
-                                        "active:scale-95 whitespace-nowrap"
-                                    )}
-                                >
-                                    <cat.icon className="w-3.5 h-3.5 inline-block mr-1.5 opacity-70" />
-                                    {cat.title}
-                                </button>
-                            ))}
-                        </div>
-                    )}
                 </div>
+
                 <MobileToolsGrid
                     searchQuery={searchQuery}
                     initialCategory={categoryFilter || undefined}

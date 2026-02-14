@@ -68,8 +68,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
+  userScalable: true,
   themeColor: [
     { media: '(prefers-color-scheme: light)', color: 'white' },
     { media: '(prefers-color-scheme: dark)', color: 'black' },
@@ -127,7 +126,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
                   <ClientOnlyExtras />
                   <SidebarProviderWrapper>
                     <AppSidebar />
-                    <main className="flex-1 flex flex-col min-h-screen w-full relative overflow-x-hidden">
+                    <main className="flex-1 flex flex-col min-h-screen w-full relative">
                       <PageHeader />
                       <script
                         type="application/ld+json"

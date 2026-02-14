@@ -1,6 +1,7 @@
 import { cn } from '@/lib/utils';
 import { ArrowUpRight, Check, type LucideIcon } from 'lucide-react';
 import Link from 'next/link';
+import { useSettings } from './settings-provider';
 
 interface ToolCardProps {
   href: string;
@@ -27,85 +28,93 @@ const ICON_VARIANTS = [
 ];
 
 export default function ToolCard({ href, name, description, icon: Icon, isExternal, variantIndex = 0, compact = false, className, style }: ToolCardProps) {
+  const { settings } = useSettings();
   const variant = ICON_VARIANTS[variantIndex % ICON_VARIANTS.length];
 
   const cardContent = (
     <div
       className={cn(
         "tool-island flex flex-col justify-between transition-all duration-500",
-        "bg-card border border-border",
-        "shadow-sm hover:-translate-y-2 group relative overflow-visible",
+        compact
+          ? "bg-white dark:bg-zinc-900 border-black dark:border-white border-2 shadow-[4px_4px_0px_hsl(var(--primary))]"
+          : "bg-card border border-border shadow-sm hover:-translate-y-2",
+        "group relative overflow-visible",
         className
       )}
       style={{
         '--hover-shadow-color': 'var(--primary)',
-        height: compact ? 'auto' : 'calc(320px * var(--spacing-multiplier))',
-        minHeight: compact ? '160px' : undefined,
-        padding: compact ? '1.25rem' : 'calc(2rem * var(--spacing-multiplier))',
-        borderRadius: 'var(--radius)',
+        height: compact ? '100%' : 'calc(320px * var(--spacing-multiplier))',
+        width: compact ? '160px' : undefined,
+        minHeight: compact ? '190px' : undefined,
+        padding: compact ? '1rem' : 'calc(2rem * var(--spacing-multiplier))',
+        borderRadius: compact ? `${settings.cardRoundness}px` : 'var(--radius)',
         ...style
       } as React.CSSProperties}
     >
-      {/* Dynamic Background Glow on Hover */}
-      <div
-        className="absolute inset-0 transition-opacity duration-500 opacity-0 group-hover:opacity-100 pointer-events-none -z-10"
-        style={{
-          borderRadius: 'var(--radius)',
-          boxShadow: `0 20px 50px -10px hsl(var(--primary) / var(--card-glow-strength))`,
-        }}
-      />
+      {/* Dynamic Background Glow on Hover (Desktop Only) */}
+      {!compact && (
+        <div
+          className="absolute inset-0 transition-opacity duration-500 opacity-0 group-hover:opacity-100 pointer-events-none -z-10"
+          style={{
+            borderRadius: 'var(--radius)',
+            boxShadow: `0 20px 50px -10px hsl(var(--primary) / var(--card-glow-strength))`,
+          }}
+        />
+      )}
 
       {/* Top Bar - Icon & Status */}
-      <div className={cn("flex items-center justify-between", compact ? "mb-3" : "mb-4")}>
+      <div className={cn("flex items-center justify-between", compact ? "mb-2" : "mb-4")}>
         <div
           className={cn(
-            "flex items-center justify-center transition-transform group-hover:scale-110 bg-primary/10",
-            compact ? "p-2" : "p-2.5"
+            "flex items-center justify-center transition-transform group-hover:scale-110",
+            compact ? "bg-[#141c2d] p-2 rounded-xl border border-white/5 shadow-inner" : "bg-primary/10 p-2.5 rounded-[calc(var(--radius)*0.7)]"
           )}
-          style={{ borderRadius: 'calc(var(--radius) * 0.7)' }}
         >
-          <Icon className={cn("text-primary", compact ? "h-4 w-4" : "h-5 w-5")} />
+          <Icon className={cn(compact ? "text-primary h-5 w-5" : "text-primary h-5 w-5")} />
         </div>
         <div className={cn(
-          "rounded-full bg-zinc-100 dark:bg-white/5 flex items-center justify-center opacity-40 group-hover:opacity-100 transition-opacity",
-          compact ? "w-6 h-6" : "w-8 h-8"
+          "rounded-full flex items-center justify-center opacity-40 group-hover:opacity-100 transition-opacity",
+          compact ? "w-6 h-6 bg-white/5 border border-white/5" : "w-8 h-8 bg-zinc-100 dark:bg-white/5"
         )}>
-          <Check className={cn("text-muted-foreground", compact ? "w-3 h-3" : "w-4 h-4")} />
+          <Check className={cn(compact ? "text-white/40 w-3 h-3" : "text-muted-foreground w-4 h-4")} />
         </div>
       </div>
 
-      {/* Title & Description (30% Secondary/Text) */}
-      <div className={cn("space-y-2 flex-1 overflow-hidden", compact ? "mb-3" : "mb-4 space-y-3")}>
+      {/* Title & Description */}
+      <div className={cn("space-y-1.5 flex-1 overflow-hidden", compact ? "mb-3" : "mb-4 space-y-3")}>
         <h3
           className={cn(
-            "font-bold tracking-tight text-foreground group-hover:text-primary transition-colors leading-[1.2]",
-            compact ? "text-sm" : "text-xl"
+            "font-black tracking-tight transition-colors leading-tight text-foreground",
+            compact ? "text-lg" : "text-xl group-hover:text-primary"
           )}
-          style={{ textShadow: 'var(--text-glow)' }}
+          style={{ textShadow: compact ? 'none' : 'var(--text-glow)' }}
         >
           {name}
         </h3>
         <p className={cn(
-          "text-muted-foreground leading-relaxed line-clamp-2",
-          compact ? "text-[10px]" : "text-[13px]"
+          "text-muted-foreground leading-tight line-clamp-2 font-medium",
+          compact ? "text-sm" : "text-[13px]"
         )}>
           {description}
         </p>
       </div>
 
-      {/* CTA (10% Accent - Rule 60-30-10) */}
-      <div className="w-full">
+      {/* CTA (Launch Button) */}
+      <div className={cn("w-full")}>
         <div
           className={cn(
-            "w-full flex items-center justify-center gap-2",
-            "font-bold transition-all active:scale-[0.98]",
-            "bg-primary text-primary-foreground hover:bg-primary/90",
-            compact ? "h-8 text-[10px]" : "h-11 text-sm"
+            "w-full flex items-center justify-center gap-1.5 font-black transition-all active:scale-[0.98]",
+            compact
+              ? "bg-primary text-primary-foreground h-10 text-[12px] border border-primary/50 shadow-[0_0_15px_hsl(var(--primary)/0.2)] hover:brightness-110"
+              : "bg-primary text-primary-foreground hover:bg-primary/90 h-11 text-sm rounded-[calc(var(--radius)*0.7)]"
           )}
-          style={{ borderRadius: 'calc(var(--radius) * 0.7)' }}
+          style={{ borderRadius: compact ? `calc(${settings.cardRoundness}px * 0.7)` : undefined }}
         >
-          <span className="tracking-tight">Launch</span>
-          <ArrowUpRight className={cn("opacity-70 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform", compact ? "w-3 h-3" : "w-4 h-4")} />
+          <span className="tracking-tight uppercase text-white">Launch</span>
+          <ArrowUpRight className={cn(
+            "transition-transform",
+            compact ? "w-4 h-4 text-white" : "w-4 h-4 opacity-70 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+          )} />
         </div>
       </div>
     </div>

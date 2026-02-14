@@ -2,6 +2,17 @@
 @import "tailwindcss/components";
 @import "tailwindcss/utilities";
 
+@layer utilities {
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -124,8 +135,8 @@
   body {
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
-    overflow-x: hidden !important;
-    touch-action: manipulation;
+    overflow-x: hidden;
+    touch-action: auto;
     -webkit-text-size-adjust: 100%;
   }
 

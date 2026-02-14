@@ -5,6 +5,7 @@ import { ALL_TOOLS_CATEGORIES, Tool } from "@/lib/tools-data";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { ChevronDown, ChevronUp } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 interface MobileToolsGridProps {
     searchQuery: string;
@@ -19,6 +20,7 @@ import ToolCard from '@/components/tool-card';
 // actually, the imported ToolCard handles its own variants internally if we pass variantIndex.
 
 export function MobileToolsGrid({ searchQuery, initialCategory }: MobileToolsGridProps) {
+    const router = useRouter();
     const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({});
 
     const toggleCategory = (slug: string) => {
@@ -49,17 +51,23 @@ export function MobileToolsGrid({ searchQuery, initialCategory }: MobileToolsGri
     return (
         <div className="pb-32 pt-4">
             {isSearching ? (
-                <div className="px-5 space-y-4 min-h-[50vh]">
-                    <h3 className="text-sm font-medium text-muted-foreground">
-                        Found {filteredTools.length} result{filteredTools.length !== 1 && 's'}
+                <div className="px-3 space-y-6 min-h-[50vh]">
+                    <div className="space-y-1 relative z-20">
+                        <h1 className="text-3xl font-black tracking-tighter text-white uppercase leading-tight relative z-30 block opacity-100">
+                            Results
+                        </h1>
+                        <div className="h-1 w-12 bg-primary rounded-full shadow-[0_0_10px_hsl(var(--primary)/0.3)]" />
+                    </div>
+                    <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground opacity-60">
+                        Found {filteredTools.length} result{filteredTools.length !== 1 && 's'} for "{searchQuery}"
                     </h3>
-                    {/* Changed to grid-cols-1 for full width desktop cards on mobile */}
-                    <div className="grid grid-cols-1 gap-4">
+                    <div className="grid grid-cols-2 gap-3 transition-all duration-500">
                         {filteredTools.map((tool, idx) => (
                             <ToolCard
                                 key={tool.name}
                                 {...tool}
                                 variantIndex={idx}
+                                compact={true}
                             />
                         ))}
                     </div>
@@ -70,7 +78,7 @@ export function MobileToolsGrid({ searchQuery, initialCategory }: MobileToolsGri
                     )}
                 </div>
             ) : (
-                <div className="space-y-8 px-5">
+                <div className="space-y-12">
                     {displayCategories.map((category) => {
                         const mobileReadyTools = category.tools.filter(t => !t.isExternal && !t.desktopOnly);
                         if (mobileReadyTools.length === 0) return null;
@@ -85,42 +93,39 @@ export function MobileToolsGrid({ searchQuery, initialCategory }: MobileToolsGri
                         toolIndex += mobileReadyTools.length;
 
                         return (
-                            <div key={category.slug} className="space-y-4">
-                                <div className="flex items-center gap-3 mb-2">
-                                    <div className="p-2 rounded-xl bg-primary/10 text-primary">
-                                        <category.icon className="w-5 h-5" />
-                                    </div>
-                                    <h3 className="text-xl font-bold tracking-tight text-foreground font-headline">
+                            <div key={category.slug} className="category-section" id={category.slug}>
+                                <div className="pr-6 mb-8 flex items-center gap-4 relative z-20">
+                                    <div className="w-2 h-10 bg-primary rounded-full shadow-[0_0_15px_hsl(var(--primary)/0.4)] relative z-30" />
+                                    <h3 className="text-3xl font-black tracking-tighter text-white uppercase text-left leading-tight relative z-30 block opacity-100">
                                         {category.title}
                                     </h3>
                                 </div>
 
-                                {/* Changed to grid-cols-2 for compact cards */}
-                                <div className="grid grid-cols-2 gap-3 transition-all duration-500">
+                                {/* Adaptive Grid: Flex for home, Grid for category page to ensure 2 columns */}
+                                <div className={cn(
+                                    "transition-all duration-500",
+                                    isSingleCategory
+                                        ? "grid grid-cols-2 gap-3 px-3 place-items-center"
+                                        : "flex flex-wrap justify-center gap-4 pr-6"
+                                )}>
                                     {displayTools.map((tool, idx) => (
                                         <ToolCard
                                             key={tool.name}
                                             {...tool}
                                             variantIndex={currentCategoryIndex + idx}
                                             compact={true}
+                                            style={isSingleCategory ? { width: '100%', maxWidth: '170px' } : undefined}
                                         />
                                     ))}
                                 </div>
 
                                 {hasMore && !isSingleCategory && (
                                     <button
-                                        onClick={() => toggleCategory(category.slug)}
-                                        className="w-full flex items-center justify-center gap-1.5 py-1 text-xs font-semibold text-primary/70 hover:text-primary transition-colors active:scale-95 duration-200"
+                                        onClick={() => router.push(`/tools?category=${category.slug}`)}
+                                        className="w-full flex items-center justify-center gap-2 py-2 mt-2 text-[10px] font-black uppercase tracking-widest text-primary hover:text-primary/80 transition-all active:scale-95"
                                     >
-                                        {isExpanded ? (
-                                            <>
-                                                Show Less <ChevronUp className="w-3.5 h-3.5" />
-                                            </>
-                                        ) : (
-                                            <>
-                                                Show More ({category.tools.length - 2}) <ChevronDown className="w-3.5 h-3.5" />
-                                            </>
-                                        )}
+                                        Explore All {category.title} ({category.tools.length})
+                                        <ChevronDown className="w-4 h-4 -rotate-90" />
                                     </button>
                                 )}
                             </div>

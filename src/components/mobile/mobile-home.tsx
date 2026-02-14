@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { MobileHeader } from "@/components/mobile/mobile-header";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, Sparkles, Zap, Shield, Minimize, KeyRound, Rocket, ArrowRight, Star, Image, Wrench, Replace } from "lucide-react";
@@ -16,6 +16,11 @@ import { RecentActivity } from "./recent-activity";
 export function MobileHome() {
     const [searchQuery, setSearchQuery] = useState("");
     const { user } = useUser();
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     // Functional search filtering
     const filteredTools = useMemo(() => {
@@ -31,22 +36,28 @@ export function MobileHome() {
     // Recommended tools for the "Special for you" section - Dynamic Shuffle
     const recommendedTools = useMemo(() => {
         const mobileTools = ALL_TOOLS.filter(tool => !tool.isExternal && !tool.desktopOnly);
-        // Fischer-Yates Shuffle
+
+        // During SSR or first client render, return a stable subset
+        if (!mounted) return mobileTools.slice(0, 3);
+
+        // Fischer-Yates Shuffle (only on Client after mount)
         const shuffled = [...mobileTools];
         for (let i = shuffled.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
         }
         return shuffled.slice(0, 3);
-    }, []);
+    }, [mounted]);
 
     const greeting = useMemo(() => {
-        const hour = new Date().getHours();
         const name = user?.displayName?.split(' ')[0] || "Friend";
+        if (!mounted) return `Hello, ${name}`;
+
+        const hour = new Date().getHours();
         if (hour < 12) return `Good Morning, ${name}`;
         if (hour < 18) return `Hello, ${name}`;
         return `Good Evening, ${name}`;
-    }, [user]);
+    }, [user, mounted]);
 
     return (
         <div className="min-h-screen w-full bg-background xl:hidden pb-10 overflow-x-hidden flex flex-col">
@@ -86,22 +97,23 @@ export function MobileHome() {
                     />
                 </motion.div>
 
-                {/* Category Quick Chips */}
                 <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.2 }}
-                    className="w-full overflow-x-auto flex gap-2 pb-2 scrollbar-hide no-scrollbar"
+                    className="w-full overflow-x-auto scrollbar-hide no-scrollbar snap-x snap-mandatory"
                 >
-                    {ALL_TOOLS_CATEGORIES.map((cat) => (
-                        <Link
-                            key={cat.slug}
-                            href={`/tools?category=${cat.slug}`}
-                            className="flex-shrink-0 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border bg-secondary/30 border-border/40 text-muted-foreground active:scale-95 whitespace-nowrap"
-                        >
-                            {cat.title}
-                        </Link>
-                    ))}
+                    <div className="flex gap-2 pb-2 px-1 w-max">
+                        {ALL_TOOLS_CATEGORIES.map((cat) => (
+                            <Link
+                                key={cat.slug}
+                                href={`/tools?category=${cat.slug}`}
+                                className="flex-shrink-0 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border bg-secondary/30 border-border/40 text-muted-foreground active:scale-95 whitespace-nowrap snap-start"
+                            >
+                                {cat.title}
+                            </Link>
+                        ))}
+                    </div>
                 </motion.div>
             </div>
 
