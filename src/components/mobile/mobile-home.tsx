@@ -8,8 +8,10 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { useUser } from "@/firebase";
 import { ALL_TOOLS } from "@/lib/constants";
+import { ALL_TOOLS_CATEGORIES } from "@/lib/tools-data";
 import { NotificationsPopover } from "./notifications-popover";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { RecentActivity } from "./recent-activity";
 
 export function MobileHome() {
     const [searchQuery, setSearchQuery] = useState("");
@@ -26,9 +28,16 @@ export function MobileHome() {
         ).slice(0, 8);
     }, [searchQuery]);
 
-    // Recommended tools for the "Special for you" section
+    // Recommended tools for the "Special for you" section - Dynamic Shuffle
     const recommendedTools = useMemo(() => {
-        return ALL_TOOLS.filter(tool => !tool.isExternal && !tool.desktopOnly).slice(0, 6);
+        const mobileTools = ALL_TOOLS.filter(tool => !tool.isExternal && !tool.desktopOnly);
+        // Fischer-Yates Shuffle
+        const shuffled = [...mobileTools];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        return shuffled.slice(0, 3);
     }, []);
 
     const greeting = useMemo(() => {
@@ -75,6 +84,24 @@ export function MobileHome() {
                         onChange={(e) => setSearchQuery(e.target.value)}
                         className="w-full h-14 bg-secondary/50 border border-border/40 rounded-2xl pl-12 pr-4 text-sm font-bold focus:bg-secondary focus:border-primary/50 transition-all outline-none"
                     />
+                </motion.div>
+
+                {/* Category Quick Chips */}
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.2 }}
+                    className="w-full overflow-x-auto flex gap-2 pb-2 scrollbar-hide no-scrollbar"
+                >
+                    {ALL_TOOLS_CATEGORIES.map((cat) => (
+                        <Link
+                            key={cat.slug}
+                            href={`/tools?category=${cat.slug}`}
+                            className="flex-shrink-0 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border bg-secondary/30 border-border/40 text-muted-foreground active:scale-95 whitespace-nowrap"
+                        >
+                            {cat.title}
+                        </Link>
+                    ))}
                 </motion.div>
             </div>
 
@@ -160,6 +187,9 @@ export function MobileHome() {
                         </div>
                     </motion.div>
                 </div>
+
+                {/* Jump Back In - Recent Activity */}
+                <RecentActivity />
 
                 {/* Special for You Section - (Morning Gratitude style) */}
                 <div className="space-y-6">

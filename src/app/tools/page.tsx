@@ -9,6 +9,9 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 
+import { ALL_TOOLS_CATEGORIES } from '@/lib/tools-data';
+import { cn } from '@/lib/utils';
+
 export default function ToolsPage() {
     const [searchQuery, setSearchQuery] = useState("");
     const searchParams = useSearchParams();
@@ -20,7 +23,7 @@ export default function ToolsPage() {
             <div className="md:hidden">
                 <MobileHeader searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
 
-                <div className="flex flex-col items-center justify-center text-center space-y-4 my-8 px-4 relative">
+                <div className="flex flex-col items-center justify-center text-center space-y-6 my-8 px-4 relative">
                     {categoryFilter && (
                         <Button
                             variant="ghost"
@@ -31,12 +34,34 @@ export default function ToolsPage() {
                             <ArrowLeft className="w-4 h-4 mr-1" /> Back
                         </Button>
                     )}
-                    <h1 className="text-4xl font-bold tracking-tighter font-headline">
-                        {categoryFilter ? categoryFilter.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'All Tools'}
-                    </h1>
-                    <p className="text-muted-foreground text-lg text-center">
-                        Explore our full suite of productivity, media, and creative utilities.
-                    </p>
+                    <div className="space-y-2">
+                        <h1 className="text-4xl font-bold tracking-tighter font-headline">
+                            {categoryFilter ? categoryFilter.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'All Tools'}
+                        </h1>
+                        <p className="text-muted-foreground text-sm text-center px-4 opacity-70">
+                            Explore our full suite of productivity, media, and creative utilities.
+                        </p>
+                    </div>
+
+                    {/* Category Filter Chips */}
+                    {!categoryFilter && (
+                        <div className="w-full overflow-x-auto flex gap-2 px-2 pb-2 scrollbar-hide no-scrollbar">
+                            {ALL_TOOLS_CATEGORIES.map((cat) => (
+                                <button
+                                    key={cat.slug}
+                                    onClick={() => router.push(`/tools?category=${cat.slug}`)}
+                                    className={cn(
+                                        "flex-shrink-0 px-4 py-2 rounded-full text-xs font-bold transition-all border",
+                                        "bg-secondary/50 border-border/40 text-muted-foreground",
+                                        "active:scale-95 whitespace-nowrap"
+                                    )}
+                                >
+                                    <cat.icon className="w-3.5 h-3.5 inline-block mr-1.5 opacity-70" />
+                                    {cat.title}
+                                </button>
+                            ))}
+                        </div>
+                    )}
                 </div>
                 <MobileToolsGrid
                     searchQuery={searchQuery}

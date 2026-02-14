@@ -36,6 +36,9 @@ const RESTRICTED_MOBILE_TOOLS = [
 ];
 
 import { ToolErrorBoundary } from "@/components/tool-error-boundary";
+import { useRecentTools } from "@/hooks/use-recent-tools";
+import { ALL_TOOLS_CATEGORIES } from "@/lib/tools-data";
+import { useEffect } from "react";
 
 export default function ToolsLayout({
   children,
@@ -43,8 +46,18 @@ export default function ToolsLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const { addRecentTool } = useRecentTools();
   const isRestricted = RESTRICTED_MOBILE_TOOLS.some(path => pathname === path);
   const toolName = pathname.split('/').pop()?.replace(/-/g, ' ');
+
+  // Track recent tool access
+  useEffect(() => {
+    // Find the tool in ALL_TOOLS_CATEGORIES to get the correct name (case sensitive)
+    const tool = ALL_TOOLS_CATEGORIES.flatMap(cat => cat.tools).find(t => t.href === pathname);
+    if (tool) {
+      addRecentTool(tool.name);
+    }
+  }, [pathname, addRecentTool]);
 
   return (
     <div className="flex-1 w-full h-full relative">
