@@ -21,7 +21,7 @@ export default function Home() {
   return (
     <>
       <MobileHome />
-      <div className="hidden md:flex flex-col w-full min-h-screen relative overflow-hidden mesh-bg">
+      <div className="hidden xl:flex flex-col w-full min-h-screen relative overflow-hidden mesh-bg">
         <main className="flex-1 w-full max-w-7xl mx-auto px-12 py-24 space-y-32 relative z-10">
           {/* Desktop Branding Hero */}
           <section className="text-center space-y-8 py-12">

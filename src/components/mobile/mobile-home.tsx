@@ -40,7 +40,7 @@ export function MobileHome() {
     }, [user]);
 
     return (
-        <div className="min-h-screen w-full bg-background md:hidden pb-44 overflow-x-hidden flex flex-col">
+        <div className="min-h-screen w-full bg-background xl:hidden pb-10 overflow-x-hidden flex flex-col">
             {/* Header / Top Info */}
             <div className="pt-12 px-6 pb-6 space-y-6">
                 <div className="flex items-center justify-between">
@@ -180,12 +180,12 @@ export function MobileHome() {
                             >
                                 <Link
                                     href={tool.href}
-                                    className="flex items-center justify-between p-5 bg-cyan-50 dark:bg-secondary/20 rounded-[2rem] hover:opacity-90 transition-opacity group"
+                                    className="flex items-center justify-between p-5 bg-muted/50 rounded-[2rem] hover:opacity-90 transition-opacity group"
                                 >
                                     <div className="flex flex-col gap-2">
                                         <h4 className="text-base font-bold text-foreground">{tool.name}</h4>
                                         <div className="flex items-center gap-2">
-                                            <span className="text-[10px] font-bold text-cyan-700 dark:text-cyan-300 bg-cyan-100 dark:bg-cyan-900/30 px-3 py-1 rounded-full uppercase tracking-wider">
+                                            <span className="text-[10px] font-bold text-primary bg-primary/10 px-3 py-1 rounded-full uppercase tracking-wider">
                                                 Utility
                                             </span>
                                             {idx < 2 && (

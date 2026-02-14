@@ -34,8 +34,8 @@ export default function PageHeader() {
   return (
     <>
       <header className={cn(
-        "hidden md:flex sticky top-0 z-50 h-16 items-center gap-4 border-b border-white/10 px-4 md:px-6 transition-all duration-300 shadow-sm relative overflow-hidden",
-        settings.sidebarStyle === 'mini' && "md:pl-2"
+        "hidden xl:flex sticky top-0 z-50 h-16 items-center gap-4 border-b border-white/10 px-4 xl:px-6 transition-all duration-300 shadow-sm relative overflow-hidden",
+        settings.sidebarStyle === 'mini' && "xl:pl-2"
       )}>
         <div className="relative z-10 md:hidden">
           <SidebarTrigger />

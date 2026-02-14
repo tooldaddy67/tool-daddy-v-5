@@ -34,7 +34,7 @@ const DiscordIcon = () => (
 
 export default function AppFooter() {
   return (
-    <footer className="w-full border-t border-border/20 bg-background/50 backdrop-blur-lg mt-auto">
+    <footer className="w-full border-t border-border/20 bg-background/50 backdrop-blur-lg mt-auto pb-24 xl:pb-0">
       <div className="mx-auto px-4 md:px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4 max-w-7xl">
         <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
           <Logo />

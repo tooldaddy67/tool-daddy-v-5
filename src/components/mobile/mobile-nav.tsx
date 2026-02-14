@@ -25,19 +25,19 @@ export function MobileNav() {
     ];
 
     return (
-        <div className="fixed bottom-0 left-0 right-0 z-[100] md:hidden px-4 pb-6 bg-gradient-to-t from-background via-background/80 to-transparent pointer-events-none">
-            <div className="bg-secondary/95 backdrop-blur-xl border border-white/10 rounded-[2rem] shadow-2xl h-20 flex items-center justify-around px-2 pointer-events-auto max-w-md mx-auto">
+        <div className="fixed bottom-0 left-0 right-0 z-[100] xl:hidden px-4 pb-4 bg-gradient-to-t from-background via-background/80 to-transparent pointer-events-none">
+            <div className="bg-secondary/95 backdrop-blur-xl border border-white/10 rounded-[2rem] shadow-2xl h-16 flex items-center justify-around px-2 pointer-events-auto max-w-md mx-auto">
                 {navItems.map((item) => (
                     <Link
                         key={item.href}
                         href={item.href}
                         className={cn(
-                            "flex flex-col items-center gap-1.5 p-2 transition-all duration-300 relative group",
+                            "flex flex-col items-center gap-1 p-2 transition-all duration-300 relative group",
                             isActive(item.href) ? "text-primary scale-110" : "text-muted-foreground"
                         )}
                     >
                         <div className={cn(
-                            "p-2 rounded-2xl transition-all duration-300",
+                            "p-1.5 rounded-2xl transition-all duration-300",
                             isActive(item.href) && "bg-primary/10"
                         )}>
                             <item.icon className={cn("w-5 h-5", isActive(item.href) && "fill-current/20")} />
@@ -58,17 +58,17 @@ export function MobileNav() {
                 ))}
 
                 {/* Account / Auth Item */}
-                <div className="flex flex-col items-center gap-1.5 p-2">
+                <div className="flex flex-col items-center gap-1 p-2">
                     {user && !user.isAnonymous ? (
                         <Link
                             href="/dashboard"
                             className={cn(
-                                "flex flex-col items-center gap-1.5 transition-all duration-300",
+                                "flex flex-col items-center gap-1 transition-all duration-300",
                                 isActive('/dashboard') ? "text-primary scale-110" : "text-muted-foreground"
                             )}
                         >
                             <div className={cn(
-                                "p-2 rounded-2xl transition-all duration-300",
+                                "p-1.5 rounded-2xl transition-all duration-300",
                                 isActive('/dashboard') && "bg-primary/10"
                             )}>
                                 <User className="w-5 h-5" />
@@ -83,8 +83,8 @@ export function MobileNav() {
                     ) : (
                         <UserAuthButton
                             customTrigger={
-                                <div className="flex flex-col items-center gap-1.5 text-muted-foreground hover:text-primary transition-all">
-                                    <div className="p-2 rounded-2xl">
+                                <div className="flex flex-col items-center gap-1 text-muted-foreground hover:text-primary transition-all">
+                                    <div className="p-1.5 rounded-2xl">
                                         <LogIn className="w-5 h-5" />
                                     </div>
                                     <span className="text-[9px] font-black uppercase tracking-widest opacity-40">Login</span>
