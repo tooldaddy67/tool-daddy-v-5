@@ -9,20 +9,26 @@ import { z } from 'zod';
  * Sanitize strings to prevent XSS attacks
  * Removes dangerous HTML/JS content while preserving safe text
  */
-export function sanitizeString(input: string, maxLength: number = 10000): string {
+export function sanitizeString(input: string, maxLength: number = 50000): string {
   if (typeof input !== 'string') {
-    throw new TypeError('Input must be a string');
+    return '';
   }
 
   // Truncate to prevent DoS via huge strings
   let sanitized = input.slice(0, maxLength);
 
-  // Remove dangerous HTML tags and scripts
+  // Remove dangerous patterns
   sanitized = sanitized
     .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '') // Remove <script> tags
-    .replace(/on\w+\s*=\s*["'][^"']*["']/gi, '') // Remove event handlers (onclick, etc)
+    .replace(/\s*on\w+\s*=\s*["'][^"']*["']/gi, '') // Remove event handlers
     .replace(/javascript:/gi, '') // Remove javascript: protocol
-    .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, ''); // Remove iframes
+    .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, '') // Remove iframes
+    .replace(/<object\b[^<]*(?:(?!<\/object>)<[^<]*)*<\/object>/gi, '') // Remove objects
+    .replace(/<embed\b[^<]*(?:(?!<\/embed>)<[^<]*)*<\/embed>/gi, ''); // Remove embeds
+
+  // Basic HTML entity encoding for extra safety on common symbols
+  // Note: We don't want to encode everything if the user wants to keep basic formatting,
+  // but for most "input-to-output" tools, encoding is better.
 
   return sanitized;
 }

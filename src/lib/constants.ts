@@ -372,13 +372,6 @@ export const TOOL_CATEGORIES: ToolCategory[] = [
         icon: Globe,
         isMobileFriendly: true,
       },
-      {
-        name: 'Unix Timestamp',
-        description: 'Convert between Unix timestamps and dates.',
-        href: '/date-time-converter',
-        icon: Clock,
-        isMobileFriendly: true,
-      },
     ]
   },
   {

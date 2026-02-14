@@ -35,6 +35,8 @@ const RESTRICTED_MOBILE_TOOLS = [
   "/buy-me-a-coffee"
 ];
 
+import { ToolErrorBoundary } from "@/components/tool-error-boundary";
+
 export default function ToolsLayout({
   children,
 }: {
@@ -42,6 +44,7 @@ export default function ToolsLayout({
 }) {
   const pathname = usePathname();
   const isRestricted = RESTRICTED_MOBILE_TOOLS.some(path => pathname === path);
+  const toolName = pathname.split('/').pop()?.replace(/-/g, ' ');
 
   return (
     <div className="flex-1 w-full h-full relative">
@@ -49,12 +52,14 @@ export default function ToolsLayout({
         <MobileHeader />
       </div>
       <div className="md:mt-0 mt-8">
-        <div className="hidden md:block">
-          {children}
-        </div>
-        <div className="md:hidden">
-          {isRestricted ? <DesktopOnlyRoast /> : children}
-        </div>
+        <ToolErrorBoundary toolName={toolName}>
+          <div className="hidden md:block">
+            {children}
+          </div>
+          <div className="md:hidden">
+            {isRestricted ? <DesktopOnlyRoast /> : children}
+          </div>
+        </ToolErrorBoundary>
       </div>
     </div>
   );

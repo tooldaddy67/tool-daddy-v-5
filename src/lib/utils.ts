@@ -17,10 +17,23 @@ export function formatBytes(bytes: number, decimals = 2) {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 }
 
-export function getFileExtension(mimeType?: string) {
-  if (!mimeType) return 'bin';
-  const parts = mimeType.split('/');
-  return parts[parts.length - 1] || 'bin';
+export function getFileExtension(input?: string) {
+  if (!input) return 'bin';
+
+  // If it's a MIME type (e.g., image/jpeg)
+  if (input.includes('/')) {
+    const parts = input.split('/');
+    let ext = parts[parts.length - 1] || 'bin';
+    if (ext === 'jpeg') return 'jpg';
+    return ext;
+  }
+
+  // If it's a filename (e.g., test.jpg)
+  if (input.includes('.')) {
+    return input.split('.').pop() || '';
+  }
+
+  return '';
 }
 
 export function safeUUID(): string {

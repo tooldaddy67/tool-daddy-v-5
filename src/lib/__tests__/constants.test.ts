@@ -21,7 +21,11 @@ describe('TOOL_CATEGORIES', () => {
                 expect(tool).toHaveProperty('name');
                 expect(tool).toHaveProperty('href');
                 expect(tool).toHaveProperty('icon');
-                expect(tool.href).toMatch(/^\//);
+                if (!tool.isExternal) {
+                    expect(tool.href).toMatch(/^\//);
+                } else {
+                    expect(tool.href).toMatch(/^https?:\/\//);
+                }
             });
         });
     });
