@@ -280,8 +280,26 @@ ${allPages.map(page => `  <url>
                                                 <StatBadge label="Missing Alt" value={seoData.stats.imagesMissingAlt} good={seoData.stats.imagesMissingAlt === 0} />
                                                 <StatBadge label="Internal Links" value={seoData.stats.internalLinks} good={true} />
                                                 <StatBadge label="External Links" value={seoData.stats.externalLinks} good={true} />
+                                                <StatBadge label="Broken Links" value={seoData.stats.brokenLinksCount} good={seoData.stats.brokenLinksCount === 0} />
                                             </div>
                                         </div>
+
+                                        {/* Broken Links Details */}
+                                        {seoData.stats.brokenLinksCount > 0 && (
+                                            <div className="space-y-3">
+                                                <h3 className="text-sm font-semibold uppercase tracking-wider text-red-500 flex items-center gap-2">
+                                                    <AlertTriangle className="h-4 w-4" />
+                                                    Broken Links Detected
+                                                </h3>
+                                                <div className="grid gap-2">
+                                                    {seoData.stats.brokenLinkUrls.map((link: string, i: number) => (
+                                                        <div key={i} className="text-xs p-2 rounded bg-red-500/5 border border-red-500/20 text-red-600 truncate">
+                                                            {link}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
 
                                         {/* OG Tags */}
                                         <div className="space-y-3">

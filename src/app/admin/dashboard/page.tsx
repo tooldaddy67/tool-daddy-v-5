@@ -141,7 +141,7 @@ export default function AdminDashboard() {
                         <p className="text-muted-foreground">Real-time platform analytics from Firestore.</p>
                     </div>
                     <div className="flex gap-2">
-                        <Link href="/feedback">
+                        <Link href="/admin/feedback">
                             <Button variant="outline">
                                 <MessageSquare className="mr-2 h-4 w-4" /> View Feedback
                             </Button>

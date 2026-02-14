@@ -91,39 +91,36 @@ export async function GET(request: NextRequest) {
         let totalExecutions = 0;
 
         try {
-            // Get all user documents
-            const usersSnapshot = await adminFirestore.collection('users').listDocuments();
+            // Aggregate from all users' history using collectionGroup
+            const historySnapshot = await adminFirestore
+                .collectionGroup('history')
+                .where('timestamp', '>=', sevenDaysAgo)
+                .orderBy('timestamp', 'desc')
+                .limit(2000) // Limit to a reasonable amount for aggregation
+                .get();
 
-            // For each user, fetch their recent history
-            const historyPromises = usersSnapshot.map(async (userDoc) => {
-                const historyRef = userDoc.collection('history');
-                const recentHistory = await historyRef
-                    .where('timestamp', '>=', sevenDaysAgo)
-                    .orderBy('timestamp', 'desc')
-                    .limit(200)
-                    .get();
+            historySnapshot.docs.forEach((doc) => {
+                const data = doc.data();
+                const toolName = data.tool || 'Unknown';
+                const timestamp = data.timestamp?.toDate?.() || new Date();
+                const dayKey = timestamp.toISOString().split('T')[0]; // YYYY-MM-DD
+                const userId = doc.ref.parent.parent?.id; // Ancestor of the subcollection item
 
-                recentHistory.docs.forEach((doc) => {
-                    const data = doc.data();
-                    const toolName = data.tool || 'Unknown';
-                    const timestamp = data.timestamp?.toDate?.() || new Date();
-                    const dayKey = timestamp.toISOString().split('T')[0]; // YYYY-MM-DD
+                // Count tool usage
+                toolUsageMap[toolName] = (toolUsageMap[toolName] || 0) + 1;
+                totalExecutions++;
 
-                    // Count tool usage
-                    toolUsageMap[toolName] = (toolUsageMap[toolName] || 0) + 1;
-                    totalExecutions++;
-
-                    // Track daily unique users
+                // Track daily unique users
+                if (userId) {
                     if (!dailyActivityMap[dayKey]) {
                         dailyActivityMap[dayKey] = new Set();
                     }
-                    dailyActivityMap[dayKey].add(userDoc.id);
-                });
+                    dailyActivityMap[dayKey].add(userId);
+                }
             });
-
-            await Promise.all(historyPromises);
         } catch (e) {
-            console.error('Error aggregating history:', e);
+            console.error('Error aggregating history via collectionGroup:', e);
+            // Fallback: If collectionGroup fails (e.g. index not yet created), we might need to notify admin
         }
 
         // 4. Format top tools (sorted by usage, top 8)

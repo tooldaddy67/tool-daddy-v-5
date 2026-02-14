@@ -59,42 +59,90 @@ export async function POST(request: NextRequest) {
         const images = (html.match(/<img[^>]*>/gi) || []);
         const imagesWithAlt = images.filter(img => /alt=["'][^"']+["']/i.test(img)).length;
 
-        // Count internal/external links
-        const links = (html.match(/<a[^>]+href=["']([^"']*)["']/gi) || []);
-        const internalLinks = links.filter(l => {
-            const href = l.match(/href=["']([^"']*)["']/i)?.[1] || '';
-            return href.startsWith('/') || href.includes(parsedUrl.hostname);
-        }).length;
+        // Extract all hrefs from <a> tags
+        const allLinks = (html.match(/<a[^>]+href=["']([^"']*)["']/gi) || [])
+            .map(tag => tag.match(/href=["']([^"']*)["']/i)?.[1])
+            .filter((href): href is string => !!href && !href.startsWith('#') && !href.startsWith('javascript:'));
 
-        const result = {
+        const internalLinks: string[] = [];
+        const externalLinks: string[] = [];
+
+        allLinks.forEach(l => {
+            try {
+                const linkUrl = new URL(l, parsedUrl); // Resolve relative URLs
+                if (linkUrl.hostname === parsedUrl.hostname) {
+                    internalLinks.push(linkUrl.toString());
+                } else {
+                    externalLinks.push(linkUrl.toString());
+                }
+            } catch (e) {
+                // Malformed URL, treat as external or ignore
+                externalLinks.push(l);
+            }
+        });
+
+        // Simple broken link detection (Limit to 5 external for performance)
+        const brokenLinks: string[] = [];
+        const linksToTest = externalLinks.slice(0, 5); // Test only a few external links
+
+        await Promise.all(linksToTest.map(async (l) => {
+            try {
+                const head = await fetch(l, {
+                    method: 'HEAD',
+                    signal: AbortSignal.timeout(3000)
+                });
+                if (!head.ok) brokenLinks.push(l);
+            } catch (e) {
+                brokenLinks.push(l);
+            }
+        }));
+
+        const title = titleMatch?.[1]?.trim() || null;
+        const description = getMetaContent('description');
+        const canonical = canonicalMatch?.[1] || null;
+        const language = langMatch?.[1] || null;
+        const robots = getMetaContent('robots');
+        const keywords = getMetaContent('keywords');
+
+        const ogTitle = getMetaContent('og:title');
+        const ogDescription = getMetaContent('og:description');
+        const ogImage = getMetaContent('og:image');
+        const ogUrl = getMetaContent('og:url');
+        const ogType = getMetaContent('og:type');
+        const ogSiteName = getMetaContent('og:site_name');
+
+        const twitterCard = getMetaContent('twitter:card');
+        const twitterTitle = getMetaContent('twitter:title');
+        const twitterDescription = getMetaContent('twitter:description');
+        const twitterImage = getMetaContent('twitter:image');
+        const twitterSite = getMetaContent('twitter:site');
+
+        return NextResponse.json({
             url: parsedUrl.toString(),
-            title: titleMatch?.[1]?.trim() || null,
-            titleLength: titleMatch?.[1]?.trim().length || 0,
-            description: getMetaContent('description'),
-            descriptionLength: getMetaContent('description')?.length || 0,
-            canonical: canonicalMatch?.[1] || null,
+            title: title || '',
+            titleLength: title?.length || 0,
+            description: description || '',
+            descriptionLength: description?.length || 0,
+            canonical,
             favicon: faviconMatch?.[1] || null,
-            language: langMatch?.[1] || null,
-            robots: getMetaContent('robots'),
-            keywords: getMetaContent('keywords'),
-            // Open Graph
+            language,
+            robots,
+            keywords,
             og: {
-                title: getMetaContent('og:title'),
-                description: getMetaContent('og:description'),
-                image: getMetaContent('og:image'),
-                url: getMetaContent('og:url'),
-                type: getMetaContent('og:type'),
-                siteName: getMetaContent('og:site_name'),
+                title: ogTitle || '',
+                description: ogDescription || '',
+                image: ogImage || '',
+                url: ogUrl || '',
+                type: ogType || '',
+                siteName: ogSiteName || '',
             },
-            // Twitter Card
             twitter: {
-                card: getMetaContent('twitter:card'),
-                title: getMetaContent('twitter:title'),
-                description: getMetaContent('twitter:description'),
-                image: getMetaContent('twitter:image'),
-                site: getMetaContent('twitter:site'),
+                card: twitterCard || '',
+                title: twitterTitle || '',
+                description: twitterDescription || '',
+                image: twitterImage || '',
+                site: twitterSite || '',
             },
-            // Page stats
             stats: {
                 h1Count: h1s,
                 h2Count: h2s,
@@ -102,13 +150,13 @@ export async function POST(request: NextRequest) {
                 totalImages: images.length,
                 imagesWithAlt,
                 imagesMissingAlt: images.length - imagesWithAlt,
-                totalLinks: links.length,
-                internalLinks,
-                externalLinks: links.length - internalLinks,
+                totalLinks: allLinks.length,
+                internalLinks: internalLinks.length,
+                externalLinks: externalLinks.length,
+                brokenLinksCount: brokenLinks.length,
+                brokenLinkUrls: brokenLinks
             },
-        };
-
-        return NextResponse.json(result);
+        });
     } catch (error: any) {
         console.error('Meta tag fetch error:', error);
         return NextResponse.json(
