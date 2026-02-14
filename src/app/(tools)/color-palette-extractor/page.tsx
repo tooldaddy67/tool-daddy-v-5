@@ -1,13 +1,21 @@
-
-'use client';
-
+import { Metadata } from 'next';
 import dynamic from 'next/dynamic';
 import { Skeleton } from '@/components/ui/skeleton';
+
+export const metadata: Metadata = {
+  title: 'Color Palette Extractor from Image | Tool Daddy',
+  description: 'Extract beautiful color palettes from any image instantly. Upload an image and get a curated collection of its dominant colors.',
+  keywords: ['color extractor', 'image to palette', 'extract colors', 'color palette from image', 'design tools'],
+  openGraph: {
+    title: 'Color Palette Extractor | Tool Daddy',
+    description: 'Get the perfect color palette from any image you upload.',
+    type: 'website',
+  }
+};
 
 const ColorPaletteExtractor = dynamic(() => import('./_components/color-palette-extractor'), {
   loading: () => <ColorPaletteExtractorSkeleton />,
 });
-
 
 function ColorPaletteExtractorSkeleton() {
   return (

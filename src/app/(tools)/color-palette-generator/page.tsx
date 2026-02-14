@@ -1,6 +1,17 @@
-'use client';
+import { Metadata } from 'next';
 import dynamic from 'next/dynamic';
 import { Skeleton } from '@/components/ui/skeleton';
+
+export const metadata: Metadata = {
+  title: 'AI Color Palette Generator | Tool Daddy',
+  description: 'Generate beautiful, harmonious color palettes instantly. Explore trending color schemes and find the perfect inspiration for your next design project.',
+  keywords: ['color palette generator', 'color schemes', 'trending colors', 'design inspiration', 'color palette creator'],
+  openGraph: {
+    title: 'AI Color Palette Generator | Tool Daddy',
+    description: 'Find the perfect colors for your next project.',
+    type: 'website',
+  }
+};
 
 const ColorPaletteGenerator = dynamic(() => import('./_components/color-palette-generator'), {
   loading: () => <ColorPaletteGeneratorSkeleton />,

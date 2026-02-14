@@ -1,56 +1,26 @@
+import { Metadata } from 'next';
+import dynamic from 'next/dynamic';
+import { Skeleton } from '@/components/ui/skeleton';
 
-'use client';
+export const metadata: Metadata = {
+  title: 'AI Image Enhancer | Tool Daddy',
+  description: 'Enhance your images using powerful AI tools. Upscale, sharpen, and improve image quality instantly.',
+  keywords: ['ai image enhancer', 'upscale image', 'improve image quality', 'sharpen image', 'ai photo editor'],
+  openGraph: {
+    title: 'AI Image Enhancer | Tool Daddy',
+    description: 'Enhance your images with AI power.',
+    type: 'website',
+  }
+};
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { Loader2 } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import AdModal from '@/components/ad-modal';
-
-const EXTERNAL_URL = 'https://imgupscaler.ai/';
+const AiImageEnhancerClient = dynamic(() => import('./_components/ai-image-enhancer-client'), {
+  loading: () => (
+    <div className="w-full max-w-4xl mx-auto p-4 md:p-8">
+      <Skeleton className="h-[400px] w-full rounded-2xl" />
+    </div>
+  )
+});
 
 export default function AiImageEnhancerPage() {
-  const router = useRouter();
-  const [isAdModalOpen, setIsAdModalOpen] = useState(true);
-
-  const handleAdFinish = () => {
-    setIsAdModalOpen(false);
-    window.location.replace(EXTERNAL_URL);
-  };
-
-  const handleModalClose = () => {
-    setIsAdModalOpen(false);
-    router.replace('/');
-  }
-
-  return (
-    <>
-      <div className="w-full max-w-4xl mx-auto p-4 md:p-8">
-        <Card className="bg-card/50 backdrop-blur-lg border-border/20">
-          <CardHeader>
-            <CardTitle>Redirecting...</CardTitle>
-            <CardDescription>
-              Please wait while we redirect you to the AI Image Enhancer.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex justify-center items-center h-64 border-2 border-dashed rounded-lg bg-background/30">
-              <div className="text-center">
-                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground mx-auto" />
-                <p className="mt-4 text-muted-foreground">Preparing the external tool...</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <AdModal
-        isOpen={isAdModalOpen}
-        onClose={handleModalClose}
-        onAdFinish={handleAdFinish}
-        title="Redirecting you to our partner..."
-        duration={10}
-      />
-    </>
-  );
+  return <AiImageEnhancerClient />;
 }

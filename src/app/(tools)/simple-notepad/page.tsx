@@ -1,6 +1,17 @@
-'use client';
+import { Metadata } from 'next';
 import dynamic from 'next/dynamic';
 import { Skeleton } from '@/components/ui/skeleton';
+
+export const metadata: Metadata = {
+  title: 'Simple Online Notepad | Tool Daddy',
+  description: 'A clean, fast, and secure online notepad. Type, save, and manage your notes directly in your browser with auto-save and easy export options.',
+  keywords: ['online notepad', 'secure notes', 'browser notepad', 'quick notes', 'text editor online', 'web notepad'],
+  openGraph: {
+    title: 'Simple Online Notepad | Tool Daddy',
+    description: 'Your secure and fast online scratchpad.',
+    type: 'website',
+  }
+};
 
 const SimpleNotepad = dynamic(() => import('./_components/simple-notepad'), {
   loading: () => <SimpleNotepadSkeleton />

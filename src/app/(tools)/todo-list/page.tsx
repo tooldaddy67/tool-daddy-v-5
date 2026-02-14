@@ -1,8 +1,17 @@
-
-'use client';
-
+import { Metadata } from 'next';
 import dynamic from 'next/dynamic';
 import { Skeleton } from '@/components/ui/skeleton';
+
+export const metadata: Metadata = {
+  title: 'Minimalist To-Do List | Tool Daddy',
+  description: 'Stay organized and focused with our clean, minimalist to-do list. Manage your tasks, set priorities, and get things done efficiently.',
+  keywords: ['online todo list', 'task manager', 'minimalist productivity', 'todo list online', 'get things done'],
+  openGraph: {
+    title: 'Minimalist To-Do List | Tool Daddy',
+    description: 'Stay focused and organized with our minimalist to-do list.',
+    type: 'website',
+  }
+};
 
 const TodoList = dynamic(() => import('./_components/todo-list'), {
   loading: () => <TodoListSkeleton />

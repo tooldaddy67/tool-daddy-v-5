@@ -1,8 +1,17 @@
-
-'use client';
-
+import { Metadata } from 'next';
 import dynamic from 'next/dynamic';
 import { Skeleton } from '@/components/ui/skeleton';
+
+export const metadata: Metadata = {
+  title: 'Free Online Drawing Canvas | Tool Daddy',
+  description: 'A simple, fast, and secure online drawing canvas. Sketch, paint, and download your creations instantly from your browser.',
+  keywords: ['online drawing canvas', 'sketchpad online', 'free drawing tool', 'paint online', 'digital canvas'],
+  openGraph: {
+    title: 'Free Online Drawing Canvas | Tool Daddy',
+    description: 'Sketch and paint instantly in your browser.',
+    type: 'website',
+  }
+};
 
 const DrawingCanvas = dynamic(() => import('./_components/drawing-canvas'), {
   loading: () => <DrawingCanvasSkeleton />
