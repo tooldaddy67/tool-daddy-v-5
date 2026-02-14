@@ -56,7 +56,7 @@ export default function ToolsPage() {
             </div>
 
             <div className="hidden md:block w-full min-h-screen mesh-bg relative">
-                <div className="container px-8 py-24 mx-auto space-y-20 relative z-10">
+                <div className="w-full px-12 py-24 space-y-20 relative z-10">
                     <div className="flex flex-col items-center justify-center text-center space-y-6 mb-16">
                         <h1 className="text-6xl font-black tracking-tighter uppercase font-headline">All Tools</h1>
                         <div className="h-1.5 w-20 bg-red-500 rounded-full" />

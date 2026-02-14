@@ -43,10 +43,10 @@ export default function ToolCard({ href, name, description, icon: Icon, isExtern
       )}
       style={{
         '--hover-shadow-color': 'var(--primary)',
-        height: compact ? '100%' : 'calc(320px * var(--spacing-multiplier))',
-        width: compact ? '160px' : undefined,
+        height: compact ? '100%' : 'calc(380px * var(--spacing-multiplier))',
+        width: compact ? '100%' : undefined,
         minHeight: compact ? '190px' : undefined,
-        padding: compact ? '1rem' : 'calc(2rem * var(--spacing-multiplier))',
+        padding: compact ? '1rem' : 'calc(2.5rem * var(--spacing-multiplier))',
         borderRadius: compact ? `${settings.cardRoundness}px` : 'var(--radius)',
         ...style
       } as React.CSSProperties}
@@ -85,7 +85,7 @@ export default function ToolCard({ href, name, description, icon: Icon, isExtern
         <h3
           className={cn(
             "font-black tracking-tight transition-colors leading-tight text-foreground",
-            compact ? "text-lg" : "text-xl group-hover:text-primary"
+            compact ? "text-lg" : "text-2xl group-hover:text-primary"
           )}
           style={{ textShadow: compact ? 'none' : 'var(--text-glow)' }}
         >
@@ -93,7 +93,7 @@ export default function ToolCard({ href, name, description, icon: Icon, isExtern
         </h3>
         <p className={cn(
           "text-muted-foreground leading-tight line-clamp-2 font-medium",
-          compact ? "text-sm" : "text-[13px]"
+          compact ? "text-sm" : "text-[15px]"
         )}>
           {description}
         </p>
