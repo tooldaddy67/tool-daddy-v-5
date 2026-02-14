@@ -76,9 +76,35 @@ export async function verifyAdminPassword(password: string): Promise<AdminAuthRe
         await lockoutRef.set({ attempts: 0, lockedUntil: 0, lastSuccess: new Date() }, { merge: true });
         return { isValid: true };
     } else {
+        const data = lockoutDoc.data();
         let attempts = 1;
-        if (lockoutDoc.exists) {
-            attempts = (lockoutDoc.data()?.attempts || 0) + 1;
+
+        if (lockoutDoc.exists && data) {
+            const now = Date.now();
+            let lockedUntil: number = 0;
+            const lastAttempt = data.lastAttempt?.toMillis?.() || data.lastAttempt?.getTime?.() || 0;
+
+            try {
+                const lu = data.lockedUntil;
+                if (lu && typeof lu === 'object' && '_seconds' in lu) lockedUntil = lu._seconds * 1000;
+                else if (typeof lu?.toMillis === 'function') lockedUntil = lu.toMillis();
+                else if (lu instanceof Date) lockedUntil = lu.getTime();
+                else lockedUntil = Number(lu);
+            } catch (e) {
+                lockedUntil = 0;
+            }
+
+            // RESET LOGIC: 
+            // 1. If we were locked and the time has passed, start fresh.
+            // 2. OR if it's been more than 30 minutes since the last failed attempt, start fresh.
+            const isOldAttempt = lastAttempt && (now - lastAttempt > 30 * 60 * 1000);
+
+            if ((lockedUntil > 0 && now > lockedUntil) || isOldAttempt) {
+                console.log(`[AdminAuth] IP [${ip}] - Resetting attempts (Lock expired or 30m idle). previous: ${data.attempts}`);
+                attempts = 1;
+            } else {
+                attempts = (data.attempts || 0) + 1;
+            }
         }
 
         console.log(`[AdminAuth] IP [${ip}] - FAILED attempt #${attempts}`);
@@ -135,8 +161,12 @@ export async function checkIpLockout(): Promise<AdminAuthResponse> {
                     return { isValid: false, isLocked: true, lockedUntil };
                 }
 
-                // Secondary safety: if attempts are huge but no lockedUntil, lock them anyway
-                if (data.attempts >= 4 && !lockedUntil) {
+                // Secondary safety: if attempts are huge but no lockedUntil, 
+                // lock them anyway ONLY if the last attempt was recent (within 30 mins)
+                const lastAttempt = data.lastAttempt?.toMillis?.() || data.lastAttempt?.getTime?.() || 0;
+                const isRecentFailure = lastAttempt && (now - lastAttempt < 30 * 60 * 1000);
+
+                if (data.attempts >= 4 && !lockedUntil && isRecentFailure) {
                     const newLockedUntil = Date.now() + 3 * 60 * 1000;
                     await lockoutRef.set({ lockedUntil: new Date(newLockedUntil) }, { merge: true });
                     return { isValid: false, isLocked: true, lockedUntil: newLockedUntil };
