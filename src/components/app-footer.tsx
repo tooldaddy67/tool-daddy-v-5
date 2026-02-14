@@ -51,7 +51,7 @@ export default function AppFooter() {
             <Link href="/buy-me-a-coffee" className="text-muted-foreground hover:text-foreground transition-colors whitespace-nowrap">
               Support Us
             </Link>
-            <Link href="/feedback" className="text-muted-foreground hover:text-foreground transition-colors whitespace-nowrap">
+            <Link href="/feedback" prefetch={false} className="text-muted-foreground hover:text-foreground transition-colors whitespace-nowrap">
               Feedback
             </Link>
           </div>

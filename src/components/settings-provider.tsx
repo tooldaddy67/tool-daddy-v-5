@@ -4,7 +4,11 @@ import React, { createContext, useContext, useEffect, useState, useMemo } from '
 import { useFirebase, useDoc } from '@/firebase';
 import { doc, setDoc } from 'firebase/firestore';
 import { cn } from '@/lib/utils';
-import { SettingsDialog } from '@/components/settings-dialog';
+import dynamic from 'next/dynamic';
+
+const SettingsDialog = dynamic(() => import('@/components/settings-dialog').then(mod => mod.SettingsDialog), {
+    ssr: false
+});
 
 export type FontPair = 'tech' | 'modern' | 'classic' | 'friendly' | 'elegant' | 'futuristic' | 'monospace' | 'playful' | 'royal';
 export type ColorTheme = 'purple' | 'cyan' | 'green' | 'blue' | 'amber' | 'rose' | 'indigo' | 'emerald' | 'slate' | 'sunset' | 'custom';
@@ -57,7 +61,7 @@ const defaultSettings: UserSettings = {
     colorTheme: 'green',
     primaryColor: '142 70% 45%',
     blurIntensity: 'high',
-    uiDensity: 'standard',
+    uiDensity: 'compact',
     borderStyle: 'smooth',
     bgStyle: 'dark',
     animSpeed: 1,

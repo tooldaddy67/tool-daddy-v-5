@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import {
@@ -57,6 +57,22 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
     const [showAllFonts, setShowAllFonts] = useState(false);
     const [newDisplayName, setNewDisplayName] = useState(user?.displayName || '');
     const [isAdmin, setIsAdmin] = useState(false);
+
+    useEffect(() => {
+        if (!user) { setIsAdmin(false); return; }
+        user.getIdTokenResult().then((result) => {
+            if (result.claims.admin === true) {
+                setIsAdmin(true);
+            } else if (user.email === 'admin@tooldaddy.com') {
+                setIsAdmin(true);
+            } else {
+                // Also check if isAdmin is set in firestore doc (as per line 259)
+                // for now we stick to this, but we'll check doc too if needed.
+                setIsAdmin(false);
+            }
+        }).catch(() => setIsAdmin(false));
+    }, [user]);
+
     const [isDeletingData, setIsDeletingData] = useState(false);
     const [isDeletingAccount, setIsDeletingAccount] = useState(false);
     const [showDisablePersistenceDialog, setShowDisablePersistenceDialog] = useState(false);
@@ -488,16 +504,18 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                                             ))}
                                         </div>
                                     </div>
-                                    <div className="space-y-3">
-                                        <Label className="flex items-center gap-2 text-[10px] font-bold uppercase opacity-50">
-                                            <Activity className="w-3 h-3 text-primary" /> UI Density
-                                        </Label>
-                                        <div className="flex gap-1 bg-background/40 p-1 rounded-lg">
-                                            {(['compact', 'standard', 'cozy'] as UIDensity[]).map((d) => (
-                                                <Button key={d} variant={settings.uiDensity === d ? 'default' : 'ghost'} size="sm" className="flex-1 text-[10px] h-7 rounded-md capitalize" onClick={() => updateSettings({ uiDensity: d })}>{d}</Button>
-                                            ))}
+                                    {isAdmin && (
+                                        <div className="space-y-3">
+                                            <Label className="flex items-center gap-2 text-[10px] font-bold uppercase opacity-50">
+                                                <Activity className="w-3 h-3 text-primary" /> UI Density
+                                            </Label>
+                                            <div className="flex gap-1 bg-background/40 p-1 rounded-lg">
+                                                {(['compact', 'standard', 'cozy'] as UIDensity[]).map((d) => (
+                                                    <Button key={d} variant={settings.uiDensity === d ? 'default' : 'ghost'} size="sm" className="flex-1 text-[10px] h-7 rounded-md capitalize" onClick={() => updateSettings({ uiDensity: d })}>{d}</Button>
+                                                ))}
+                                            </div>
                                         </div>
-                                    </div>
+                                    )}
                                     <div className="space-y-3">
                                         <Label className="flex items-center gap-2 text-[10px] font-bold uppercase opacity-50">
                                             <ImageIcon className="w-3 h-3 text-primary" /> Background

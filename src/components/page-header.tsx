@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import dynamic from 'next/dynamic';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { cn } from '@/lib/utils';
 import {
@@ -18,7 +19,9 @@ import { Fragment } from 'react';
 import { HomeIcon, Settings, BookOpen, History } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { NotificationBell } from './notification-bell';
-import { SettingsDialog } from './settings-dialog';
+const SettingsDialog = dynamic(() => import('./settings-dialog').then(mod => mod.SettingsDialog), {
+  ssr: false
+});
 import { Button } from '@/components/ui/button';
 import { useSettings } from '@/components/settings-provider';
 
