@@ -44,7 +44,7 @@ export default function ToolCard({ href, name, description, icon: Icon, isExtern
       style={{
         '--hover-shadow-color': 'var(--primary)',
         height: compact ? '100%' : 'calc(380px * var(--spacing-multiplier))',
-        width: compact ? '100%' : undefined,
+        width: compact ? '160px' : undefined,
         minHeight: compact ? '190px' : undefined,
         padding: compact ? '1rem' : 'calc(2.5rem * var(--spacing-multiplier))',
         borderRadius: compact ? `${settings.cardRoundness}px` : 'var(--radius)',
