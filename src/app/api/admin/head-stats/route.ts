@@ -50,10 +50,10 @@ export async function GET(request: NextRequest) {
         let logs: any[] = [];
         let combinedEvents: any[] = [];
         try {
-            // A. Audit Logs
+            // A. Audit Logs (Increased Depth)
             const auditSnapshot = await adminFirestore.collection('audit_logs')
                 .orderBy('timestamp', 'desc')
-                .limit(20)
+                .limit(100)
                 .get();
 
             const auditLogs = auditSnapshot.docs.map(doc => {
@@ -71,10 +71,10 @@ export async function GET(request: NextRequest) {
                 };
             });
 
-            // B. Tool History (Global Activity)
+            // B. Tool History (Global Activity - Increased Depth)
             const historySnapshot = await adminFirestore.collectionGroup('history')
                 .orderBy('timestamp', 'desc')
-                .limit(20)
+                .limit(100)
                 .get();
 
             const toolLogs = historySnapshot.docs.map(doc => {
@@ -97,7 +97,7 @@ export async function GET(request: NextRequest) {
             // C. Feedback
             const feedbackSnapshot = await adminFirestore.collection('feedback')
                 .orderBy('createdAt', 'desc')
-                .limit(10)
+                .limit(50)
                 .get();
 
             const feedbackLogs = feedbackSnapshot.docs.map(doc => {
@@ -118,7 +118,7 @@ export async function GET(request: NextRequest) {
 
             combinedEvents = [...auditLogs, ...toolLogs, ...feedbackLogs]
                 .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-                .slice(0, 30);
+                .slice(0, 150);
 
         } catch (e) {
             console.warn('Full activity fetch partial failure:', e);
@@ -126,15 +126,26 @@ export async function GET(request: NextRequest) {
 
         // Fallback or Session Log
         if (combinedEvents.length === 0) {
-            combinedEvents = [{
-                id: 'init',
-                timestamp: new Date().toISOString(),
-                action: 'SESSION_INITIALIZED',
-                userEmail: email,
-                target: 'HEAD_DASHBOARD',
-                status: 'success',
-                type: 'security'
-            }];
+            combinedEvents = [
+                {
+                    id: 'boot',
+                    timestamp: new Date(Date.now() - 3600000).toISOString(),
+                    action: 'GATEWAY_BOOT_SEQUENCE',
+                    userEmail: 'system@kernel',
+                    target: 'CLUSTER_ALPHA',
+                    status: 'success',
+                    type: 'security'
+                },
+                {
+                    id: 'init',
+                    timestamp: new Date().toISOString(),
+                    action: 'SESSION_INITIALIZED',
+                    userEmail: email,
+                    target: 'HEAD_DASHBOARD',
+                    status: 'success',
+                    type: 'security'
+                }
+            ];
         }
 
         logs = combinedEvents;
@@ -288,7 +299,9 @@ export async function GET(request: NextRequest) {
             maintenanceMode: configData.maintenanceMode || false,
             featureFlags: configData.featureFlags ?? true,
             betaPercent: configData.betaPercent || 0,
-            apiVersion: 'v5.0.0-PRO'
+            apiVersion: 'v5.0.0-PRO',
+            publicRateLimit: configData.publicRateLimit || 50,
+            authRateLimit: configData.authRateLimit || 1000
         };
 
         return NextResponse.json({

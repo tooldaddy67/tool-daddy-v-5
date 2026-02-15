@@ -120,6 +120,27 @@ export async function POST(request: NextRequest) {
                 message = `Password updated successfully for ${targetUser.email}. Existing sessions have been terminated for security.`;
                 break;
 
+            case 'CONFIG_SYNC':
+                const { details } = body;
+                if (!details) return NextResponse.json({ error: 'Missing sync details' }, { status: 400 });
+
+                // Allow only specific keys
+                const allowedKeys = ['publicRateLimit', 'authRateLimit', 'maintenanceMode'];
+                const filteredDetails: any = {};
+                Object.keys(details).forEach(key => {
+                    if (allowedKeys.includes(key)) {
+                        filteredDetails[key] = details[key];
+                    }
+                });
+
+                await adminFirestore.doc('system/config').set({
+                    ...filteredDetails,
+                    lastUpdated: new Date(),
+                    updatedBy: callerUid
+                }, { merge: true });
+                message = `Global system configuration synchronized across cluster nodes.`;
+                break;
+
             default:
                 return NextResponse.json({ error: 'Invalid action type' }, { status: 400 });
         }

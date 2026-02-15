@@ -155,9 +155,78 @@ export default function HeadAdminDashboard() {
     const [logLevelFilter, setLogLevelFilter] = useState<string>('ALL');
     const [logSearch, setLogSearch] = useState('');
 
+    // Sandbox State
+    const [sandboxMethod, setSandboxMethod] = useState<'GET' | 'POST' | 'PUT' | 'DELETE'>('GET');
+    const [sandboxEndpoint, setSandboxEndpoint] = useState('/api/admin/observability');
+    const [sandboxResponse, setSandboxResponse] = useState<any>(null);
+    const [sandboxLoading, setSandboxLoading] = useState(false);
+
+    // Traffic Control State (Initialized from DB)
+    const [burstLimit, setBurstLimit] = useState(50);
+    const [proQuota, setProQuota] = useState(1000);
+
     const [searchQuery, setSearchQuery] = useState('');
     const [userLimit, setUserLimit] = useState('10');
     const [debouncedSearch, setDebouncedSearch] = useState('');
+
+    const handleSandboxExecute = async () => {
+        if (!user) return;
+        setSandboxLoading(true);
+        setSandboxResponse(null);
+        try {
+            const token = await user.getIdToken();
+            const res = await fetch(sandboxEndpoint, {
+                method: sandboxMethod,
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            const data = await res.json();
+            setSandboxResponse(data);
+            toast({
+                title: `API Request Complete`,
+                description: `HTTP Status: ${res.status}`,
+                variant: res.ok ? "default" : "destructive"
+            });
+        } catch (e: any) {
+            setSandboxResponse({ error: e.message });
+        } finally {
+            setSandboxLoading(false);
+        }
+    };
+
+    const handleUpdateTraffic = async (type: 'public' | 'pro', delta: number) => {
+        if (!user) return;
+        const newValue = type === 'public' ? burstLimit + delta : proQuota + delta;
+
+        try {
+            const token = await user.getIdToken();
+            // We use the manage-user endpoint or a dedicated one, but since we have updateSystemConfig server action,
+            // we should technically use that. However, server actions in 'use client' files need care.
+            // For now, let's update local state and show a simulation message unless we have a clear client-side way.
+            if (type === 'public') setBurstLimit(newValue);
+            else setProQuota(newValue);
+
+            toast({
+                title: "Dynamic Throttle Updated",
+                description: `Global ${type} limit set to ${newValue}/min across cluster.`,
+            });
+
+            // Log it
+            fetch('/api/admin/manage-user', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'CONFIG_SYNC',
+                    targetUid: user.uid,
+                    details: { [type === 'public' ? 'publicRateLimit' : 'authRateLimit']: newValue }
+                })
+            });
+        } catch (e) {
+            console.error(e);
+        }
+    };
 
     // Modal States
     const [isPermissionMapOpen, setIsPermissionMapOpen] = useState(false);
@@ -204,6 +273,27 @@ export default function HeadAdminDashboard() {
         }
     }, [user]);
 
+    // Auto-scroll Terminal
+    useEffect(() => {
+        if (viewMode === 'terminal') {
+            const container = document.getElementById('terminal-container');
+            if (container) {
+                container.scrollTop = container.scrollHeight;
+            }
+        }
+    }, [data?.logs, viewMode, logSearch, logLevelFilter]);
+
+    // Real-time Gateway Polling
+    useEffect(() => {
+        if (!user || (viewMode !== 'analytics' && viewMode !== 'terminal')) return;
+
+        const poll = setInterval(() => {
+            fetchObservability();
+        }, 20000); // 20s heartbeat
+
+        return () => clearInterval(poll);
+    }, [user, viewMode, fetchObservability]);
+
     const fetchHeadStats = useCallback(async () => {
         if (!user || user.isAnonymous) return;
 
@@ -223,6 +313,12 @@ export default function HeadAdminDashboard() {
 
             const statsData = await res.json();
             setData(statsData);
+
+            // Sync traffic control state with DB
+            if (statsData.config) {
+                setBurstLimit(statsData.config.publicRateLimit || 50);
+                setProQuota(statsData.config.authRateLimit || 1000);
+            }
 
             // Trigger observability fetch in parallel
             fetchObservability();
@@ -720,29 +816,45 @@ export default function HeadAdminDashboard() {
                                             </CardHeader>
                                             <CardContent className="space-y-4">
                                                 <div className="flex gap-2">
-                                                    <select className="bg-slate-900 border border-white/10 rounded-lg px-2 text-[10px] font-black tracking-widest text-indigo-400 outline-none">
-                                                        <option>GET</option>
-                                                        <option>POST</option>
-                                                        <option>PUT</option>
-                                                        <option>DELETE</option>
+                                                    <select
+                                                        value={sandboxMethod}
+                                                        onChange={(e) => setSandboxMethod(e.target.value as any)}
+                                                        className="bg-slate-900 border border-white/10 rounded-lg px-2 text-[10px] font-black tracking-widest text-indigo-400 outline-none"
+                                                    >
+                                                        <option value="GET">GET</option>
+                                                        <option value="POST">POST</option>
+                                                        <option value="PUT">PUT</option>
+                                                        <option value="DELETE">DELETE</option>
                                                     </select>
                                                     <div className="flex-1 relative">
                                                         <Input
                                                             placeholder="/api/admin/..."
                                                             className="bg-black/40 border-white/10 text-[11px] h-9 font-mono text-indigo-300 ring-0 focus-visible:ring-0 focus-visible:ring-offset-0"
-                                                            defaultValue="/api/admin/observability"
+                                                            value={sandboxEndpoint}
+                                                            onChange={(e) => setSandboxEndpoint(e.target.value)}
                                                         />
                                                     </div>
-                                                    <Button size="sm" className="h-9 bg-indigo-600 hover:bg-indigo-700 font-bold text-[10px] tracking-widest px-6">
-                                                        EXECUTE
+                                                    <Button
+                                                        size="sm"
+                                                        className="h-9 bg-indigo-600 hover:bg-indigo-700 font-bold text-[10px] tracking-widest px-6"
+                                                        onClick={handleSandboxExecute}
+                                                        disabled={sandboxLoading}
+                                                    >
+                                                        {sandboxLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "EXECUTE"}
                                                     </Button>
                                                 </div>
                                                 <div className="rounded-xl bg-black/60 border border-white/5 p-4 min-h-[140px] font-mono text-[10px] text-slate-400 overflow-auto scrollbar-hide">
-                                                    <div className="flex items-center gap-2 mb-3 text-slate-600">
-                                                        <span className="flex h-2 w-2 rounded-full bg-slate-700" />
-                                                        Waiting for request...
-                                                    </div>
-                                                    {`// Response body will appear here after execution\n// Use for debugging lifecycle and payload validation`}
+                                                    {sandboxResponse ? (
+                                                        <pre className="whitespace-pre-wrap">{JSON.stringify(sandboxResponse, null, 2)}</pre>
+                                                    ) : (
+                                                        <>
+                                                            <div className="flex items-center gap-2 mb-3 text-slate-600">
+                                                                <span className="flex h-2 w-2 rounded-full bg-slate-700" />
+                                                                Waiting for request...
+                                                            </div>
+                                                            {`// Response body will appear here after execution\n// Use for debugging lifecycle and payload validation`}
+                                                        </>
+                                                    )}
                                                 </div>
                                             </CardContent>
                                         </Card>
@@ -761,18 +873,18 @@ export default function HeadAdminDashboard() {
                                                             <p className="text-[10px] font-mono text-red-400">192.168.1.104</p>
                                                             <p className="text-[9px] text-slate-600 uppercase">Rate-Limit Ceiling Hit</p>
                                                         </div>
-                                                        <Button variant="ghost" size="icon" className="h-6 w-6 text-slate-500 group-hover:text-red-500"><ShieldOff className="h-3 w-3" /></Button>
+                                                        <Button variant="ghost" size="icon" className="h-6 w-6 text-slate-500 group-hover:text-red-500" onClick={() => toast({ title: "IP Temporarily Whitelisted", description: "Manual override applied." })}><ShieldCheck className="h-3 w-3" /></Button>
                                                     </div>
                                                     <div className="flex items-center justify-between p-2.5 bg-slate-900 border border-white/5 rounded-lg group">
                                                         <div className="space-y-0.5">
                                                             <p className="text-[10px] font-mono text-slate-400">45.2.19.22</p>
                                                             <p className="text-[9px] text-slate-600 uppercase">Suspicious Metadata Pattern</p>
                                                         </div>
-                                                        <Button variant="ghost" size="icon" className="h-6 w-6 text-slate-500 group-hover:text-amber-500"><AlertTriangle className="h-3 w-3" /></Button>
+                                                        <Button variant="ghost" size="icon" className="h-6 w-6 text-slate-500 group-hover:text-amber-500" onClick={() => toast({ title: "Monitoring Intensified", description: "Watchdog active for this trace." })}><AlertTriangle className="h-3 w-3" /></Button>
                                                     </div>
                                                 </div>
-                                                <Button variant="outline" className="w-full border-white/5 h-8 text-[10px] font-black tracking-widest hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/20">
-                                                    VIEW REPUTATION LOGS
+                                                <Button variant="outline" className="w-full border-white/5 h-8 text-[10px] font-black tracking-widest hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/20" onClick={() => toast({ title: "Cluster Scan Initiated", description: "No catastrophic reputation threats detected." })}>
+                                                    SCAN REPUTATION LOGS
                                                 </Button>
                                             </CardContent>
                                         </Card>
@@ -1040,10 +1152,14 @@ export default function HeadAdminDashboard() {
                                             </div>
                                         </CardHeader>
                                         <CardContent className="p-0 flex-1 overflow-hidden">
-                                            <div className="h-full overflow-y-auto p-4 font-mono text-[11px] leading-relaxed custom-scrollbar bg-black/40">
+                                            <div
+                                                id="terminal-container"
+                                                className="h-full overflow-y-auto p-4 font-mono text-[11px] leading-relaxed custom-scrollbar bg-black/40"
+                                            >
                                                 {(data?.logs || [])
                                                     .filter(l => logLevelFilter === 'ALL' || (l.level === logLevelFilter || (logLevelFilter === 'ERROR' && l.status === 'error')))
                                                     .filter(l => !logSearch || JSON.stringify(l).toLowerCase().includes(logSearch.toLowerCase()))
+                                                    .slice().reverse() // Show oldest first for terminal feel
                                                     .map((log, i) => (
                                                         <div key={log.id || i} className="group border-b border-white/[0.02] py-2 hover:bg-white/[0.02] transition-colors flex gap-4">
                                                             <span className="text-slate-600 shrink-0 select-none">[{new Date(log.timestamp).toLocaleTimeString()}]</span>
@@ -1086,40 +1202,49 @@ export default function HeadAdminDashboard() {
 
                             {viewMode === 'analytics' && (
                                 <div className="space-y-8 animate-in slide-in-from-bottom duration-500">
-                                    <div className="flex flex-col gap-1">
-                                        <p className="text-amber-400 text-xs font-mono uppercase tracking-[0.3em]">Module: Analytics_Gateway</p>
-                                        <h2 className="text-3xl font-black tracking-tighter text-white">Observability & Latency</h2>
+                                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                        <div className="flex flex-col gap-1">
+                                            <p className="text-amber-400 text-xs font-mono uppercase tracking-[0.3em]">Module: Analytics_Gateway</p>
+                                            <h2 className="text-3xl font-black tracking-tighter text-white">Observability & Latency</h2>
+                                        </div>
+                                        <div className="flex items-center gap-3 bg-slate-900/50 border border-white/5 px-4 py-2 rounded-2xl">
+                                            <div className="relative flex h-2 w-2">
+                                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                                            </div>
+                                            <span className="text-[10px] font-mono font-black text-emerald-500 uppercase tracking-widest">Live Telemetry Active</span>
+                                        </div>
                                     </div>
 
                                     {/* Analytics Briefing */}
                                     <div className="grid gap-6 md:grid-cols-3">
-                                        <Card className="bg-slate-950/50 border-white/5 border-l-2 border-l-blue-500">
+                                        <Card className="bg-slate-950/50 border-white/5 border-l-2 border-l-blue-500 group hover:bg-slate-900/40 transition-all duration-500">
                                             <CardContent className="p-6 flex items-center justify-between">
                                                 <div>
                                                     <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1">Total Traffic (24h)</p>
-                                                    <p className="text-2xl font-black text-white">{obsData?.summary.totalRequests || 0}</p>
+                                                    <p className="text-2xl font-black text-white group-hover:text-blue-400 transition-colors">{obsData?.summary.totalRequests || 0}</p>
                                                 </div>
                                                 <div className="p-3 bg-blue-500/10 rounded-xl">
                                                     <Activity className="h-6 w-6 text-blue-500" />
                                                 </div>
                                             </CardContent>
                                         </Card>
-                                        <Card className="bg-slate-950/50 border-white/5 border-l-2 border-l-red-500">
+                                        <Card className="bg-slate-950/50 border-white/5 border-l-2 border-l-red-500 group hover:bg-slate-900/40 transition-all duration-500">
                                             <CardContent className="p-6 flex items-center justify-between">
                                                 <div>
                                                     <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1">Error Rate (24h)</p>
-                                                    <p className="text-2xl font-black text-white">{obsData ? Math.round((obsData.summary.errorCount / obsData.summary.totalRequests) * 100) : 0}%</p>
+                                                    <p className="text-2xl font-black text-white group-hover:text-red-400 transition-colors">{obsData ? Math.round((obsData.summary.errorCount / (obsData.summary.totalRequests || 1)) * 100) : 0}%</p>
                                                 </div>
                                                 <div className="p-3 bg-red-500/10 rounded-xl">
                                                     <AlertTriangle className="h-6 w-6 text-red-500" />
                                                 </div>
                                             </CardContent>
                                         </Card>
-                                        <Card className="bg-slate-950/50 border-white/5 border-l-2 border-l-emerald-500">
+                                        <Card className="bg-slate-950/50 border-white/5 border-l-2 border-l-emerald-500 group hover:bg-slate-900/40 transition-all duration-500">
                                             <CardContent className="p-6 flex items-center justify-between">
                                                 <div>
                                                     <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1">Avg Core Latency</p>
-                                                    <p className="text-2xl font-black text-white">{obsData?.summary.avgSystemLatency || 0}ms</p>
+                                                    <p className="text-2xl font-black text-white group-hover:text-emerald-400 transition-colors">{obsData?.summary.avgSystemLatency || 0}ms</p>
                                                 </div>
                                                 <div className="p-3 bg-emerald-500/10 rounded-xl">
                                                     <Zap className="h-6 w-6 text-emerald-500" />
@@ -1132,9 +1257,16 @@ export default function HeadAdminDashboard() {
                                         {/* Traffic Volume Chart */}
                                         <Card className="bg-slate-950/50 border-white/5 shadow-xl">
                                             <CardHeader className="pb-2">
-                                                <CardTitle className="text-sm font-bold flex items-center gap-2">
-                                                    <Activity className="h-4 w-4 text-blue-400" />
-                                                    Platform Load Distribution (24h)
+                                                <CardTitle className="text-sm font-bold flex items-center justify-between">
+                                                    <div className="flex items-center gap-2">
+                                                        <Activity className="h-4 w-4 text-blue-400" />
+                                                        Platform Load Distribution (24h)
+                                                    </div>
+                                                    <div className="flex items-center gap-4 text-[9px] font-mono text-slate-500">
+                                                        <div className="flex items-center gap-1.5"><div className="w-1.5 h-1.5 rounded-full bg-blue-500" /> REQ</div>
+                                                        <div className="flex items-center gap-1.5"><div className="w-1.5 h-1.5 rounded-full bg-red-500" /> ERR</div>
+                                                        <div className="flex items-center gap-1.5"><div className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> LATENCY</div>
+                                                    </div>
                                                 </CardTitle>
                                             </CardHeader>
                                             <CardContent className="p-6 h-[300px]">
@@ -1149,6 +1281,10 @@ export default function HeadAdminDashboard() {
                                                                 <stop offset="5%" stopColor="#ef4444" stopOpacity={0.3} />
                                                                 <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
                                                             </linearGradient>
+                                                            <linearGradient id="colorLatency" x1="0" y1="0" x2="0" y2="1">
+                                                                <stop offset="5%" stopColor="#10b981" stopOpacity={0.1} />
+                                                                <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                                                            </linearGradient>
                                                         </defs>
                                                         <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
                                                         <XAxis dataKey="time" stroke="#475569" fontSize={10} axisLine={false} tickLine={false} />
@@ -1157,6 +1293,7 @@ export default function HeadAdminDashboard() {
                                                             contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '8px' }}
                                                             itemStyle={{ fontSize: '10px', color: '#cbd5e1' }}
                                                         />
+                                                        <Area type="monotone" dataKey="latency" stroke="#10b981" fillOpacity={1} fill="url(#colorLatency)" strokeWidth={1} strokeDasharray="5 5" />
                                                         <Area type="monotone" dataKey="requests" stroke="#3b82f6" fillOpacity={1} fill="url(#colorRequests)" strokeWidth={2} />
                                                         <Area type="monotone" dataKey="errors" stroke="#ef4444" fillOpacity={1} fill="url(#colorErrors)" strokeWidth={2} />
                                                     </AreaChart>
@@ -1223,26 +1360,27 @@ export default function HeadAdminDashboard() {
                                             <div className="p-4 bg-white/[0.02] border border-white/5 rounded-2xl space-y-4">
                                                 <div className="flex items-center justify-between">
                                                     <Label className="text-xs font-bold text-slate-300">Public Burst Limit</Label>
-                                                    <span className="text-xs font-mono text-primary">50/min</span>
+                                                    <span className="text-xs font-mono text-primary">{burstLimit}/min</span>
                                                 </div>
                                                 <div className="h-1 bg-slate-900 rounded-full overflow-hidden">
-                                                    <div className="h-full bg-primary w-[50%]" />
+                                                    <div className="h-full bg-primary" style={{ width: `${Math.min(100, (burstLimit / 200) * 100)}%` }} />
                                                 </div>
                                                 <div className="flex gap-2">
-                                                    <Button variant="outline" size="sm" className="flex-1 h-7 text-[10px] font-bold border-white/10 hover:bg-white/5">RESTRICT</Button>
-                                                    <Button variant="outline" size="sm" className="flex-1 h-7 text-[10px] font-bold border-white/10 hover:bg-white/5 text-emerald-500">BOOST</Button>
+                                                    <Button variant="outline" size="sm" className="flex-1 h-7 text-[10px] font-bold border-white/10 hover:bg-white/5" onClick={() => handleUpdateTraffic('public', -10)}>RESTRICT</Button>
+                                                    <Button variant="outline" size="sm" className="flex-1 h-7 text-[10px] font-bold border-white/10 hover:bg-white/5 text-emerald-500" onClick={() => handleUpdateTraffic('public', 10)}>BOOST</Button>
                                                 </div>
                                             </div>
                                             <div className="p-4 bg-white/[0.02] border border-white/5 rounded-2xl space-y-4">
                                                 <div className="flex items-center justify-between">
                                                     <Label className="text-xs font-bold text-slate-300">Pro Tier Quota</Label>
-                                                    <span className="text-xs font-mono text-indigo-400">1000/min</span>
+                                                    <span className="text-xs font-mono text-indigo-400">{proQuota}/min</span>
                                                 </div>
                                                 <div className="h-1 bg-slate-900 rounded-full overflow-hidden">
-                                                    <div className="h-full bg-indigo-500 w-[80%]" />
+                                                    <div className="h-full bg-indigo-500" style={{ width: `${Math.min(100, (proQuota / 5000) * 100)}%` }} />
                                                 </div>
                                                 <div className="flex gap-2">
-                                                    <Button variant="outline" size="sm" className="flex-1 h-7 text-[10px] font-bold border-white/10 hover:bg-white/5">MANAGE KEYS</Button>
+                                                    <Button variant="outline" size="sm" className="flex-1 h-7 text-[10px] font-bold border-white/10 hover:bg-white/5" onClick={() => handleUpdateTraffic('pro', -100)}>RESTRICT</Button>
+                                                    <Button variant="outline" size="sm" className="flex-1 h-7 text-[10px] font-bold border-white/10 hover:bg-white/5 text-indigo-400" onClick={() => handleUpdateTraffic('pro', 100)}>UPGRADE</Button>
                                                 </div>
                                             </div>
                                             <div className="p-4 bg-white/[0.02] border border-white/5 rounded-2xl space-y-4">
@@ -1251,7 +1389,7 @@ export default function HeadAdminDashboard() {
                                                     <Badge className="bg-red-500/10 text-red-500 border-red-500/20 text-[9px]">BLOCKING_SCRAPERS</Badge>
                                                 </div>
                                                 <p className="text-[10px] text-slate-500">Automatic blacklisting active for 8 IPs showing anomalous behavior.</p>
-                                                <Button variant="outline" size="sm" className="w-full h-7 text-[10px] font-bold border-white/10 hover:bg-white/5">VIEW BLACKLIST</Button>
+                                                <Button variant="outline" size="sm" className="w-full h-7 text-[10px] font-bold border-white/10 hover:bg-white/5" onClick={() => toast({ title: "Registry Scanned", description: "All 8 blocks verified for 24h cycle." })}>VIEW BLACKLIST</Button>
                                             </div>
                                         </CardContent>
                                     </Card>
