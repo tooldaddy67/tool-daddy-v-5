@@ -19,15 +19,11 @@ export function FirebaseClientProvider({ children }: FirebaseClientProviderProps
     return () => clearTimeout(timer);
   }, []);
 
-  if (!services) {
-    return <>{children}</>;
-  }
-
   return (
     <FirebaseProvider
-      firebaseApp={services.firebaseApp}
-      auth={services.auth}
-      firestore={services.firestore}
+      firebaseApp={services?.firebaseApp}
+      auth={services?.auth}
+      firestore={services?.firestore}
     >
       {children}
     </FirebaseProvider>

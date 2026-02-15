@@ -10,16 +10,10 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 import Script from 'next/script';
-import { LazyMotion, domAnimation } from 'framer-motion';
-import nextDynamic from 'next/dynamic';
-
-const AppSidebar = nextDynamic(() => import('@/components/app-sidebar'), { ssr: false });
-const PageHeader = nextDynamic(() => import('@/components/page-header'), { ssr: false });
-const AppFooter = nextDynamic(() => import('@/components/app-footer'), { ssr: false });
-
-import { MobileNav } from '@/components/mobile/mobile-nav';
-import { ClientOnlyExtras } from '@/components/client-only-extras';
 import { headers } from 'next/headers';
+import { SettingsProvider } from '@/components/settings-provider';
+import { checkIpLockout } from '@/app/actions/admin';
+import { RootLayoutClient } from '@/components/root-layout-client';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -77,13 +71,6 @@ export const viewport: Viewport = {
     { media: '(prefers-color-scheme: dark)', color: 'black' },
   ],
 };
-
-import { SettingsProvider } from '@/components/settings-provider';
-import { SidebarProviderWrapper } from '@/components/sidebar-provider-wrapper';
-import { checkIpLockout } from '@/app/actions/admin';
-const FloatingFeedback = nextDynamic(() => import('@/components/floating-feedback').then(mod => mod.FloatingFeedback), { ssr: false });
-const BrutalLockout = nextDynamic(() => import('@/components/brutal-lockout').then(mod => mod.BrutalLockout), { ssr: false });
-
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const headersList = await headers();
@@ -152,28 +139,9 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
           <FirebaseClientProvider>
             <SettingsProvider>
-              {lockoutStatus.isLocked && lockoutStatus.lockedUntil ? (
-                <BrutalLockout lockedUntil={lockoutStatus.lockedUntil} />
-              ) : (
-                <LazyMotion features={domAnimation}>
-                  <ClientOnlyExtras />
-                  {isMobile ? (
-                    <main className="flex-1 flex flex-col min-h-screen w-full relative">
-                      <div className="flex-1 w-full flex flex-col items-center">{children}</div>
-                    </main>
-                  ) : (
-                    <SidebarProviderWrapper>
-                      <AppSidebar />
-                      <main className="flex-1 flex flex-col min-h-screen w-full relative">
-                        <PageHeader />
-                        <div className="flex-1 w-full flex flex-col items-center">{children}</div>
-                        <AppFooter />
-                      </main>
-                    </SidebarProviderWrapper>
-                  )}
-                  <FloatingFeedback />
-                </LazyMotion>
-              )}
+              <RootLayoutClient isMobile={isMobile} lockoutStatus={lockoutStatus}>
+                {children}
+              </RootLayoutClient>
             </SettingsProvider>
           </FirebaseClientProvider>
           <Toaster />
