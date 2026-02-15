@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { AdminPasswordGate } from '@/components/admin-password-gate';
 import Link from 'next/link';
+import { HeadAdminModal } from '@/components/admin/head-admin-modal';
 
 interface AnalyticsData {
     totalUsers: number;
@@ -154,6 +155,7 @@ export default function AdminDashboard() {
                         <Link href="/admin/blog">
                             <Button variant="outline">Manage Blog</Button>
                         </Link>
+                        <HeadAdminModal />
                         <Button variant="outline" onClick={fetchAnalytics} disabled={loading}>
                             <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
                             Refresh

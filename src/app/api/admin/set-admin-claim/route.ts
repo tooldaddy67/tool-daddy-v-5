@@ -6,6 +6,17 @@ const BOOTSTRAP_ADMIN_EMAILS = [
     ...(process.env.NEXT_PUBLIC_ADMIN_EMAILS?.split(',') || [])
 ];
 
+async function checkFirestoreAdmin(uid: string): Promise<boolean> {
+    try {
+        const { adminFirestore } = await import('@/lib/firebase-admin');
+        if (!adminFirestore) return false;
+        const userDoc = await adminFirestore.collection('users').doc(uid).get();
+        return userDoc.exists && userDoc.data()?.isAdmin === true;
+    } catch (e) {
+        return false;
+    }
+}
+
 export async function POST(request: NextRequest) {
     try {
         console.log('SetAdminClaim API: Start request');
@@ -22,12 +33,11 @@ export async function POST(request: NextRequest) {
 
         console.log(`SetAdminClaim API: Checking authorization for caller UID: ${callerUid}, Email: ${callerEmail}`);
 
-        // Only existing admins or bootstrap emails can set admin claims
-        const isCallerAdmin =
-            callerToken.admin === true ||
-            BOOTSTRAP_ADMIN_EMAILS.includes(callerEmail || '');
+        // Only existing admins or bootstrap emails or Firestore admins can set admin claims
+        const isBootstrap = callerToken.admin === true || BOOTSTRAP_ADMIN_EMAILS.includes(callerEmail || '');
+        const isFirestoreAdmin = await checkFirestoreAdmin(callerUid);
 
-        if (!isCallerAdmin) {
+        if (!isBootstrap && !isFirestoreAdmin) {
             console.warn(`Access Denied: Caller UID ${callerUid} (${callerEmail}) is not authorized to set claims.`);
             return NextResponse.json({
                 error: 'Forbidden',

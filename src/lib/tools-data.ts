@@ -24,6 +24,7 @@ export interface Tool {
     isExternal?: boolean;
     desktopOnly?: boolean;
     isMobileFriendly?: boolean;
+    usesApi?: boolean;
 }
 
 export interface ToolCategory {
@@ -49,9 +50,9 @@ export const ALL_TOOLS_CATEGORIES: ToolCategory[] = [
         slug: "ai",
         icon: Bot,
         tools: [
-            { name: "AI Text Humanizer", description: "Refine AI-generated text to sound more natural and human.", href: "/ai-text-humanizer", icon: Bot, isPopular: true, isMobileFriendly: true },
+            { name: "AI Text Humanizer", description: "Refine AI-generated text to sound more natural and human.", href: "/ai-text-humanizer", icon: Bot, isPopular: true, isMobileFriendly: true, usesApi: true },
             { name: "AI Image Enhancer", description: "Upscale and enhance your images locally.", href: "/ai-image-enhancer", icon: Sparkles, isNew: true, desktopOnly: true },
-            { name: "AI Playlist Maker", description: "Generate a music playlist based on a vibe or prompt.", href: "/ai-playlist-maker", icon: ListMusic, isNew: true, isMobileFriendly: true },
+            { name: "AI Playlist Maker", description: "Generate a music playlist based on a vibe or prompt.", href: "/ai-playlist-maker", icon: ListMusic, isNew: true, isMobileFriendly: true, usesApi: true },
             { name: "Numeronym Generator", description: "Shorten words by replacing middle letters with their count.", href: "/numeronym-generator", icon: Hash, isMobileFriendly: true },
         ]
     },
@@ -160,7 +161,7 @@ export const ALL_TOOLS_CATEGORIES: ToolCategory[] = [
             { name: "Subnet Calculator", description: "Calculate masks, network and IP ranges.", href: "/ipv4-subnet-calculator", icon: Router, isMobileFriendly: true },
             { name: "IP Address Conv", description: "Convert IP to decimal, binary, and hex.", href: "/ipv4-address-converter", icon: Binary, isMobileFriendly: true },
             { name: "IP Range Expander", description: "Expand CIDR notations into address lists.", href: "/ipv4-range-expander", icon: ChevronsUpDown, isMobileFriendly: true },
-            { name: "MAC Lookup", description: "Identify manufacturer by MAC address.", href: "/mac-address-lookup", icon: Search, isMobileFriendly: true },
+            { name: "MAC Lookup", description: "Identify manufacturer by MAC address.", href: "/mac-address-lookup", icon: Search, isMobileFriendly: true, usesApi: true },
             { name: "IPv6 ULA Gen", description: "Generate Unique Local Addresses for IPv6.", href: "/ipv6-ula-generator", icon: Factory },
         ]
     },

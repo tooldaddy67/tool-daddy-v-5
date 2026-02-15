@@ -4,6 +4,8 @@
  */
 import { createFlowAi } from '@/ai/genkit';
 import { z } from 'zod';
+import { checkMaintenanceMode } from '@/app/actions/system-config';
+import { checkPersistentRateLimit } from '@/lib/rate-limiter';
 
 const ai = createFlowAi('playlist');
 
@@ -26,8 +28,22 @@ export const PlaylistOutputSchema = z.object({
 });
 export type PlaylistOutput = z.infer<typeof PlaylistOutputSchema>;
 
-export async function generatePlaylist(input: PlaylistInput): Promise<PlaylistOutput> {
-  return generatePlaylistFlow(input);
+export async function generatePlaylist(input: PlaylistInput): Promise<{ data: PlaylistOutput | null, error: string | null }> {
+  try {
+    await checkMaintenanceMode();
+    const rateLimit = await checkPersistentRateLimit('ai-playlist-maker');
+    if (!rateLimit.allowed) {
+      throw new Error(`Rate limit exceeded. Please try again in ${rateLimit.resetTime} seconds.`);
+    }
+    const result = await generatePlaylistFlow(input);
+    return { data: result, error: null };
+  } catch (error: any) {
+    console.error('Playlist generation error:', error);
+    return {
+      data: null,
+      error: error.message || 'Failed to generate playlist. Please try again.'
+    };
+  }
 }
 
 const playlistPrompt = ai.definePrompt({

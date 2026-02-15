@@ -103,23 +103,32 @@ export default function AiTextHumanizer() {
   };
 
   const handleError = (error: any) => {
-    console.error('Error during humanization process:', error);
     let description = 'An unknown error occurred. Please try again.';
+    let isMaintenance = false;
 
-    if (error instanceof Error) {
+    if (typeof error === 'string') {
+      description = error;
+    } else if (error instanceof Error) {
       description = error.message;
-      if (description.startsWith('Rate limit exceeded.')) {
-        const timeMatch = description.match(/(\d+)/);
-        if (timeMatch) {
-          const time = parseInt(timeMatch[1], 10);
-          setCooldownTime(time);
-          setRateLimitInfo(prev => ({ ...prev, remaining: 0 }));
-        }
+    }
+
+    if (description.includes('SITE_MAINTENANCE')) {
+      isMaintenance = true;
+      description = description.replace('SITE_MAINTENANCE: ', '');
+    } else if (description.startsWith('Rate limit exceeded.')) {
+      const timeMatch = description.match(/(\d+)/);
+      if (timeMatch) {
+        const time = parseInt(timeMatch[1], 10);
+        setCooldownTime(time);
+        setRateLimitInfo(prev => ({ ...prev, remaining: 0 }));
       }
+      console.error('Rate limit triggered:', description);
+    } else {
+      console.error('Error during humanization process:', error);
     }
 
     toast({
-      title: 'An Error Occurred',
+      title: isMaintenance ? 'System Maintenance' : 'An Error Occurred',
       description,
       variant: 'destructive',
     });
@@ -146,7 +155,7 @@ export default function AiTextHumanizer() {
     setIsLoading(false);
 
     if (result.error) {
-      handleError(new Error(result.error));
+      handleError(result.error);
       return;
     }
 

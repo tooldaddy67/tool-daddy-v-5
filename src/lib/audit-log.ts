@@ -1,32 +1,48 @@
-import { getFirestore, collection, addDoc, Timestamp } from 'firebase/firestore';
+import { adminFirestore } from './firebase-admin';
 
-/**
- * Log a sensitive operation to Firestore 'audit_logs' collection.
- * @param {Object} params
- * @param {string} params.userId - The user performing the action
- * @param {string} params.action - The action performed (e.g., 'delete', 'role_change')
- * @param {string} params.target - The target of the action (e.g., userId, resourceId)
- * @param {object} [params.details] - Additional details
- */
-interface AuditEvent {
+export type LogLevel = 'DEBUG' | 'INFO' | 'WARN' | 'ERROR' | 'FATAL';
+
+export interface AuditEvent {
   userId: string;
   action: string;
+  userEmail?: string;
   target?: string;
+  status?: 'success' | 'warning' | 'error';
+  level?: LogLevel;
   details?: Record<string, any>;
+  duration?: number;
+  ip?: string;
+  userAgent?: string;
 }
 
-export async function logAuditEvent({ userId, action, target, details = {} }: AuditEvent) {
+export async function logAuditEvent({
+  userId,
+  action,
+  userEmail,
+  target,
+  status = 'success',
+  level = 'INFO',
+  details = {},
+  duration,
+  ip,
+  userAgent
+}: AuditEvent) {
   try {
-    const db = getFirestore();
-    await addDoc(collection(db, 'audit_logs'), {
+    if (!adminFirestore) return;
+    await adminFirestore.collection('audit_logs').add({
       userId,
       action,
-      target,
+      userEmail: userEmail || 'system@internal',
+      target: target || 'global',
+      status,
+      level: status === 'error' ? 'ERROR' : (status === 'warning' ? 'WARN' : level),
       details,
-      timestamp: Timestamp.now(),
+      duration: duration || null,
+      ip: ip || '0.0.0.0',
+      userAgent: userAgent || 'internal/system',
+      timestamp: new Date()
     });
   } catch (error) {
-    // Optionally, handle/log error elsewhere
     console.error('Failed to log audit event:', error);
   }
 }

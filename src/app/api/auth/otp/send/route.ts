@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
 import { sendEmail } from '@/lib/send-email';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limiter';
+import { logAuditEvent } from '@/lib/audit-log';
 
 export async function POST(req: Request) {
   try {
@@ -57,6 +58,15 @@ export async function POST(req: Request) {
     `;
 
     await sendEmail(email, subject, html);
+
+    // Log the event
+    await logAuditEvent({
+      userId: 'anonymous',
+      action: 'AUTH_OTP_REQUESTED',
+      userEmail: email,
+      target: 'AUTH_GATE',
+      status: 'success'
+    });
 
     console.log('[OTP] Email sent successfully!');
 

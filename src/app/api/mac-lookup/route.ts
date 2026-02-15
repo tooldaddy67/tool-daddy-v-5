@@ -1,20 +1,43 @@
 import { NextResponse } from 'next/server';
+import { getSystemConfig } from '@/app/actions/system-config';
+import { checkPersistentRateLimit } from '@/lib/rate-limiter';
 
 export async function GET(request: Request) {
-    const { searchParams } = new URL(request.url);
-    const mac = searchParams.get('mac');
-
-    if (!mac) {
-        return NextResponse.json({ error: 'MAC address required' }, { status: 400 });
-    }
-
-    const cleanMac = mac.replace(/[^a-fA-F0-9]/g, '').slice(0, 12);
-
-    if (cleanMac.length < 6) {
-        return NextResponse.json({ error: 'Invalid MAC address' }, { status: 400 });
-    }
-
     try {
+        const config = await getSystemConfig();
+        if (config.maintenanceMode) {
+            return NextResponse.json({ error: 'SITE_MAINTENANCE: The platform is currently undergoing scheduled maintenance.' }, { status: 503 });
+        }
+
+        // --- Rate Limit Enforcement ---
+        const rateLimit = await checkPersistentRateLimit('mac-address-lookup');
+        if (!rateLimit.allowed) {
+            return NextResponse.json(
+                { error: `Too many requests. Please try again in ${rateLimit.resetTime ?? 60} seconds.` },
+                {
+                    status: 429,
+                    headers: {
+                        'X-RateLimit-Limit': rateLimit.limit.toString(),
+                        'X-RateLimit-Remaining': (rateLimit.remaining ?? 0).toString(),
+                        'X-RateLimit-Reset': (rateLimit.resetTime ?? 60).toString()
+                    }
+                }
+            );
+        }
+
+        const { searchParams } = new URL(request.url);
+        const mac = searchParams.get('mac');
+
+        if (!mac) {
+            return NextResponse.json({ error: 'MAC address required' }, { status: 400 });
+        }
+
+        const cleanMac = mac.replace(/[^a-fA-F0-9]/g, '').slice(0, 12);
+
+        if (cleanMac.length < 6) {
+            return NextResponse.json({ error: 'Invalid MAC address' }, { status: 400 });
+        }
+
         // Prepare to race with timeout
         const fetchWithTimeout = (url: string, timeout = 5000) => {
             return Promise.race([
@@ -49,12 +72,13 @@ export async function GET(request: Request) {
             console.error('Secondary source failed:', e);
         }
 
-        // Try tertiary source - macaddress.io (Example, requires key usually, skipping for now)
+        return NextResponse.json({ error: 'Manufacturer not found in database. Try a different MAC.' }, { status: 404 });
 
-        return NextResponse.json({ error: 'Vendor not found' }, { status: 404 });
-
-    } catch (error) {
-        console.error('MAC Lookup error:', error);
-        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    } catch (error: any) {
+        console.error('Global MAC Lookup error:', error);
+        return NextResponse.json({
+            error: 'The lookup service is temporarily unavailable. Please try again later.',
+            details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        }, { status: 500 });
     }
 }

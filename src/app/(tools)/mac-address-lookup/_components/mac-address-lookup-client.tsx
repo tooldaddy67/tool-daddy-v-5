@@ -37,7 +37,8 @@ export default function MacLookupClient() {
                 }
             } else {
                 const errorData = await response.json().catch(() => ({}));
-                throw new Error(errorData.error || `HTTP ${response.status}`);
+                const errorMessage = errorData.error || (response.status === 500 ? 'Server side lookup failed' : `System Error (${response.status})`);
+                throw new Error(errorMessage);
             }
         } catch (error: any) {
             console.error('Lookup detailed error:', error);

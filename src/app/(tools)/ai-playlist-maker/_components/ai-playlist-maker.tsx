@@ -78,37 +78,39 @@ export default function AiPlaylistMaker() {
     setIsLoading(true);
     setPlaylist(null);
 
-    try {
-      const result = await generatePlaylistAction({ prompt: userPrompt });
-      setPlaylist(result);
+    const result = await generatePlaylistAction({ prompt: userPrompt });
 
-      // Save to history
+    if (result.error) {
+      const isMaintenance = result.error.includes('SITE_MAINTENANCE');
+      toast({
+        title: isMaintenance ? 'System Maintenance' : 'An Error Occurred',
+        description: isMaintenance ? result.error.replace('SITE_MAINTENANCE: ', '') : result.error,
+        variant: 'destructive',
+      });
+      setIsLoading(false);
+      return;
+    }
+
+    if (result.data) {
+      setPlaylist(result.data);
+
       addToHistory({
         tool: 'AI Playlist Maker',
         data: {
-          playlistName: result.playlistName,
-          songs: result.songs,
+          playlistName: result.data.playlistName,
+          songs: result.data.songs,
         }
       });
 
-      // Send notification
       sendNotification(firestore, user?.uid, {
         title: 'Playlist Generated',
-        message: `Playlist "${result.playlistName}" has been created.`,
+        message: `Playlist "${result.data.playlistName}" has been created.`,
         type: 'success',
         link: '/ai-playlist-maker'
       });
-
-    } catch (error: any) {
-      console.error('Playlist generation error:', error);
-      toast({
-        title: 'An Error Occurred',
-        description: error.message || 'Failed to generate playlist. Please try again.',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoading(false);
     }
+
+    setIsLoading(false);
   };
 
   const examplePrompts = [

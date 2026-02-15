@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limiter';
+import { logAuditEvent } from '@/lib/audit-log';
 
 export async function POST(req: Request) {
     try {
@@ -36,11 +37,17 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'OTP has expired' }, { status: 400 });
         }
 
-        // OTP is valid. Ideally, we should delete it now to prevent reuse,
-        // OR mark it as verified if we need to do a multi-step process.
-        // Since the client will immediately create the user after this success response,
         // deleting it is safe to prevent replay attacks.
         await docRef.delete();
+
+        // Log the activity
+        await logAuditEvent({
+            userId: 'anonymous',
+            action: 'AUTH_OTP_VERIFIED',
+            userEmail: email,
+            target: 'AUTH_GATE',
+            status: 'success'
+        });
 
         return NextResponse.json({ message: 'OTP verified successfully' });
     } catch (error: any) {
