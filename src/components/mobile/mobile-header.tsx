@@ -5,7 +5,12 @@ import { Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { NotificationsPopover } from "./notifications-popover";
+import dynamic from "next/dynamic";
+
+const NotificationsPopover = dynamic(() => import("./notifications-popover").then(mod => mod.NotificationsPopover), {
+    ssr: false,
+    loading: () => <div className="w-8 h-8 rounded-full bg-muted animate-pulse" />
+});
 
 
 const Logo = ({ className }: { className?: string }) => (
@@ -29,12 +34,12 @@ const Logo = ({ className }: { className?: string }) => (
 interface MobileHeaderProps {
     searchQuery?: string;
     setSearchQuery?: (query: string) => void;
+    initialQuery?: string;
 }
 
-
-export function MobileHeader({ searchQuery, setSearchQuery }: MobileHeaderProps) {
+export function MobileHeader({ searchQuery, setSearchQuery, initialQuery = "" }: MobileHeaderProps) {
     const router = useRouter();
-    const [localQuery, setLocalQuery] = useState("");
+    const [localQuery, setLocalQuery] = useState(initialQuery);
 
     const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
         const val = e.target.value;
@@ -46,8 +51,12 @@ export function MobileHeader({ searchQuery, setSearchQuery }: MobileHeaderProps)
     };
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-        if (e.key === 'Enter' && !setSearchQuery) {
-            router.push(`/?search=${encodeURIComponent(localQuery)}`);
+        if (e.key === 'Enter') {
+            if (setSearchQuery) {
+                // If we have a local setter, we use it (already handled in onChange)
+                return;
+            }
+            router.push(`/tools?q=${encodeURIComponent(localQuery)}`);
         }
     }
 

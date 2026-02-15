@@ -34,10 +34,10 @@ export default function ToolCard({ href, name, description, icon: Icon, isExtern
   const cardContent = (
     <div
       className={cn(
-        "tool-island flex flex-col justify-between transition-all duration-500",
+        "tool-island flex flex-col justify-between",
         compact
           ? "bg-white dark:bg-zinc-900 border-black dark:border-white border-2 shadow-[4px_4px_0px_hsl(var(--primary))]"
-          : "bg-card border border-border shadow-sm hover:-translate-y-2",
+          : "bg-card border border-border shadow-sm hover:-translate-y-2 transition-all duration-200",
         "group relative overflow-visible",
         className
       )}

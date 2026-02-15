@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
-import { ALL_TOOLS_CATEGORIES, Tool } from "@/lib/tools-data";
+import { useState, useEffect } from "react";
+import { ALL_TOOLS_CATEGORIES, Tool, ToolCategory } from "@/lib/tools-data";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronUp, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useInView } from "react-intersection-observer";
 
 interface MobileToolsGridProps {
     searchQuery: string;
@@ -14,14 +15,97 @@ interface MobileToolsGridProps {
 
 import ToolCard from '@/components/tool-card';
 
-// ... (imports remain)
+function LazyCategory({
+    category,
+    isSingleCategory,
+    expandedCategories,
+    toggleCategory,
+    toolIndex,
+    router,
+    eager = false
+}: {
+    category: ToolCategory,
+    isSingleCategory: boolean,
+    expandedCategories: Record<string, boolean>,
+    toggleCategory: (slug: string) => void,
+    toolIndex: number,
+    router: any,
+    eager?: boolean
+}) {
+    const { ref, inView: inViewObserved } = useInView({
+        triggerOnce: true,
+        rootMargin: '200px 0px',
+        skip: eager, // Skip tracking if we want to render immediately
+    });
 
-// Remove ICON_VARIANTS as it's handled inside the imported ToolCard or passed differently if needed.
-// actually, the imported ToolCard handles its own variants internally if we pass variantIndex.
+    const inView = eager || inViewObserved;
+
+    const mobileReadyTools = category.tools.filter(t => !t.isExternal && !t.desktopOnly);
+    if (mobileReadyTools.length === 0) return null;
+
+    // Auto-expand if only one category is shown
+    const isExpanded = isSingleCategory || expandedCategories[category.slug];
+    const displayTools = isExpanded ? mobileReadyTools : mobileReadyTools.slice(0, 2);
+    const hasMore = mobileReadyTools.length > 2;
+
+    return (
+        <div ref={ref} className="category-section" id={category.slug}>
+            {!inView ? (
+                <div className="h-64 flex items-center justify-center opacity-20">
+                    <Loader2 className="w-6 h-6 animate-spin" />
+                </div>
+            ) : (
+                <>
+                    {!isSingleCategory && (
+                        <div className="pr-6 mb-8 flex items-center gap-4 relative z-20">
+                            <div className="w-2 h-10 bg-primary rounded-full shadow-[0_0_15px_hsl(var(--primary)/0.4)] relative z-30" />
+                            <h3 className="text-3xl font-black tracking-tighter text-white uppercase text-left leading-tight relative z-30 block opacity-100">
+                                {category.title}
+                            </h3>
+                        </div>
+                    )}
+
+                    <div className={cn(
+                        "transition-none",
+                        isSingleCategory
+                            ? "grid grid-cols-2 gap-3 px-3 place-items-center"
+                            : "flex flex-wrap justify-center gap-4 pr-6"
+                    )}>
+                        {displayTools.map((tool, idx) => (
+                            <ToolCard
+                                key={tool.name}
+                                {...tool}
+                                variantIndex={toolIndex + idx}
+                                compact={true}
+                                style={isSingleCategory ? { width: '100%', maxWidth: '170px' } : undefined}
+                            />
+                        ))}
+                    </div>
+
+                    {hasMore && !isSingleCategory && (
+                        <button
+                            onClick={() => router.push(`/tools?category=${category.slug}`)}
+                            className="w-full flex items-center justify-center gap-2 py-2 mt-2 text-[10px] font-black uppercase tracking-widest text-primary hover:text-primary/80 transition-all active:scale-95"
+                        >
+                            Explore All {category.title} ({category.tools.length})
+                            <ChevronDown className="w-4 h-4 -rotate-90" />
+                        </button>
+                    )}
+                </>
+            )}
+        </div>
+    );
+}
 
 export function MobileToolsGrid({ searchQuery, initialCategory }: MobileToolsGridProps) {
     const router = useRouter();
     const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({});
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            (window as any).TOOL_DADY_HYDRATED = true;
+        }
+    }, []);
 
     const toggleCategory = (slug: string) => {
         setExpandedCategories(prev => ({
@@ -61,7 +145,7 @@ export function MobileToolsGrid({ searchQuery, initialCategory }: MobileToolsGri
                     <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground opacity-60">
                         Found {filteredTools.length} result{filteredTools.length !== 1 && 's'} for "{searchQuery}"
                     </h3>
-                    <div className="grid grid-cols-2 gap-3 transition-all duration-500">
+                    <div className="grid grid-cols-2 gap-3 transition-all duration-200">
                         {filteredTools.map((tool, idx) => (
                             <ToolCard
                                 key={tool.name}
@@ -79,56 +163,24 @@ export function MobileToolsGrid({ searchQuery, initialCategory }: MobileToolsGri
                 </div>
             ) : (
                 <div className="space-y-12">
-                    {displayCategories.map((category) => {
+                    {displayCategories.map((category, idx) => {
                         const mobileReadyTools = category.tools.filter(t => !t.isExternal && !t.desktopOnly);
                         if (mobileReadyTools.length === 0) return null;
 
-                        // Auto-expand if only one category is shown
-                        const isSingleCategory = displayCategories.length === 1;
-                        const isExpanded = isSingleCategory || expandedCategories[category.slug];
-
-                        const displayTools = isExpanded ? mobileReadyTools : mobileReadyTools.slice(0, 2);
-                        const hasMore = mobileReadyTools.length > 2;
                         const currentCategoryIndex = toolIndex;
                         toolIndex += mobileReadyTools.length;
 
                         return (
-                            <div key={category.slug} className="category-section" id={category.slug}>
-                                <div className="pr-6 mb-8 flex items-center gap-4 relative z-20">
-                                    <div className="w-2 h-10 bg-primary rounded-full shadow-[0_0_15px_hsl(var(--primary)/0.4)] relative z-30" />
-                                    <h3 className="text-3xl font-black tracking-tighter text-white uppercase text-left leading-tight relative z-30 block opacity-100">
-                                        {category.title}
-                                    </h3>
-                                </div>
-
-                                {/* Adaptive Grid: Flex for home, Grid for category page to ensure 2 columns */}
-                                <div className={cn(
-                                    "transition-all duration-500",
-                                    isSingleCategory
-                                        ? "grid grid-cols-2 gap-3 px-3 place-items-center"
-                                        : "flex flex-wrap justify-center gap-4 pr-6"
-                                )}>
-                                    {displayTools.map((tool, idx) => (
-                                        <ToolCard
-                                            key={tool.name}
-                                            {...tool}
-                                            variantIndex={currentCategoryIndex + idx}
-                                            compact={true}
-                                            style={isSingleCategory ? { width: '100%', maxWidth: '170px' } : undefined}
-                                        />
-                                    ))}
-                                </div>
-
-                                {hasMore && !isSingleCategory && (
-                                    <button
-                                        onClick={() => router.push(`/tools?category=${category.slug}`)}
-                                        className="w-full flex items-center justify-center gap-2 py-2 mt-2 text-[10px] font-black uppercase tracking-widest text-primary hover:text-primary/80 transition-all active:scale-95"
-                                    >
-                                        Explore All {category.title} ({category.tools.length})
-                                        <ChevronDown className="w-4 h-4 -rotate-90" />
-                                    </button>
-                                )}
-                            </div>
+                            <LazyCategory
+                                key={category.slug}
+                                category={category}
+                                isSingleCategory={displayCategories.length === 1}
+                                expandedCategories={expandedCategories}
+                                toggleCategory={toggleCategory}
+                                toolIndex={currentCategoryIndex}
+                                router={router}
+                                eager={idx === 0}
+                            />
                         );
                     })}
                 </div>

@@ -288,10 +288,10 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     return (
         <SettingsContext.Provider value={value}>
             <div className={cn(
-                "min-h-screen transition-all duration-700",
-                isDesktop && localSettings.bgStyle === 'mesh' ? 'mesh-bg' : '',
-                isDesktop && localSettings.bgStyle === 'pulse' ? 'pulse-bg' : '',
-                (!isDesktop || localSettings.bgStyle === 'dark') ? 'bg-background' : ''
+                "min-h-screen xl:transition-all xl:duration-200",
+                localSettings.bgStyle === 'mesh' ? 'mesh-bg' : '',
+                localSettings.bgStyle === 'pulse' ? 'pulse-bg' : '',
+                'bg-background'
             )}>
                 {children}
                 <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />

@@ -1,26 +1,65 @@
-"use client"
-
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
-import { useUser } from '@/firebase';
-import ToolGrid from '@/components/tool-grid';
-import { MobileHome } from '@/components/mobile/mobile-home';
-import DynamicToolCard from '@/components/dynamic-tool-card';
 import { Sparkles, Minimize, Shuffle, ChevronDown } from 'lucide-react';
+import { MobileHomeStatic } from '@/components/mobile/mobile-home-static';
 
-const DashboardWidgets = dynamic(() => import('@/components/dashboard-widgets').then(mod => mod.DashboardWidgets), {
-  loading: () => <div className="min-h-[200px] w-full animate-pulse bg-muted/10 rounded-xl" />,
-  ssr: false
+const MobileHome = dynamic(() => import('@/components/mobile/mobile-home').then(mod => mod.MobileHome), {
+  ssr: true, // Keep SSR for SEO on the home screen
+  loading: () => <div className="min-h-screen bg-background animate-pulse" />
 });
 
-import { DesktopDashboard } from '@/components/desktop-dashboard';
+const DesktopDashboard = dynamic(() => import('@/components/desktop-dashboard').then(mod => mod.DesktopDashboard), {
+  ssr: false // Only needed on desktop client
+});
+
+const DynamicToolCard = dynamic(() => import('@/components/dynamic-tool-card'), { ssr: true });
 
 export default function Home() {
-  const { user } = useUser();
-
   return (
-    <>
-      <MobileHome />
+    <div className="relative">
+      {/* LCP Optimization Layer for Mobile */}
+      <div className="xl:hidden">
+        <MobileHomeStatic />
+
+        <div id="mobile-client-grid" className="absolute top-0 left-0 w-full z-10 opacity-0 transition-opacity duration-300">
+          <MobileHome />
+        </div>
+
+        {/* Cleanup Script: Hides the SSR layer once client-side React takes over */}
+        <script dangerouslySetInnerHTML={{
+          __html: `
+                    (function() {
+                        function swap() {
+                            var ssrLayer = document.getElementById('mobile-ssr-home');
+                            var clientGrid = document.getElementById('mobile-client-grid');
+                            
+                            if (!window.TOOL_DADY_HYDRATED) {
+                                setTimeout(swap, 100);
+                                return;
+                            }
+
+                            if (clientGrid) {
+                                clientGrid.style.opacity = '1';
+                                setTimeout(function() {
+                                    clientGrid.style.position = 'relative'; 
+                                    if (ssrLayer) {
+                                        ssrLayer.style.opacity = '0';
+                                        setTimeout(function() { ssrLayer.style.display = 'none'; }, 200);
+                                    }
+                                }, 50);
+                            }
+                        }
+
+                        if (document.readyState === 'loading') {
+                            window.addEventListener('DOMContentLoaded', swap);
+                        } else {
+                            swap();
+                        }
+                        setTimeout(swap, 2000);
+                    })()
+                `}} />
+      </div>
+
       <div className="hidden xl:flex flex-col w-full min-h-screen relative overflow-hidden mesh-bg">
         <main className="flex-1 w-full max-w-7xl mx-auto px-12 py-24 space-y-32 relative z-10">
           {/* Desktop Branding Hero */}
@@ -87,8 +126,6 @@ export default function Home() {
           </section>
         </main>
       </div>
-    </>
+    </div>
   );
 }
-
-// Helper to avoid import issues if cn isn't globally available here (though it should be via @/lib/utils)

@@ -373,43 +373,32 @@
 }
 
 
-/* ELITE MESH BACKGROUND */
-.mesh-bg {
-  background-color: hsl(var(--background));
-  background-image:
-    radial-gradient(at 0% 0%, hsla(var(--primary), 0.15) 0px, transparent 50%),
-    radial-gradient(at 100% 0%, hsla(var(--accent), 0.15) 0px, transparent 50%),
-    radial-gradient(at 100% 100%, hsla(var(--primary), 0.15) 0px, transparent 50%),
-    radial-gradient(at 0% 100%, hsla(var(--accent), 0.15) 0px, transparent 50%),
-    radial-gradient(at 50% 50%, hsla(var(--primary), 0.1) 0px, transparent 50%);
-  background-size: 200% 200%;
-  /* Mesh animation removed to stay composited only and reduce main-worker load */
-}
-
-@keyframes mesh-advanced {
-  0% {
-    background-position: 0% 0%;
+/* ELITE MESH BACKGROUND - Desktop Only for Performance */
+@media (min-width: 1024px) {
+  .mesh-bg {
+    background-color: hsl(var(--background));
+    background-image:
+      radial-gradient(at 0% 0%, hsla(var(--primary), 0.15) 0px, transparent 50%),
+      radial-gradient(at 100% 0%, hsla(var(--accent), 0.15) 0px, transparent 50%),
+      radial-gradient(at 100% 100%, hsla(var(--primary), 0.15) 0px, transparent 50%),
+      radial-gradient(at 0% 100%, hsla(var(--accent), 0.15) 0px, transparent 50%),
+      radial-gradient(at 50% 50%, hsla(var(--primary), 0.1) 0px, transparent 50%);
+    background-size: 200% 200%;
   }
 
-  25% {
-    background-position: 100% 0%;
-  }
-
-  50% {
-    background-position: 100% 100%;
-  }
-
-  75% {
-    background-position: 0% 100%;
-  }
-
-  100% {
-    background-position: 0% 0%;
+  .pulse-bg {
+    animation: pulse-bg calc(8s / var(--anim-speed, 1)) ease-in-out infinite;
   }
 }
 
-.pulse-bg {
-  animation: pulse-bg calc(8s / var(--anim-speed, 1)) ease-in-out infinite;
+@media (max-width: 1023px) {
+
+  .mesh-bg,
+  .pulse-bg {
+    background-color: hsl(var(--background)) !important;
+    background-image: none !important;
+    animation: none !important;
+  }
 }
 
 @keyframes pulse-bg {
