@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { useInView } from "react-intersection-observer";
@@ -28,7 +28,7 @@ export default function RecommendationList() {
     return (
         <div ref={ref} className="space-y-3 min-h-[400px]">
             {inView ? recommendedTools.map((tool, idx) => (
-                <motion.div
+                <m.div
                     key={tool.href}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -53,7 +53,7 @@ export default function RecommendationList() {
                             <ArrowRight className="w-4 h-4" />
                         </div>
                     </Link>
-                </motion.div>
+                </m.div>
             )) : (
                 <div className="space-y-3">
                     {[1, 2, 3].map((i) => (

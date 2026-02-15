@@ -4,7 +4,7 @@ import { Sparkles, Minimize, Shuffle, ChevronDown } from 'lucide-react';
 import { MobileHomeStatic } from '@/components/mobile/mobile-home-static';
 
 const MobileHome = dynamic(() => import('@/components/mobile/mobile-home').then(mod => mod.MobileHome), {
-  ssr: true, // Keep SSR for SEO on the home screen
+  ssr: false, // Essential: MobileHomeStatic provides the SSR LCP layer. ssr: true here causes double-rendering.
   loading: () => <div className="min-h-screen bg-background animate-pulse" />
 });
 
@@ -29,12 +29,13 @@ export default function Home() {
         <script dangerouslySetInnerHTML={{
           __html: `
                     (function() {
+                        var startTime = Date.now();
                         function swap() {
                             var ssrLayer = document.getElementById('mobile-ssr-home');
                             var clientGrid = document.getElementById('mobile-client-grid');
                             
-                            if (!window.TOOL_DADY_HYDRATED) {
-                                setTimeout(swap, 100);
+                            if (!window.TOOL_DADY_HYDRATED && (Date.now() - startTime < 8000)) {
+                                setTimeout(swap, 50);
                                 return;
                             }
 
@@ -46,7 +47,7 @@ export default function Home() {
                                         ssrLayer.style.opacity = '0';
                                         setTimeout(function() { ssrLayer.style.display = 'none'; }, 200);
                                     }
-                                }, 50);
+                                }, 30);
                             }
                         }
 
@@ -55,7 +56,8 @@ export default function Home() {
                         } else {
                             swap();
                         }
-                        setTimeout(swap, 2000);
+                        // Safety fallback
+                        setTimeout(swap, 1500);
                     })()
                 `}} />
       </div>
@@ -95,7 +97,7 @@ export default function Home() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               <DynamicToolCard
                 name="AI Image Enhancer"
-                description="Upscale and enhance your images before being redirected."
+                description="Upscale and enhance your images using powerful AI models."
                 href="/ai-image-enhancer"
                 icon={Sparkles}
                 isExternal={false}

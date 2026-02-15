@@ -81,8 +81,8 @@ export const viewport: Viewport = {
 import { SettingsProvider } from '@/components/settings-provider';
 import { SidebarProviderWrapper } from '@/components/sidebar-provider-wrapper';
 import { checkIpLockout } from '@/app/actions/admin';
-import { BrutalLockout } from '@/components/brutal-lockout';
-import { FloatingFeedback } from '@/components/floating-feedback';
+const FloatingFeedback = nextDynamic(() => import('@/components/floating-feedback').then(mod => mod.FloatingFeedback), { ssr: false });
+const BrutalLockout = nextDynamic(() => import('@/components/brutal-lockout').then(mod => mod.BrutalLockout), { ssr: false });
 
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
@@ -137,7 +137,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
                 margin: 0;
                 font-family: var(--font-inter), system-ui, sans-serif;
             }
-            #mobile-ssr-lcp { 
+            #mobile-ssr-lcp, #mobile-ssr-home { 
                 opacity: 1 !important; 
                 visibility: visible !important; 
                 contain-intrinsic-size: 500px;
