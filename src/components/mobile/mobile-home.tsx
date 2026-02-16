@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Search, Sparkles, Zap, Shield, Minimize, KeyRound, Rocket, ArrowRight, Star, Image, Wrench, Replace } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { useUser } from "@/firebase";
+import { useUser } from "@/firebase/provider";
 import { ALL_TOOLS } from "@/lib/constants";
 import { ALL_TOOLS_CATEGORIES } from "@/lib/tools-data";
 import { ThemeToggle } from "@/components/theme-toggle";

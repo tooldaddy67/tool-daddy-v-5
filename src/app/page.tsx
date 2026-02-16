@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
-import { useUser } from '@/firebase';
+import { useUser } from '@/firebase/provider';
 import ToolGrid from '@/components/tool-grid';
 import DynamicToolCard from '@/components/dynamic-tool-card';
 import { Sparkles, Minimize, Shuffle, ChevronDown } from 'lucide-react';

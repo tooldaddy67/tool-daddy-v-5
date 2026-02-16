@@ -1,7 +1,8 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState, useMemo } from 'react';
-import { useFirebase, useDoc } from '@/firebase';
+import { useFirebase } from '@/firebase/provider';
+import { useDoc } from '@/firebase/firestore/use-doc';
 import { doc, setDoc } from 'firebase/firestore';
 import { cn } from '@/lib/utils';
 import dynamic from 'next/dynamic';

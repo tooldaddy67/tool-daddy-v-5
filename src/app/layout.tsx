@@ -3,7 +3,7 @@ import './globals.css';
 import { cn } from '@/lib/utils';
 import { Toaster } from '@/components/ui/toaster';
 import { ThemeProvider } from '@/components/theme-provider';
-import { FirebaseClientProvider } from '@/firebase';
+import { FirebaseProvider as FirebaseClientProvider } from '@/firebase/provider';
 import { Inter, Space_Grotesk, Playfair_Display } from 'next/font/google';
 
 export const dynamic = 'force-dynamic';

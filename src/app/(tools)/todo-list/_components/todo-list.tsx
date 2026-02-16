@@ -4,7 +4,8 @@ import { useState, useMemo, useCallback, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ListTodo, Trash2, Plus, Copy, Download, Edit, MoreVertical, Loader2, Calendar as CalendarIcon, ChevronDown, Tv2 } from 'lucide-react';
 import { TimePicker } from '@/components/ui/time-picker';
-import { useFirebase, useCollection, useMemoFirebase, FirebaseClientProvider } from '@/firebase';
+import { useFirebase, useMemoFirebase, FirebaseProvider as FirebaseClientProvider } from '@/firebase/provider';
+import { useCollection } from '@/firebase/firestore/use-collection';
 import { useSettings } from '@/components/settings-provider';
 import { collection, query, orderBy, doc, serverTimestamp, writeBatch, Timestamp } from 'firebase/firestore';
 import { Input } from '@/components/ui/input';
@@ -143,7 +144,7 @@ function TodoListManager() {
 
   // Sync to Cloud on login
   useEffect(() => {
-    if (user && !user.isAnonymous && isLocalLoaded && localLists.length > 0 && listsCollectionPath && settings.dataPersistence) {
+    if (user && !user.isAnonymous && isLocalLoaded && localLists.length > 0 && listsCollectionPath && settings.dataPersistence && firestore) {
       const syncToCloud = async () => {
         try {
           const batch = writeBatch(firestore);
@@ -251,7 +252,7 @@ function TodoListManager() {
   };
 
   const handleDeleteList = useCallback(async (listId: string) => {
-    if (listsCollectionPath && user && !user.isAnonymous && settings.dataPersistence) {
+    if (listsCollectionPath && user && !user.isAnonymous && settings.dataPersistence && firestore) {
       const listDocRef = doc(firestore, 'users', user.uid, 'todolists', listId);
       await deleteDocumentNonBlocking(listDocRef);
     } else {
