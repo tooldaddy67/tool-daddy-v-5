@@ -1,11 +1,14 @@
 "use client";
 import { useEffect, useState } from 'react';
-import { initializeFirebase } from '@/firebase';
+import { useFirebase } from '@/firebase/provider';
 
 export function useAuthUserRole() {
+  const { auth, user } = useFirebase();
   const [role, setRole] = useState<string | null>(null);
+
   useEffect(() => {
-    const { auth } = initializeFirebase();
+    if (!auth) return;
+
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
       if (user) {
         const token = await user.getIdTokenResult();
@@ -15,6 +18,7 @@ export function useAuthUserRole() {
       }
     });
     return () => unsubscribe();
-  }, []);
+  }, [auth]);
+
   return role;
 }
