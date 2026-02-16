@@ -55,9 +55,9 @@ export async function verifyHeadAdminPassword(password: string, idToken: string)
     try {
         adminDb = getAdminDb();
         adminAuth = getAdminAuth();
-    } catch (e) {
+    } catch (e: any) {
         console.error('[HeadAdminAuth] Firebase Admin SDK failed to initialize:', e);
-        return { isValid: false, error: 'Database connection failed (Initialization error)' };
+        return { isValid: false, error: `Database connection failed (HeadAdmin.ts Init error: ${e.message || 'Unknown'})` };
     }
 
     // 1. Verify User is already a normal Admin

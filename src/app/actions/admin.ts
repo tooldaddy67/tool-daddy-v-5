@@ -38,9 +38,9 @@ export async function verifyAdminPassword(password: string): Promise<AdminAuthRe
     let adminDb;
     try {
         adminDb = getAdminDb();
-    } catch (e) {
+    } catch (e: any) {
         console.error('[AdminAuth] Firebase Admin SDK failed to initialize:', e);
-        return { isValid: false, error: 'Database connection failed (Initialization error)' };
+        return { isValid: false, error: `Database connection failed (Admin.ts Init error: ${e.message || 'Unknown'})` };
     }
 
     if (!correctPassword) {

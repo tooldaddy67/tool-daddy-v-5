@@ -4,19 +4,34 @@ function getInitializeApp() {
     if (admin.apps.length > 0) return admin.apps[0]!;
 
     try {
-        const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n');
-        const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-        const projectId = process.env.FIREBASE_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+        let privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n').trim();
+        let clientEmail = process.env.FIREBASE_CLIENT_EMAIL?.trim();
+        let projectId = (process.env.FIREBASE_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID)?.trim();
+
+        // Strip accidental quotes that might come from CLI env setting
+        if (privateKey?.startsWith('"') && privateKey.endsWith('"')) privateKey = privateKey.slice(1, -1);
+        if (privateKey?.startsWith("'") && privateKey.endsWith("'")) privateKey = privateKey.slice(1, -1);
+        if (clientEmail?.startsWith('"') && clientEmail.endsWith('"')) clientEmail = clientEmail.slice(1, -1);
+        if (clientEmail?.startsWith("'") && clientEmail.endsWith("'")) clientEmail = clientEmail.slice(1, -1);
+        if (projectId?.startsWith('"') && projectId.endsWith('"')) projectId = projectId.slice(1, -1);
+        if (projectId?.startsWith("'") && projectId.endsWith("'")) projectId = projectId.slice(1, -1);
+
+        console.log(`[FirebaseAdmin] Checking env: PID=${!!projectId}, EMAIL=${!!clientEmail}, KEY=${!!privateKey}, SERVICE_KEY=${!!process.env.FIREBASE_SERVICE_ACCOUNT_KEY}`);
 
         if (projectId && clientEmail && privateKey) {
             console.log(`[FirebaseAdmin] Initializing with individual credentials for project: ${projectId}`);
-            return admin.initializeApp({
-                credential: admin.credential.cert({
-                    projectId,
-                    clientEmail,
-                    privateKey,
-                }),
-            });
+            try {
+                return admin.initializeApp({
+                    credential: admin.credential.cert({
+                        projectId,
+                        clientEmail,
+                        privateKey,
+                    }),
+                });
+            } catch (certError: any) {
+                console.error('[FirebaseAdmin] admin.credential.cert failed:', certError.message);
+                throw certError;
+            }
         }
 
         if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
@@ -25,20 +40,30 @@ function getInitializeApp() {
             if (key.startsWith("'") && key.endsWith("'")) key = key.slice(1, -1);
             if (key.startsWith('"') && key.endsWith('"')) key = key.slice(1, -1);
 
-            const serviceAccount = JSON.parse(key);
-            return admin.initializeApp({
-                credential: admin.credential.cert(serviceAccount),
-            });
+            try {
+                const serviceAccount = JSON.parse(key);
+                return admin.initializeApp({
+                    credential: admin.credential.cert(serviceAccount),
+                });
+            } catch (jsonError: any) {
+                console.error('[FirebaseAdmin] JSON Parse failed for FIREBASE_SERVICE_ACCOUNT_KEY:', jsonError.message);
+                throw new Error(`Invalid JSON format in FIREBASE_SERVICE_ACCOUNT_KEY: ${jsonError.message}`);
+            }
         }
 
         if (projectId) {
             console.log(`[FirebaseAdmin] Attempting default initialization for project: ${projectId}`);
-            return admin.initializeApp({ projectId });
+            try {
+                return admin.initializeApp({ projectId });
+            } catch (e: any) {
+                console.error('[FirebaseAdmin] Default init failed:', e.message);
+                throw e;
+            }
         }
 
-        throw new Error('No Firebase Admin credentials found in environment variables.');
-    } catch (error) {
-        console.error('[FirebaseAdmin] Initialization failed!', error);
+        throw new Error('No Firebase Admin credentials found in environment variables. Set FIREBASE_PRIVATE_KEY, FIREBASE_CLIENT_EMAIL, and FIREBASE_PROJECT_ID.');
+    } catch (error: any) {
+        console.error('[FirebaseAdmin] Initialization failed!', error.message);
         throw error;
     }
 }
