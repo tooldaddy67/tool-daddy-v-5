@@ -1,7 +1,7 @@
 'use server';
 
 import { headers } from 'next/headers';
-import { adminAuth, adminDb, adminFirestore } from '@/lib/firebase-admin';
+import { getAdminAuth, getAdminDb } from '@/lib/firebase-admin';
 
 export interface HeadAdminAuthResponse {
     isValid: boolean;
@@ -23,8 +23,8 @@ function isAdminByToken(decodedToken: { admin?: boolean; email?: string }): bool
 
 async function checkFirestoreAdmin(uid: string): Promise<boolean> {
     try {
-        if (!adminFirestore) return false;
-        const userDoc = await adminFirestore.collection('users').doc(uid).get();
+        const adminDb = getAdminDb();
+        const userDoc = await adminDb.collection('users').doc(uid).get();
         return userDoc.exists && userDoc.data()?.isAdmin === true;
     } catch (e) {
         return false;
@@ -50,9 +50,14 @@ export async function verifyHeadAdminPassword(password: string, idToken: string)
     const correctPassword = process.env.HEAD_ADMIN_PASSWORD;
     const ip = await getIp();
 
-    if (!adminDb || !adminAuth) {
-        console.error('[HeadAdminAuth] SDK not initialized! adminDb:', !!adminDb, 'adminAuth:', !!adminAuth);
-        return { isValid: false, error: 'Database connection failed (Admin SDK not initialized)' };
+    let adminDb;
+    let adminAuth;
+    try {
+        adminDb = getAdminDb();
+        adminAuth = getAdminAuth();
+    } catch (e) {
+        console.error('[HeadAdminAuth] Firebase Admin SDK failed to initialize:', e);
+        return { isValid: false, error: 'Database connection failed (Initialization error)' };
     }
 
     // 1. Verify User is already a normal Admin

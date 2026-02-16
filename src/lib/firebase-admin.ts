@@ -1,77 +1,67 @@
 import admin from 'firebase-admin';
 
-// Initialize Firebase Admin if it hasn't been initialized yet
-if (!admin.apps.length) {
+function getInitializeApp() {
+    if (admin.apps.length > 0) return admin.apps[0]!;
+
     try {
         const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n');
         const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
         const projectId = process.env.FIREBASE_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
         if (projectId && clientEmail && privateKey) {
-            admin.initializeApp({
+            console.log(`[FirebaseAdmin] Initializing with individual credentials for project: ${projectId}`);
+            return admin.initializeApp({
                 credential: admin.credential.cert({
                     projectId,
                     clientEmail,
                     privateKey,
                 }),
             });
-            console.log('Firebase Admin: Initialized with individual credentials.');
-        } else if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
+        }
+
+        if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
+            console.log('[FirebaseAdmin] Initializing with JSON key.');
             let key = process.env.FIREBASE_SERVICE_ACCOUNT_KEY.trim();
-            // Handle cases where the env var might be wrapped in quotes
             if (key.startsWith("'") && key.endsWith("'")) key = key.slice(1, -1);
             if (key.startsWith('"') && key.endsWith('"')) key = key.slice(1, -1);
 
             const serviceAccount = JSON.parse(key);
-            admin.initializeApp({
+            return admin.initializeApp({
                 credential: admin.credential.cert(serviceAccount),
             });
-            console.log('Firebase Admin: Initialized with JSON key.');
-        } else if (projectId) {
-            // Fallback for environments with partial config or ADC
-            admin.initializeApp({ projectId });
-            console.log('Firebase Admin: Initialized with Project ID only (using default credentials).');
-        } else {
-            console.error('Firebase Admin: Fatal Error - No credentials or Project ID found in environment variables.');
         }
+
+        if (projectId) {
+            console.log(`[FirebaseAdmin] Attempting default initialization for project: ${projectId}`);
+            return admin.initializeApp({ projectId });
+        }
+
+        throw new Error('No Firebase Admin credentials found in environment variables.');
     } catch (error) {
-        console.error('Firebase Admin: Initialization failed!', error);
+        console.error('[FirebaseAdmin] Initialization failed!', error);
+        throw error;
     }
 }
 
-// Export specific services
-let adminAuth: admin.auth.Auth;
-let adminFirestore: admin.firestore.Firestore;
-let adminDb: admin.firestore.Firestore;
+/**
+ * Gets the Admin Auth instance, initializing the app if necessary.
+ */
+export const getAdminAuth = (): admin.auth.Auth => {
+    const app = getInitializeApp();
+    return admin.auth(app);
+};
 
-try {
-    if (admin.apps.length > 0) {
-        const app = admin.apps[0];
-        if (app) {
-            adminAuth = admin.auth(app);
-            adminFirestore = admin.firestore(app);
-            adminDb = adminFirestore;
-        } else {
-            throw new Error('No Firebase app found even though apps.length > 0');
-        }
-    } else {
-        console.warn('Firebase Admin: Services requested but no app was initialized. Admin features will fail.');
-        // @ts-ignore
-        adminAuth = null;
-        // @ts-ignore
-        adminFirestore = null;
-        // @ts-ignore
-        adminDb = null;
-    }
-} catch (error) {
-    console.error('Failed to initialize Firebase Admin services', error);
-    // @ts-ignore
-    adminAuth = null;
-    // @ts-ignore
-    adminFirestore = null;
-    // @ts-ignore
-    adminDb = null;
-}
+/**
+ * Gets the Admin Firestore instance, initializing the app if necessary.
+ */
+export const getAdminDb = (): admin.firestore.Firestore => {
+    const app = getInitializeApp();
+    return admin.firestore(app);
+};
 
-export { adminAuth, adminFirestore, adminDb };
+// For backward compatibility
+export const adminAuth = null as unknown as admin.auth.Auth;
+export const adminFirestore = null as unknown as admin.firestore.Firestore;
+export const adminDb = null as unknown as admin.firestore.Firestore;
+
 export default admin;

@@ -1,7 +1,7 @@
 'use server';
 
 import { headers } from 'next/headers';
-import { adminDb } from '@/lib/firebase-admin';
+import { getAdminDb } from '@/lib/firebase-admin';
 
 export interface AdminAuthResponse {
     isValid: boolean;
@@ -33,10 +33,14 @@ export async function verifyAdminPassword(password: string): Promise<AdminAuthRe
     const ip = await getIp();
 
     console.log(`[AdminAuth] >>> VERIFY ATTEMPT from IP: [${ip}]`);
+    console.log(`[AdminAuth] DEBUG - env check: PROJECT_ID=${!!process.env.FIREBASE_PROJECT_ID}, CLIENT_EMAIL=${!!process.env.FIREBASE_CLIENT_EMAIL}, PRIVATE_KEY=${!!process.env.FIREBASE_PRIVATE_KEY}, SERVICE_KEY=${!!process.env.FIREBASE_SERVICE_ACCOUNT_KEY}, ADMIN_PW=${!!correctPassword}`);
 
-    if (!adminDb) {
-        console.error('[AdminAuth] Firebase Admin DB not initialized! Check environment variables.');
-        return { isValid: false, error: 'Database connection failed (Admin SDK not initialized)' };
+    let adminDb;
+    try {
+        adminDb = getAdminDb();
+    } catch (e) {
+        console.error('[AdminAuth] Firebase Admin SDK failed to initialize:', e);
+        return { isValid: false, error: 'Database connection failed (Initialization error)' };
     }
 
     if (!correctPassword) {
@@ -132,7 +136,8 @@ export async function checkIpLockout(): Promise<AdminAuthResponse> {
     try {
         const ip = await getIp();
 
-        if (!adminDb) return { isValid: false, isLocked: false };
+        const adminDb = getAdminDb();
+        if (!adminDb) return { isValid: false, isLocked: false, lockedUntil: 0 };
 
         const lockoutRef = adminDb.collection('admin_lockouts').doc(ip);
         const lockoutDoc = await lockoutRef.get();
