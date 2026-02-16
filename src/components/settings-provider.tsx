@@ -164,7 +164,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
                 // Ensure cardRoundness is consistent if missing in cloud but borderStyle is present
                 // This handles the case where users have "sharp" selected but no roundness value saved
                 if (cloudSettings.cardRoundness === undefined && cloudSettings.borderStyle) {
-                    mergedSettings.cardRoundness = RADIUS_MAP[cloudSettings.borderStyle];
+                    mergedSettings.cardRoundness = RADIUS_MAP[cloudSettings.borderStyle as BorderStyle];
                 }
 
                 // FORCE ADJUSTMENT: If style is 'sharp', radius MUST be 0.
@@ -288,10 +288,10 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     return (
         <SettingsContext.Provider value={value}>
             <div className={cn(
-                "min-h-screen xl:transition-all xl:duration-200",
-                localSettings.bgStyle === 'mesh' ? 'mesh-bg' : '',
-                localSettings.bgStyle === 'pulse' ? 'pulse-bg' : '',
-                'bg-background'
+                "min-h-screen transition-all duration-700",
+                isDesktop && localSettings.bgStyle === 'mesh' ? 'mesh-bg' : '',
+                isDesktop && localSettings.bgStyle === 'pulse' ? 'pulse-bg' : '',
+                (!isDesktop || localSettings.bgStyle === 'dark') ? 'bg-background' : ''
             )}>
                 {children}
                 <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />

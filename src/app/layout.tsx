@@ -3,7 +3,7 @@ import './globals.css';
 import { cn } from '@/lib/utils';
 import { Toaster } from '@/components/ui/toaster';
 import { ThemeProvider } from '@/components/theme-provider';
-import { FirebaseClientProvider } from '@/firebase/client-provider';
+import { FirebaseClientProvider } from '@/firebase';
 import { Inter, Space_Grotesk, Playfair_Display } from 'next/font/google';
 
 export const dynamic = 'force-dynamic';
@@ -11,10 +11,12 @@ export const revalidate = 0;
 
 import Script from 'next/script';
 import { LazyMotion, domAnimation } from 'framer-motion';
+
+import AppSidebar from '@/components/app-sidebar';
+import PageHeader from '@/components/page-header';
+import AppFooter from '@/components/app-footer';
 import { MobileNav } from '@/components/mobile/mobile-nav';
 import { ClientOnlyExtras } from '@/components/client-only-extras';
-import { DesktopLayout } from '@/components/layout/desktop-layout';
-import { headers } from 'next/headers';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -74,18 +76,13 @@ export const viewport: Viewport = {
 };
 
 import { SettingsProvider } from '@/components/settings-provider';
+import { SidebarProviderWrapper } from '@/components/sidebar-provider-wrapper';
 import { checkIpLockout } from '@/app/actions/admin';
 import { BrutalLockout } from '@/components/brutal-lockout';
 import { FloatingFeedback } from '@/components/floating-feedback';
 
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  const headersList = await headers();
-  const userAgent = headersList.get('user-agent') || '';
-  const isMobileHeader = headersList.get('sec-ch-ua-mobile') === '?1';
-  const isMobileUA = /mobile|android|iphone|ipad|phone/i.test(userAgent);
-  const isMobile = isMobileHeader || isMobileUA;
-
   let lockoutStatus = { isLocked: false, lockedUntil: 0 };
 
   try {
@@ -108,36 +105,12 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <link rel="apple-touch-icon" href="/icon.png" />
-
-        {/* Critical Performance: Preconnect & DNS Prefetch */}
+        {/* Preconnect to external domains for performance */}
+        <link rel="preconnect" href="https://www.googletagmanager.com" />
+        <link rel="preconnect" href="https://www.google-analytics.com" />
+        <link rel="preconnect" href="https://www.google.com" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
-        <link rel="dns-prefetch" href="https://www.google-analytics.com" />
-
-        {/* Critical CSS: Prevent white flash and speed up initial paint */}
-        <style dangerouslySetInnerHTML={{
-          __html: `
-            :root {
-                --background: 240 10% 3.9%;
-                --foreground: 0 0% 98%;
-                --primary: 142 70% 45%;
-                --radius: 12px;
-            }
-            * { font-display: swap !important; }
-            body { 
-                background-color: hsl(240 10% 3.9%); 
-                color: hsl(0 0% 98%);
-                margin: 0;
-                font-family: var(--font-inter), system-ui, sans-serif;
-            }
-            #mobile-ssr-lcp { 
-                opacity: 1 !important; 
-                visibility: visible !important; 
-                contain-intrinsic-size: 500px;
-                content-visibility: auto;
-            }
-        `}} />
       </head>
       <body suppressHydrationWarning className="min-h-screen bg-background font-body antialiased">
         <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-P2725PBH"
@@ -151,13 +124,35 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
               ) : (
                 <LazyMotion features={domAnimation}>
                   <ClientOnlyExtras />
-                  {isMobile ? (
+                  <SidebarProviderWrapper>
+                    <AppSidebar />
                     <main className="flex-1 flex flex-col min-h-screen w-full relative">
+                      <PageHeader />
+                      <script
+                        type="application/ld+json"
+                        dangerouslySetInnerHTML={{
+                          __html: JSON.stringify({
+                            '@context': 'https://schema.org',
+                            '@type': 'WebSite',
+                            name: 'Tool Daddy',
+                            description: 'The ultimate free online tool suite. Image compression, video conversion, AI tools, and more.',
+                            url: process.env.NEXT_PUBLIC_BASE_URL || 'https://tool-daddy.com',
+                            potentialAction: {
+                              '@type': 'SearchAction',
+                              target: {
+                                '@type': 'EntryPoint',
+                                urlTemplate: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://tool-daddy.com'}/?q={search_term_string}`,
+                              },
+                              'query-input': 'required name=search_term_string',
+                            },
+                          })
+                        }}
+                      />
                       <div className="flex-1 w-full flex flex-col items-center">{children}</div>
+                      <AppFooter />
+                      <MobileNav />
                     </main>
-                  ) : (
-                    <DesktopLayout>{children}</DesktopLayout>
-                  )}
+                  </SidebarProviderWrapper>
                   <FloatingFeedback />
                 </LazyMotion>
               )}
@@ -188,6 +183,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
             });
           `}
         </Script>
+        <Script src="https://www.google.com/recaptcha/api.js?render=6Lfe02YsAAAAADPOetn7_P0L2oW2xhLgDVmYZgbF" strategy="lazyOnload" />
       </body>
     </html>
   );

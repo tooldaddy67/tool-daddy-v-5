@@ -13,17 +13,6 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import dynamic from "next/dynamic";
 import { useInView } from "react-intersection-observer";
 
-const RecommendationList = dynamic(() => import("./recommendation-list"), {
-    ssr: false,
-    loading: () => (
-        <div className="space-y-3">
-            {[1, 2, 3].map((i) => (
-                <div key={i} className="w-full h-[98px] bg-muted/10 animate-pulse rounded-[2rem]" />
-            ))}
-        </div>
-    )
-});
-
 const NotificationsPopover = dynamic(() => import("./notifications-popover").then(mod => mod.NotificationsPopover), {
     ssr: false,
     loading: () => <div className="w-10 h-10 rounded-full bg-muted animate-pulse" />
@@ -41,9 +30,6 @@ export function MobileHome() {
 
     useEffect(() => {
         setMounted(true);
-        if (typeof window !== 'undefined') {
-            (window as any).TOOL_DADY_HYDRATED = true;
-        }
     }, []);
 
     // Functional search filtering
@@ -56,6 +42,22 @@ export function MobileHome() {
                 tool.description.toLowerCase().includes(searchQuery.toLowerCase()))
         ).slice(0, 8);
     }, [searchQuery]);
+
+    // Recommended tools for the "Special for you" section - Dynamic Shuffle
+    const recommendedTools = useMemo(() => {
+        const mobileTools = ALL_TOOLS.filter(tool => !tool.isExternal && !tool.desktopOnly);
+
+        // During SSR or first client render, return a stable subset
+        if (!mounted) return mobileTools.slice(0, 3);
+
+        // Fischer-Yates Shuffle (only on Client after mount)
+        const shuffled = [...mobileTools];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        return shuffled.slice(0, 3);
+    }, [mounted]);
 
     const greeting = useMemo(() => {
         const name = user?.displayName?.split(' ')[0] || "Friend";
@@ -72,12 +74,15 @@ export function MobileHome() {
             {/* Header / Top Info */}
             <div className="pt-12 px-6 pb-6 space-y-6">
                 <div className="flex items-center justify-between">
-                    <div>
-                        <h1 className="text-2xl font-black tracking-tight text-foreground glow-text">
+                    <motion.div
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                    >
+                        <h1 className="text-2xl font-black tracking-tight text-foreground">
                             {greeting}
                         </h1>
                         <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mt-1 opacity-60">Ready to build something?</p>
-                    </div>
+                    </motion.div>
 
                     <div className="flex items-center gap-2">
                         <ThemeToggle />
@@ -86,7 +91,12 @@ export function MobileHome() {
                 </div>
 
                 {/* Search Bar - Functional */}
-                <div className="relative">
+                <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 }}
+                    className="relative"
+                >
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
                     <input
                         type="text"
@@ -95,10 +105,15 @@ export function MobileHome() {
                         onChange={(e) => setSearchQuery(e.target.value)}
                         className="w-full h-14 bg-secondary/50 border border-border/40 rounded-2xl pl-12 pr-4 text-sm font-bold focus:bg-secondary focus:border-primary/50 transition-all outline-none"
                     />
-                </div>
+                </motion.div>
 
-                <div>
-                    <div className="flex overflow-x-auto pb-4 gap-2 scrollbar-hide snap-x">
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.2 }}
+                    className="w-full overflow-x-auto scrollbar-hide no-scrollbar snap-x snap-mandatory"
+                >
+                    <div className="flex gap-2 pb-2 px-1 w-max">
                         {ALL_TOOLS_CATEGORIES.map((cat) => (
                             <Link
                                 key={cat.slug}
@@ -109,7 +124,7 @@ export function MobileHome() {
                             </Link>
                         ))}
                     </div>
-                </div>
+                </motion.div>
             </div>
 
             <div className="px-6 space-y-10 flex-1">
@@ -149,7 +164,10 @@ export function MobileHome() {
                 {/* Hero Feature Cards */}
                 <div className="grid grid-cols-2 gap-4">
                     {/* Left Card - Dark Theme (Converters) */}
-                    <div
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: 0.2 }}
                         className="aspect-[4/5] bg-[#111] dark:bg-[#000] rounded-[2rem] p-5 flex flex-col justify-between relative overflow-hidden group shadow-xl"
                     >
                         <Link href="/tools?category=converters" className="absolute inset-0 z-20" />
@@ -166,10 +184,13 @@ export function MobileHome() {
                                 <ArrowRight className="w-4 h-4 text-black" />
                             </div>
                         </div>
-                    </div>
+                    </motion.div>
 
                     {/* Right Card - Light Theme (Power Utilities) */}
-                    <div
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: 0.3 }}
                         className="aspect-[4/5] bg-white dark:bg-zinc-100 rounded-[2rem] p-5 flex flex-col justify-between relative overflow-hidden group shadow-xl"
                     >
                         <Link href="/tools?category=productivity" className="absolute inset-0 z-20" />
@@ -186,7 +207,7 @@ export function MobileHome() {
                                 <ArrowRight className="w-4 h-4 text-white" />
                             </div>
                         </div>
-                    </div>
+                    </motion.div>
                 </div>
 
                 {/* Jump Back In - Recent Activity */}
@@ -201,9 +222,51 @@ export function MobileHome() {
                         </Link>
                     </div>
 
-                    <RecommendationList />
+                    <RecommendationList tools={recommendedTools} />
                 </div>
             </div>
+        </div>
+    );
+}
+
+function RecommendationList({ tools }: { tools: any[] }) {
+    const { ref, inView } = useInView({
+        triggerOnce: true,
+        rootMargin: '100px 0px',
+    });
+
+    return (
+        <div ref={ref} className="space-y-3 min-h-[300px]">
+            {inView ? tools.map((tool, idx) => (
+                <motion.div
+                    key={tool.href}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 * idx }}
+                >
+                    <Link
+                        href={tool.href}
+                        className="flex items-center justify-between p-5 bg-muted/50 rounded-[2rem] hover:opacity-90 transition-opacity group"
+                    >
+                        <div className="flex flex-col gap-2">
+                            <h4 className="text-base font-bold text-foreground">{tool.name}</h4>
+                            <div className="flex items-center gap-2">
+                                <span className="text-[10px] font-bold text-primary bg-primary/10 px-3 py-1 rounded-full uppercase tracking-wider">
+                                    Utility
+                                </span>
+                                {idx < 2 && (
+                                    <span className="text-[10px] font-bold text-muted-foreground">Top Tool</span>
+                                )}
+                            </div>
+                        </div>
+                        <div className="w-10 h-10 rounded-full bg-white dark:bg-secondary shadow-sm flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors">
+                            <ArrowRight className="w-4 h-4" />
+                        </div>
+                    </Link>
+                </motion.div>
+            )) : (
+                <div className="w-full h-32 bg-muted/10 animate-pulse rounded-[2rem]" />
+            )}
         </div>
     );
 }

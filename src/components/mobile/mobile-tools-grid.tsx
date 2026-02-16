@@ -21,24 +21,19 @@ function LazyCategory({
     expandedCategories,
     toggleCategory,
     toolIndex,
-    router,
-    eager = false
+    router
 }: {
     category: ToolCategory,
     isSingleCategory: boolean,
     expandedCategories: Record<string, boolean>,
     toggleCategory: (slug: string) => void,
     toolIndex: number,
-    router: any,
-    eager?: boolean
+    router: any
 }) {
-    const { ref, inView: inViewObserved } = useInView({
+    const { ref, inView } = useInView({
         triggerOnce: true,
         rootMargin: '200px 0px',
-        skip: eager, // Skip tracking if we want to render immediately
     });
-
-    const inView = eager || inViewObserved;
 
     const mobileReadyTools = category.tools.filter(t => !t.isExternal && !t.desktopOnly);
     if (mobileReadyTools.length === 0) return null;
@@ -56,17 +51,15 @@ function LazyCategory({
                 </div>
             ) : (
                 <>
-                    {!isSingleCategory && (
-                        <div className="pr-6 mb-8 flex items-center gap-4 relative z-20">
-                            <div className="w-2 h-10 bg-primary rounded-full shadow-[0_0_15px_hsl(var(--primary)/0.4)] relative z-30" />
-                            <h3 className="text-3xl font-black tracking-tighter text-white uppercase text-left leading-tight relative z-30 block opacity-100">
-                                {category.title}
-                            </h3>
-                        </div>
-                    )}
+                    <div className="pr-6 mb-8 flex items-center gap-4 relative z-20">
+                        <div className="w-2 h-10 bg-primary rounded-full shadow-[0_0_15px_hsl(var(--primary)/0.4)] relative z-30" />
+                        <h3 className="text-3xl font-black tracking-tighter text-white uppercase text-left leading-tight relative z-30 block opacity-100">
+                            {category.title}
+                        </h3>
+                    </div>
 
                     <div className={cn(
-                        "transition-none",
+                        "transition-all duration-500",
                         isSingleCategory
                             ? "grid grid-cols-2 gap-3 px-3 place-items-center"
                             : "flex flex-wrap justify-center gap-4 pr-6"
@@ -100,12 +93,6 @@ function LazyCategory({
 export function MobileToolsGrid({ searchQuery, initialCategory }: MobileToolsGridProps) {
     const router = useRouter();
     const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({});
-
-    useEffect(() => {
-        if (typeof window !== 'undefined') {
-            (window as any).TOOL_DADY_HYDRATED = true;
-        }
-    }, []);
 
     const toggleCategory = (slug: string) => {
         setExpandedCategories(prev => ({
@@ -145,7 +132,7 @@ export function MobileToolsGrid({ searchQuery, initialCategory }: MobileToolsGri
                     <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground opacity-60">
                         Found {filteredTools.length} result{filteredTools.length !== 1 && 's'} for "{searchQuery}"
                     </h3>
-                    <div className="grid grid-cols-2 gap-3 transition-all duration-200">
+                    <div className="grid grid-cols-2 gap-3 transition-all duration-500">
                         {filteredTools.map((tool, idx) => (
                             <ToolCard
                                 key={tool.name}
@@ -163,7 +150,7 @@ export function MobileToolsGrid({ searchQuery, initialCategory }: MobileToolsGri
                 </div>
             ) : (
                 <div className="space-y-12">
-                    {displayCategories.map((category, idx) => {
+                    {displayCategories.map((category) => {
                         const mobileReadyTools = category.tools.filter(t => !t.isExternal && !t.desktopOnly);
                         if (mobileReadyTools.length === 0) return null;
 
@@ -179,7 +166,6 @@ export function MobileToolsGrid({ searchQuery, initialCategory }: MobileToolsGri
                                 toggleCategory={toggleCategory}
                                 toolIndex={currentCategoryIndex}
                                 router={router}
-                                eager={idx === 0}
                             />
                         );
                     })}

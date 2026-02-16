@@ -34,12 +34,12 @@ const Logo = ({ className }: { className?: string }) => (
 interface MobileHeaderProps {
     searchQuery?: string;
     setSearchQuery?: (query: string) => void;
-    initialQuery?: string;
 }
 
-export function MobileHeader({ searchQuery, setSearchQuery, initialQuery = "" }: MobileHeaderProps) {
+
+export function MobileHeader({ searchQuery, setSearchQuery }: MobileHeaderProps) {
     const router = useRouter();
-    const [localQuery, setLocalQuery] = useState(initialQuery);
+    const [localQuery, setLocalQuery] = useState("");
 
     const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
         const val = e.target.value;
@@ -51,12 +51,8 @@ export function MobileHeader({ searchQuery, setSearchQuery, initialQuery = "" }:
     };
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-        if (e.key === 'Enter') {
-            if (setSearchQuery) {
-                // If we have a local setter, we use it (already handled in onChange)
-                return;
-            }
-            router.push(`/tools?q=${encodeURIComponent(localQuery)}`);
+        if (e.key === 'Enter' && !setSearchQuery) {
+            router.push(`/?search=${encodeURIComponent(localQuery)}`);
         }
     }
 
