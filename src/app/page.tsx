@@ -1,8 +1,12 @@
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { MobileHomeStatic } from '@/components/mobile/mobile-home-static';
-import { MobileHomeClient, DesktopDashboardClient } from '@/components/home-client';
-import { HomeTools } from '@/components/home-tools';
+import { DesktopHome } from '@/components/layout/desktop-home';
+
+const MobileHome = dynamic(() => import('@/components/mobile/mobile-home').then(mod => mod.MobileHome), {
+  ssr: true, // Keep SSR for SEO on the home screen
+  loading: () => <div className="min-h-screen bg-background animate-pulse" />
+});
 
 export default function Home() {
   return (
@@ -12,20 +16,19 @@ export default function Home() {
         <MobileHomeStatic />
 
         <div id="mobile-client-grid" className="absolute top-0 left-0 w-full z-10 opacity-0 transition-opacity duration-300">
-          <MobileHomeClient />
+          <MobileHome />
         </div>
 
         {/* Cleanup Script: Hides the SSR layer once client-side React takes over */}
         <script dangerouslySetInnerHTML={{
           __html: `
                     (function() {
-                        var startTime = Date.now();
                         function swap() {
                             var ssrLayer = document.getElementById('mobile-ssr-home');
                             var clientGrid = document.getElementById('mobile-client-grid');
                             
-                            if (!window.TOOL_DADY_HYDRATED && (Date.now() - startTime < 8000)) {
-                                setTimeout(swap, 50);
+                            if (!window.TOOL_DADY_HYDRATED) {
+                                setTimeout(swap, 100);
                                 return;
                             }
 
@@ -37,7 +40,7 @@ export default function Home() {
                                         ssrLayer.style.opacity = '0';
                                         setTimeout(function() { ssrLayer.style.display = 'none'; }, 200);
                                     }
-                                }, 30);
+                                }, 50);
                             }
                         }
 
@@ -46,38 +49,12 @@ export default function Home() {
                         } else {
                             swap();
                         }
-                        // Safety fallback
-                        setTimeout(swap, 1500);
+                        setTimeout(swap, 2000);
                     })()
                 `}} />
       </div>
 
-      <div className="hidden xl:flex flex-col w-full min-h-screen relative overflow-hidden mesh-bg">
-        <main className="flex-1 w-full max-w-7xl mx-auto px-12 py-24 space-y-32 relative z-10">
-          {/* Desktop Branding Hero */}
-          <section className="text-center space-y-8 py-12">
-            <div className="space-y-4">
-              <h1 className="text-7xl font-black tracking-tight uppercase font-headline text-primary">
-                The New Standard <br />
-                <span className="text-zinc-400">for Digital Tools</span>
-              </h1>
-              <p className="text-lg font-medium text-muted-foreground max-w-2xl mx-auto uppercase tracking-[0.3em] opacity-80">
-                <span style={{ color: '#D8B4FE' }}>Performance.</span> <span style={{ color: '#D35400' }}>Privacy.</span> <span style={{ color: '#D2B1A3' }}>Precision.</span>
-              </p>
-            </div>
-            <div className="flex items-center justify-center gap-4 pt-4">
-              <div className="h-[1px] w-12 bg-zinc-200 dark:bg-white/10" />
-              <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Everything you need, in one place</span>
-              <div className="h-[1px] w-12 bg-zinc-200 dark:bg-white/10" />
-            </div>
-          </section>
-
-          {/* Desktop Dashboard UI */}
-          <DesktopDashboardClient />
-
-          <HomeTools />
-        </main>
-      </div>
+      <DesktopHome />
     </div>
   );
 }

@@ -1,31 +1,24 @@
 'use client';
 
-import React, { useState, useEffect, type ReactNode } from 'react';
-import { FirebaseProvider } from '@/firebase/provider';
-import { initializeFirebase } from '@/firebase';
+import React, { ReactNode, useMemo } from 'react';
+import { initializeFirebase } from './init';
+import { FirebaseProvider } from './provider';
 
-interface FirebaseClientProviderProps {
-  children: ReactNode;
-}
+/**
+ * FirebaseClientProvider is a wrapper around FirebaseProvider that
+ * initializes Firebase SDKs on the client side.
+ */
+export function FirebaseClientProvider({ children }: { children: ReactNode }) {
+    // Initialize Firebase and get SDK instances
+    const sdks = useMemo(() => initializeFirebase(), []);
 
-export function FirebaseClientProvider({ children }: FirebaseClientProviderProps) {
-  const [services, setServices] = useState<any>(null);
-
-  useEffect(() => {
-    // Delay initialization to move Firebase out of the critical hydration path
-    const timer = setTimeout(() => {
-      setServices(initializeFirebase());
-    }, 1500); // 1.5s delay to ensure LCP is scored and main thread is quiet
-    return () => clearTimeout(timer);
-  }, []);
-
-  return (
-    <FirebaseProvider
-      firebaseApp={services?.firebaseApp}
-      auth={services?.auth}
-      firestore={services?.firestore}
-    >
-      {children}
-    </FirebaseProvider>
-  );
+    return (
+        <FirebaseProvider
+            firebaseApp={sdks.firebaseApp}
+            firestore={sdks.firestore}
+            auth={sdks.auth}
+        >
+            {children}
+        </FirebaseProvider>
+    );
 }

@@ -10,10 +10,11 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 import Script from 'next/script';
+import { LazyMotion, domAnimation } from 'framer-motion';
+import { MobileNav } from '@/components/mobile/mobile-nav';
+import { ClientOnlyExtras } from '@/components/client-only-extras';
+import { DesktopLayout } from '@/components/layout/desktop-layout';
 import { headers } from 'next/headers';
-import { SettingsProvider } from '@/components/settings-provider';
-import { checkIpLockout } from '@/app/actions/admin';
-import { RootLayoutClient } from '@/components/root-layout-client';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -72,6 +73,12 @@ export const viewport: Viewport = {
   ],
 };
 
+import { SettingsProvider } from '@/components/settings-provider';
+import { checkIpLockout } from '@/app/actions/admin';
+import { BrutalLockout } from '@/components/brutal-lockout';
+import { FloatingFeedback } from '@/components/floating-feedback';
+
+
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const headersList = await headers();
   const userAgent = headersList.get('user-agent') || '';
@@ -124,7 +131,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
                 margin: 0;
                 font-family: var(--font-inter), system-ui, sans-serif;
             }
-            #mobile-ssr-lcp, #mobile-ssr-home { 
+            #mobile-ssr-lcp { 
                 opacity: 1 !important; 
                 visibility: visible !important; 
                 contain-intrinsic-size: 500px;
@@ -139,9 +146,21 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
           <FirebaseClientProvider>
             <SettingsProvider>
-              <RootLayoutClient isMobile={isMobile} lockoutStatus={lockoutStatus}>
-                {children}
-              </RootLayoutClient>
+              {lockoutStatus.isLocked && lockoutStatus.lockedUntil ? (
+                <BrutalLockout lockedUntil={lockoutStatus.lockedUntil} />
+              ) : (
+                <LazyMotion features={domAnimation}>
+                  <ClientOnlyExtras />
+                  {isMobile ? (
+                    <main className="flex-1 flex flex-col min-h-screen w-full relative">
+                      <div className="flex-1 w-full flex flex-col items-center">{children}</div>
+                    </main>
+                  ) : (
+                    <DesktopLayout>{children}</DesktopLayout>
+                  )}
+                  <FloatingFeedback />
+                </LazyMotion>
+              )}
             </SettingsProvider>
           </FirebaseClientProvider>
           <Toaster />

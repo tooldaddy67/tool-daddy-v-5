@@ -33,6 +33,7 @@ export function RootLayoutClient({ children, isMobile, lockoutStatus }: RootLayo
             {isMobile ? (
                 <main className="flex-1 flex flex-col min-h-screen w-full relative">
                     <div className="flex-1 w-full flex flex-col items-center">{children}</div>
+                    <AppFooter />
                 </main>
             ) : (
                 <SidebarProviderWrapper>

@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { MobileHeader } from "@/components/mobile/mobile-header";
-import { m, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Search, Sparkles, Zap, Shield, Minimize, KeyRound, Rocket, ArrowRight, Star, Image, Wrench, Replace } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -116,7 +116,7 @@ export function MobileHome() {
                 {/* Search Results */}
                 <AnimatePresence>
                     {searchQuery && (
-                        <m.div
+                        <motion.div
                             initial={{ opacity: 0, height: 0 }}
                             animate={{ opacity: 1, height: 'auto' }}
                             exit={{ opacity: 0, height: 0 }}
@@ -142,7 +142,7 @@ export function MobileHome() {
                                     <p className="text-center py-4 text-xs text-muted-foreground">No tools found matching your search.</p>
                                 )}
                             </div>
-                        </m.div>
+                        </motion.div>
                     )}
                 </AnimatePresence>
 

@@ -45,7 +45,7 @@ export function MobileHomeStatic() {
                 {/* Hero Feature Cards */}
                 <div className="grid grid-cols-2 gap-4">
                     {/* Left Card */}
-                    <div className="aspect-[4/5] bg-zinc-900 rounded-[2rem] p-5 flex flex-col justify-between relative shadow-xl">
+                    <Link href="/tools?category=converters" className="aspect-[4/5] bg-zinc-900 rounded-[2rem] p-5 flex flex-col justify-between relative shadow-xl">
                         <div>
                             <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center mb-3">
                                 <Replace className="w-5 h-5 text-white" />
@@ -58,10 +58,10 @@ export function MobileHomeStatic() {
                                 <ArrowRight className="w-4 h-4 text-black" />
                             </div>
                         </div>
-                    </div>
+                    </Link>
 
                     {/* Right Card */}
-                    <div className="aspect-[4/5] bg-zinc-100 rounded-[2rem] p-5 flex flex-col justify-between relative shadow-xl">
+                    <Link href="/tools?category=productivity" className="aspect-[4/5] bg-zinc-100 rounded-[2rem] p-5 flex flex-col justify-between relative shadow-xl">
                         <div>
                             <div className="w-10 h-10 rounded-full bg-black/5 flex items-center justify-center mb-3">
                                 <Wrench className="w-5 h-5 text-black" />
@@ -74,7 +74,7 @@ export function MobileHomeStatic() {
                                 <ArrowRight className="w-4 h-4 text-white" />
                             </div>
                         </div>
-                    </div>
+                    </Link>
                 </div>
 
                 {/* Jump Back In placeholder */}

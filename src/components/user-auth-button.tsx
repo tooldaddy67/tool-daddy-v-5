@@ -85,7 +85,7 @@ export function UserAuthButton({ customTrigger }: UserAuthButtonProps) {
 
     useEffect(() => {
         // Check for email link on load
-        if (isSignInWithEmailLink(auth, window.location.href)) {
+        if (auth && isSignInWithEmailLink(auth, window.location.href)) {
             let email = window.localStorage.getItem('emailForSignIn');
             if (!email) {
                 // If email is not saved, prompt user (could be opened on a different device)
@@ -157,6 +157,7 @@ export function UserAuthButton({ customTrigger }: UserAuthButtonProps) {
             }
 
             // If OTP is valid, proceed to create user
+            if (!auth) throw new Error("Authentication service is not ready.");
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
             if (userCredential.user) {
                 await updateProfile(userCredential.user, { displayName: email.split('@')[0] });
@@ -196,6 +197,7 @@ export function UserAuthButton({ customTrigger }: UserAuthButtonProps) {
         setIsLoading(true);
         try {
             if (authMode === 'login') {
+                if (!auth) throw new Error("Authentication service is not ready.");
                 await signInWithEmailAndPassword(auth, email, password);
                 toast({ title: "Signed in successfully" });
                 setIsAuthDialogOpen(false);
@@ -221,6 +223,7 @@ export function UserAuthButton({ customTrigger }: UserAuthButtonProps) {
         };
 
         try {
+            if (!auth) throw new Error("Authentication service is not ready.");
             await sendSignInLinkToEmail(auth, email, actionCodeSettings);
             window.localStorage.setItem('emailForSignIn', email);
             setMagicLinkSent(true);
@@ -234,6 +237,7 @@ export function UserAuthButton({ customTrigger }: UserAuthButtonProps) {
 
     const handleSignOut = async () => {
         try {
+            if (!auth) return;
             await signOut(auth);
             toast({ title: "Signed out", description: "See you next time!" });
         } catch (error: any) {

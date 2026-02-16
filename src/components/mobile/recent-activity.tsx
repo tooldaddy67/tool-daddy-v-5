@@ -29,7 +29,7 @@ export function RecentActivity() {
     if (displayTools.length === 0) return null;
 
     return (
-        <div className="w-full mb-8 md:hidden">
+        <div className="w-full mb-8 xl:hidden">
             <div className="px-5 mb-4 flex items-center justify-between">
                 <h3 className="text-lg font-bold tracking-tight text-foreground flex items-center gap-2">
                     Jump Back In <span className="text-xs font-normal text-muted-foreground bg-secondary/50 px-2 py-0.5 rounded-full border border-border/40">Recent</span>
