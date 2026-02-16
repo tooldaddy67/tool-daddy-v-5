@@ -29,11 +29,15 @@ async function getIp() {
 }
 
 export async function verifyAdminPassword(password: string): Promise<AdminAuthResponse> {
-    const correctPassword = process.env.ADMIN_PASSWORD;
+    let correctPassword = process.env.ADMIN_PASSWORD?.trim();
+    if (correctPassword?.startsWith('"') && correctPassword.endsWith('"')) correctPassword = correctPassword.slice(1, -1);
+    if (correctPassword?.startsWith("'") && correctPassword.endsWith("'")) correctPassword = correctPassword.slice(1, -1);
+
     const ip = await getIp();
+    const trimmedInput = password.trim();
 
     console.log(`[AdminAuth] >>> VERIFY ATTEMPT from IP: [${ip}]`);
-    console.log(`[AdminAuth] DEBUG - env check: PROJECT_ID=${!!process.env.FIREBASE_PROJECT_ID}, CLIENT_EMAIL=${!!process.env.FIREBASE_CLIENT_EMAIL}, PRIVATE_KEY=${!!process.env.FIREBASE_PRIVATE_KEY}, SERVICE_KEY=${!!process.env.FIREBASE_SERVICE_ACCOUNT_KEY}, ADMIN_PW=${!!correctPassword}`);
+    console.log(`[AdminAuth] DEBUG - env check: PROJECT_ID=${!!process.env.FIREBASE_PROJECT_ID}, ADMIN_PW=${!!correctPassword}`);
 
     let adminDb;
     try {
@@ -75,7 +79,7 @@ export async function verifyAdminPassword(password: string): Promise<AdminAuthRe
         }
     }
 
-    if (password === correctPassword) {
+    if (trimmedInput === correctPassword) {
         console.log(`[AdminAuth] IP [${ip}] - SUCCESS`);
         await lockoutRef.set({ attempts: 0, lockedUntil: 0, lastSuccess: new Date() }, { merge: true });
         return { isValid: true };

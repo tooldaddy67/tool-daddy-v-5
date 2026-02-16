@@ -47,8 +47,12 @@ async function getIp() {
 }
 
 export async function verifyHeadAdminPassword(password: string, idToken: string): Promise<HeadAdminAuthResponse> {
-    const correctPassword = process.env.HEAD_ADMIN_PASSWORD;
+    let correctPassword = process.env.HEAD_ADMIN_PASSWORD?.trim();
+    if (correctPassword?.startsWith('"') && correctPassword.endsWith('"')) correctPassword = correctPassword.slice(1, -1);
+    if (correctPassword?.startsWith("'") && correctPassword.endsWith("'")) correctPassword = correctPassword.slice(1, -1);
+
     const ip = await getIp();
+    const trimmedInput = password.trim();
 
     let adminDb;
     let adminAuth;
@@ -100,7 +104,7 @@ export async function verifyHeadAdminPassword(password: string, idToken: string)
     }
 
     // 3. Verify Password
-    if (password === correctPassword) {
+    if (trimmedInput === correctPassword) {
         await lockoutRef.set({ attempts: 0, lockedUntil: 0, lastSuccess: new Date() }, { merge: true });
         return { isValid: true };
     } else {
