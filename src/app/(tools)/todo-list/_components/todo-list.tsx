@@ -4,7 +4,7 @@ import { useState, useMemo, useCallback, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ListTodo, Trash2, Plus, Copy, Download, Edit, MoreVertical, Loader2, Calendar as CalendarIcon, ChevronDown, Tv2 } from 'lucide-react';
 import { TimePicker } from '@/components/ui/time-picker';
-import { useFirebase, useMemoFirebase, FirebaseProvider as FirebaseClientProvider } from '@/firebase/provider';
+import { useFirebase, useMemoFirebase } from '@/firebase/provider';
 import { useCollection } from '@/firebase/firestore/use-collection';
 import { useSettings } from '@/components/settings-provider';
 import { collection, query, orderBy, doc, serverTimestamp, writeBatch, Timestamp } from 'firebase/firestore';

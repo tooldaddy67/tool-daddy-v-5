@@ -1,4 +1,4 @@
 export * from './provider';
 export * from './firestore/use-doc';
 export * from './firestore/use-collection';
-export { FirebaseProvider as FirebaseClientProvider } from './provider';
+export { FirebaseClientProvider } from './client-provider';
