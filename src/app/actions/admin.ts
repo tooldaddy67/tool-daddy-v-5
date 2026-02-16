@@ -35,8 +35,8 @@ export async function verifyAdminPassword(password: string): Promise<AdminAuthRe
     console.log(`[AdminAuth] >>> VERIFY ATTEMPT from IP: [${ip}]`);
 
     if (!adminDb) {
-        console.error('[AdminAuth] Firebase Admin DB not initialized!');
-        return { isValid: false, error: 'Database connection error' };
+        console.error('[AdminAuth] Firebase Admin DB not initialized! Check environment variables.');
+        return { isValid: false, error: 'Database connection failed (Admin SDK not initialized)' };
     }
 
     if (!correctPassword) {

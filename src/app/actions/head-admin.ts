@@ -51,7 +51,8 @@ export async function verifyHeadAdminPassword(password: string, idToken: string)
     const ip = await getIp();
 
     if (!adminDb || !adminAuth) {
-        return { isValid: false, error: 'Database connection error' };
+        console.error('[HeadAdminAuth] SDK not initialized! adminDb:', !!adminDb, 'adminAuth:', !!adminAuth);
+        return { isValid: false, error: 'Database connection failed (Admin SDK not initialized)' };
     }
 
     // 1. Verify User is already a normal Admin
