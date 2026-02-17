@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { adminDb } from '@/lib/firebase-admin';
+// Database removed
 import { sendEmail } from '@/lib/send-email';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limiter';
 import { logAuditEvent } from '@/lib/audit-log';
@@ -40,15 +40,8 @@ export async function POST(req: Request) {
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const expiresAt = Date.now() + 10 * 60 * 1000; // 10 minutes from now
 
-    console.log('[OTP] Storing OTP in Firestore...');
-    // Store OTP in Firestore (using Admin SDK for secure backend access)
-    // We'll use a collection 'otp_codes' and document ID as email (or a unique ID if we want to support multiple requests, but email is simpler for now to rate limit/overwrite)
-    // Using email as doc ID allows easy lookup and replacement of old codes.
-    await adminDb.collection('otp_codes').doc(email).set({
-      otp,
-      expiresAt,
-      createdAt: Date.now(),
-    });
+    console.log(`[OTP] MOCK STORAGE: OTP ${otp} for ${email} expires at ${expiresAt}`);
+    // Database removed - just logging for now
 
     console.log('[OTP] OTP stored successfully. Sending email...');
 

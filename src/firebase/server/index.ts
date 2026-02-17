@@ -1,5 +1,5 @@
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
-import { getFirestore } from 'firebase/firestore';
+// Firestore removed
 import { firebaseConfig } from '../config';
 
 let serverApp: FirebaseApp | null = null;

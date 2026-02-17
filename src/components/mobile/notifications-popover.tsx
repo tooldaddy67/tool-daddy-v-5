@@ -23,7 +23,7 @@ function timeAgo(date: Date): string {
 }
 
 export function NotificationsPopover() {
-    const { firestore, user, isUserLoading } = useFirebase();
+    const { user, isUserLoading } = useFirebase();
     const { settings } = useSettings();
     const [open, setOpen] = useState(false);
 

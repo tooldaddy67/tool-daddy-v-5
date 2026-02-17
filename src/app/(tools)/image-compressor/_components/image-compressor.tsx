@@ -35,7 +35,7 @@ export default function ImageCompressor() {
   const [originalFile, setOriginalFile] = useState<File | null>(null);
   const { toast } = useToast();
   const { addToHistory } = useHistory();
-  const { firestore, user } = useFirebase();
+  const { user } = useFirebase();
 
   const { isAdOpen, setIsAdOpen, showAd, handleAdFinish, duration, title } = useToolAd('standard');
 
@@ -130,7 +130,7 @@ export default function ImageCompressor() {
       // Send notification
       // Only send if substantial reduction? Or always?
       if (newSize < originalSize) {
-        sendNotification(firestore, user?.uid, {
+        sendNotification(null, user?.uid, {
           title: 'Image Compressed',
           message: `Image compressed from ${formatBytes(originalSize)} to ${formatBytes(newSize)}`,
           type: 'success',

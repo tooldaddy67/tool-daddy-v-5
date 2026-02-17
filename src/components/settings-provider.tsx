@@ -113,7 +113,7 @@ const RADIUS_MAP: Record<BorderStyle, number> = { sharp: 0, smooth: 12, round: 2
 const DENSITY_MAP: Record<UIDensity, string> = { compact: '0.9', standard: '1', cozy: '1.1' };
 
 export function SettingsProvider({ children }: { children: React.ReactNode }) {
-    const { user, firestore } = useFirebase();
+    const { user } = useFirebase();
     const [localSettings, setLocalSettings] = useState<UserSettings>(defaultSettings);
     const [isLocalLoaded, setIsLocalLoaded] = useState(false);
     const [isDesktop, setIsDesktop] = useState(typeof window !== 'undefined' ? window.innerWidth >= 1024 : true);

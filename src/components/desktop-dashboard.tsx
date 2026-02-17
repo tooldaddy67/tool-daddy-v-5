@@ -25,9 +25,10 @@ import { format } from 'date-fns';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useRouter } from 'next/navigation';
 import { DesktopCalendar } from '@/components/desktop-calendar';
+import { useSettings } from '@/components/settings-provider';
 
 export function DesktopDashboard() {
-    const { user, firestore, isUserLoading } = useFirebase();
+    const { user, isUserLoading } = useFirebase();
     const router = useRouter();
     // Safely attempt to use settings, fallback if context is missing (though it shouldn't be)
     let settings: any = { dataPersistence: true };

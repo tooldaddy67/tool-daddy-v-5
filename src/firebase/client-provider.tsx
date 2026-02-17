@@ -2,7 +2,7 @@
 
 import React, { useMemo } from 'react';
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getFirestore } from 'firebase/firestore';
+// Firestore removed
 import { getAuth } from 'firebase/auth';
 import { firebaseConfig } from './config';
 import { FirebaseProvider } from './provider';

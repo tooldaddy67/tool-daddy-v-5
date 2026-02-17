@@ -34,7 +34,7 @@ export default function PasswordGenerator() {
   const [strength, setStrength] = useState({ label: 'Weak', color: 'bg-red-500', score: 0 });
   const { toast } = useToast();
   const { addToHistory } = useHistory();
-  const { firestore, user } = useFirebase();
+  const { user } = useFirebase();
 
   // Generate password without side effects (no history/notifications)
   const generatePasswordOnly = useCallback(() => {
@@ -82,13 +82,13 @@ export default function PasswordGenerator() {
     });
 
     // Send notification
-    sendNotification(firestore, user?.uid, {
+    sendNotification(null, user?.uid, {
       title: actionType === 'generated' ? 'Password Generated' : 'Password Copied',
       message: `A ${length}-character password has been ${actionType === 'generated' ? 'created' : 'copied to clipboard'}.`,
       type: 'success',
       link: '/password-generator'
     });
-  }, [length, addToHistory, firestore, user]);
+  }, [length, addToHistory, user]);
 
   // Handle regenerate button click
   const handleRegenerate = useCallback(() => {

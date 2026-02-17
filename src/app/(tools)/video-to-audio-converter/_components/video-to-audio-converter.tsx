@@ -23,7 +23,7 @@ export default function VideoToAudioConverter() {
   const { toast } = useToast();
 
   const { addToHistory } = useHistory();
-  const { firestore, user } = useFirebase();
+  const { user } = useFirebase();
   const [isAdModalOpen, setIsAdModalOpen] = useState(false);
   const [progress, setProgress] = useState(0);
 
@@ -115,7 +115,7 @@ export default function VideoToAudioConverter() {
       });
 
       // Send notification
-      sendNotification(firestore, user?.uid, {
+      sendNotification(null, user?.uid, {
         title: 'Audio Extracted',
         message: `Successfully extracted audio from ${videoFile.name}`,
         type: 'success',

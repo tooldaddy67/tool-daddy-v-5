@@ -39,7 +39,7 @@ export default function AiPlaylistMaker() {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const { addToHistory } = useHistory();
-  const { firestore, user } = useFirebase();
+  const { user } = useFirebase();
   const [nowPlaying, setNowPlaying] = useState<NowPlaying | null>(null);
   const { isAdOpen, setIsAdOpen, showAd, handleAdFinish, duration, title: adTitle } = useToolAd('heavy_ai');
 
@@ -102,7 +102,7 @@ export default function AiPlaylistMaker() {
         }
       });
 
-      sendNotification(firestore, user?.uid, {
+      sendNotification(null, user?.uid, {
         title: 'Playlist Generated',
         message: `Playlist "${result.data.playlistName}" has been created.`,
         type: 'success',

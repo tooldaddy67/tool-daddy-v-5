@@ -91,7 +91,7 @@ function HistoryWidget() {
 }
 
 function NotesWidget() {
-    const { user, firestore } = useFirebase()
+    const { user } = useFirebase()
 
     const isCloudLoading = false;
     const cloudNote = { content: null };
@@ -151,7 +151,7 @@ function NotesWidget() {
 }
 
 function TasksWidget() {
-    const { user, firestore } = useFirebase()
+    const { user } = useFirebase()
 
     const [localTasks, setLocalTasks] = useState<any[]>([])
     const isLoading = false

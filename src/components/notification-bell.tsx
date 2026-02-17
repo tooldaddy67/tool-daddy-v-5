@@ -32,11 +32,9 @@ function timeAgo(date: Date): string {
 import { useSettings } from '@/components/settings-provider';
 
 export function NotificationBell() {
-    const { firestore, user, isUserLoading } = useFirebase();
+    const { user, isUserLoading } = useFirebase();
     const { settings } = useSettings();
     const [open, setOpen] = useState(false);
-    const cleanupRan = useRef(false);
-    const welcomeSent = useRef(false);
 
     const notifications: Notification[] = [];
     const isLoading = false;

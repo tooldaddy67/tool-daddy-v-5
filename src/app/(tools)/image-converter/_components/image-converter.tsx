@@ -23,7 +23,7 @@ export default function ImageConverter() {
   const [originalFile, setOriginalFile] = useState<File | null>(null);
   const { toast } = useToast();
   const { addToHistory } = useHistory();
-  const { firestore, user } = useFirebase();
+  const { user } = useFirebase();
 
   const handleFileDrop = useCallback((files: File[]) => {
     const file = files[0];
@@ -79,7 +79,7 @@ export default function ImageConverter() {
       })
 
       // Send notification
-      sendNotification(firestore, user?.uid, {
+      sendNotification(null, user?.uid, {
         title: 'Image Converted',
         message: `Image successfully converted to ${targetFormat.toUpperCase()}`,
         type: 'success',

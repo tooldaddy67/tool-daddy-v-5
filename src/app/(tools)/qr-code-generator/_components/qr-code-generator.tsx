@@ -27,7 +27,7 @@ export default function QrCodeGenerator() {
   const [qrCode, setQrCode] = useState('');
   const { toast } = useToast();
   const { addToHistory } = useHistory();
-  const { firestore, user } = useFirebase();
+  const { user } = useFirebase();
   const { isAdOpen, setIsAdOpen, showAd, handleAdFinish, duration, title } = useToolAd('standard');
 
   const generateQrCode = () => {
@@ -59,7 +59,7 @@ export default function QrCodeGenerator() {
     });
 
     // Send notification
-    sendNotification(firestore, user?.uid, {
+    sendNotification(null, user?.uid, {
       title: 'QR Code Generated',
       message: 'Your QR code has been successfully created.',
       type: 'success',

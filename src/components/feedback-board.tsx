@@ -49,7 +49,7 @@ interface FeedbackItem {
 }
 
 export function FeedbackBoard() {
-    const { firestore, user } = useFirebase();
+    const { user } = useFirebase();
     const { toast } = useToast();
     const [activeTab, setActiveTab] = useState<'bug' | 'suggestion'>('bug');
     const [bugs, setBugs] = useState<FeedbackItem[]>([]);

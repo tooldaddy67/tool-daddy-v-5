@@ -49,7 +49,7 @@ export default function AiTextHumanizer() {
   const [isCopied, setIsCopied] = useState(false);
   const { toast } = useToast();
   const { addToHistory } = useHistory();
-  const { firestore, user } = useFirebase();
+  const { user } = useFirebase();
 
   const [warmth, setWarmth] = useState(5);
   const [formality, setFormality] = useState(5);
@@ -168,7 +168,7 @@ export default function AiTextHumanizer() {
         data: { inputText, humanizedText: result.data.humanizedText },
       });
 
-      sendNotification(firestore, user?.uid, {
+      sendNotification(null, user?.uid, {
         title: 'Text Humanized',
         message: 'Your text has been successfully humanized.',
         type: 'success',
