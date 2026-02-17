@@ -18,69 +18,17 @@ export interface SystemConfig {
 const CONFIG_DOC_PATH = 'system/config';
 
 export async function getSystemConfig(): Promise<SystemConfig> {
-    try {
-        const db = getAdminDb();
-        const doc = await db.doc(CONFIG_DOC_PATH).get();
-        if (!doc.exists) {
-            return getDefaultConfig();
-        }
-
-        const data = doc.data() as any;
-
-        // Sanitize data: next.js doesn't like Firestore Timestamps in Client Components
-        return {
-            maintenanceMode: !!data.maintenanceMode,
-            forceSsl: !!data.forceSsl,
-            corsProtection: !!data.corsProtection,
-            authorizedOrigins: data.authorizedOrigins || 'https://tool-daddy.com',
-            publicRateLimit: Number(data.publicRateLimit) || 100,
-            authRateLimit: Number(data.authRateLimit) || 1000,
-            toolRateLimits: data.toolRateLimits || {},
-            // Convert timestamp to primitive or remove it to avoid serialization errors
-            lastUpdated: data.lastUpdated?.toDate?.()?.toISOString() || null,
-            updatedBy: data.updatedBy || 'system'
-        };
-    } catch (error) {
-        console.error('Failed to fetch system config:', error);
-        return getDefaultConfig();
-    }
+    return getDefaultConfig();
 }
 
-import { logAuditEvent } from '@/lib/audit-log';
-
 export async function updateSystemConfig(config: Partial<SystemConfig>, adminUid: string, adminEmail: string = 'system') {
-    try {
-        const db = getAdminDb();
-
-        await db.doc(CONFIG_DOC_PATH).set({
-            ...config,
-            lastUpdated: new Date(),
-            updatedBy: adminUid
-        }, { merge: true });
-
-        // Log the action
-        await logAuditEvent({
-            action: 'CONFIG_SYNC',
-            userEmail: adminEmail,
-            userId: adminUid,
-            target: 'FIREWALL_V5',
-            status: 'success',
-            details: { maintenanceMode: config.maintenanceMode }
-        });
-
-        revalidatePath('/admin/settings');
-        return { success: true };
-    } catch (error: any) {
-        console.error('Failed to update system config:', error);
-        return { success: false, error: error.message };
-    }
+    console.log('[SystemConfig] Update ignored in database-free mode:', config);
+    return { success: true };
 }
 
 export async function checkMaintenanceMode() {
-    const config = await getSystemConfig();
-    if (config.maintenanceMode) {
-        throw new Error('SITE_MAINTENANCE: The platform is currently undergoing scheduled maintenance. Please try again later.');
-    }
+    // Maintenance mode disabled in database-free mode
+    return;
 }
 
 function getDefaultConfig(): SystemConfig {

@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useFirebase } from '@/firebase';
 import { useRouter } from 'next/navigation';
-import { verifyHeadAdminPassword } from '@/app/actions/head-admin';
+// import { verifyHeadAdminPassword } from '@/app/actions/head-admin';
+const verifyHeadAdminPassword = async (pass: string, token: string) => ({ isValid: false, isLocked: false, lockedUntil: 0, error: 'Head-Admin features are disabled.' });
 import {
     Dialog,
     DialogContent,

@@ -7,7 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Lock, Eye, EyeOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-import { verifyAdminPassword } from '@/app/actions/admin';
+// import { verifyAdminPassword } from '@/app/actions/admin';
+const verifyAdminPassword = async (pass: string) => ({ isValid: false, isLocked: false, error: 'Admin features are disabled.' });
 
 export function AdminPasswordGate({ children }: { children: ReactNode }) {
     const [isAuthenticated, setIsAuthenticated] = useState(false);

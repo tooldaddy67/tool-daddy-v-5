@@ -79,22 +79,12 @@ export const viewport: Viewport = {
 
 import { SettingsProvider } from '@/components/settings-provider';
 import { SidebarProviderWrapper } from '@/components/sidebar-provider-wrapper';
-import { checkIpLockout } from '@/app/actions/admin';
-import { BrutalLockout } from '@/components/brutal-lockout';
+// Lockout logic removed
+
 
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  let lockoutStatus = { isLocked: false, lockedUntil: 0 };
-
-  try {
-    const status = await checkIpLockout();
-    lockoutStatus = {
-      isLocked: status.isLocked || false,
-      lockedUntil: status.lockedUntil || 0
-    };
-  } catch (error) {
-    console.error('[RootLayout] IP Lockout check failed:', error);
-  }
+  // Lockout logic removed
 
   return (
     <html lang="en" suppressHydrationWarning className={cn(
@@ -120,42 +110,38 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
           <FirebaseClientProvider>
             <SettingsProvider>
-              {lockoutStatus.isLocked && lockoutStatus.lockedUntil ? (
-                <BrutalLockout lockedUntil={lockoutStatus.lockedUntil} />
-              ) : (
-                <LazyMotion features={domAnimation}>
-                  <ClientOnlyExtras />
-                  <SidebarProviderWrapper>
-                    <AppSidebar />
-                    <main className="flex-1 flex flex-col min-h-screen w-full relative">
-                      <PageHeader />
-                      <script
-                        type="application/ld+json"
-                        dangerouslySetInnerHTML={{
-                          __html: JSON.stringify({
-                            '@context': 'https://schema.org',
-                            '@type': 'WebSite',
-                            name: 'Tool Daddy',
-                            description: 'The ultimate free online tool suite. Image compression, video conversion, AI tools, and more.',
-                            url: process.env.NEXT_PUBLIC_BASE_URL || 'https://tool-daddy.com',
-                            potentialAction: {
-                              '@type': 'SearchAction',
-                              target: {
-                                '@type': 'EntryPoint',
-                                urlTemplate: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://tool-daddy.com'}/?q={search_term_string}`,
-                              },
-                              'query-input': 'required name=search_term_string',
+              <LazyMotion features={domAnimation}>
+                <ClientOnlyExtras />
+                <SidebarProviderWrapper>
+                  <AppSidebar />
+                  <main className="flex-1 flex flex-col min-h-screen w-full relative">
+                    <PageHeader />
+                    <script
+                      type="application/ld+json"
+                      dangerouslySetInnerHTML={{
+                        __html: JSON.stringify({
+                          '@context': 'https://schema.org',
+                          '@type': 'WebSite',
+                          name: 'Tool Daddy',
+                          description: 'The ultimate free online tool suite. Image compression, video conversion, AI tools, and more.',
+                          url: process.env.NEXT_PUBLIC_BASE_URL || 'https://tool-daddy.com',
+                          potentialAction: {
+                            '@type': 'SearchAction',
+                            target: {
+                              '@type': 'EntryPoint',
+                              urlTemplate: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://tool-daddy.com'}/?q={search_term_string}`,
                             },
-                          })
-                        }}
-                      />
-                      <div className="flex-1 w-full flex flex-col items-center">{children}</div>
-                      <AppFooter />
-                      <MobileNav />
-                    </main>
-                  </SidebarProviderWrapper>
-                </LazyMotion>
-              )}
+                            'query-input': 'required name=search_term_string',
+                          },
+                        })
+                      }}
+                    />
+                    <div className="flex-1 w-full flex flex-col items-center">{children}</div>
+                    <AppFooter />
+                    <MobileNav />
+                  </main>
+                </SidebarProviderWrapper>
+              </LazyMotion>
             </SettingsProvider>
           </FirebaseClientProvider>
           <Toaster />

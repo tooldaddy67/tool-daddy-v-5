@@ -7,7 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Lock, Eye, EyeOff, ShieldCheck, Loader2, AlertCircle } from 'lucide-react';
-import { verifyHeadAdminPassword } from '@/app/actions/head-admin';
+// import { verifyHeadAdminPassword } from '@/app/actions/head-admin';
+const verifyHeadAdminPassword = async (pass: string, token: string) => ({ isValid: false, isLocked: false, lockedUntil: 0, error: 'Head-Admin features are disabled.' });
 
 export function HeadAdminPasswordGate({ children }: { children: ReactNode }) {
     const { user, isUserLoading } = useFirebase();
