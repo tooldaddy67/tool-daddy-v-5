@@ -14,44 +14,21 @@ function cleanPrivateKey(key: string | undefined): string | undefined {
         cleaned = cleaned.slice(1, -1).trim();
     }
 
-    // 2. Normalize literal \n results to real newlines first
+    // 2. Normalize literal \n results to real newlines
     cleaned = cleaned.replace(/\\n/g, '\n');
 
-    const beginMarker = '-----BEGIN PRIVATE KEY-----';
-    const endMarker = '-----END PRIVATE KEY-----';
-
-    // 3. Extract the base64 part
-    // We look for anything between BEGIN and END markers
-    if (cleaned.includes(beginMarker) && cleaned.includes(endMarker)) {
-        const startIdx = cleaned.indexOf(beginMarker) + beginMarker.length;
-        const endIdx = cleaned.indexOf(endMarker);
-
-        // Raw base64 content: Strip everything that isn't a valid base64 character
-        let base64Content = cleaned.substring(startIdx, endIdx).replace(/[^a-zA-Z0-9+/=]/g, '');
-
-        if (base64Content.length < 100) {
-            console.warn(`[FirebaseAdmin] Warning: Extracted base64 content is suspiciously short (${base64Content.length} chars).`);
-        }
-
-        // Handle missing padding (crucial for DER parsing)
-        const paddingNeeded = (4 - (base64Content.length % 4)) % 4;
-        if (paddingNeeded > 0) {
-            console.log(`[FirebaseAdmin] cleanPrivateKey: Adding ${paddingNeeded} padding chars to base64 content.`);
-            base64Content = base64Content.padEnd(base64Content.length + paddingNeeded, '=');
-        }
-
-        // Reconstruct with standard 64-char wrapping (RFC 1421 / PEM standard style)
-        let formattedBase64 = '';
-        for (let i = 0; i < base64Content.length; i += 64) {
-            formattedBase64 += base64Content.substring(i, i + 64) + '\n';
-        }
-
-        cleaned = `${beginMarker}\n${formattedBase64}${endMarker}\n`;
+    // 3. Basic validation: ensure BEGIN and END markers are present
+    if (cleaned.includes('-----BEGIN PRIVATE KEY-----') && cleaned.includes('-----END PRIVATE KEY-----')) {
+        // Safe logging of reconstructed key length and snippet
+        console.log(`[FirebaseAdmin] cleanPrivateKey: Standardized key length=${cleaned.length}`);
+        return cleaned;
     }
 
-    console.log(`[FirebaseAdmin] cleanPrivateKey (Super Nuclear): Result length=${cleaned.length}, base64Length=${cleaned.length - 52}`);
-    if (cleaned.length > 100) {
-        console.log(`[FirebaseAdmin] cleanPrivateKey: Key Snippet (start/end only): ${cleaned.substring(0, 35)}...${cleaned.substring(cleaned.length - 35)}`);
+    // If it's just a raw base64 string without markers, try to reconstruct it
+    // Some people put the raw base64 in the env var
+    if (!cleaned.includes('-----')) {
+        console.log('[FirebaseAdmin] cleanPrivateKey: Reconstructing key from raw base64');
+        return `-----BEGIN PRIVATE KEY-----\n${cleaned}\n-----END PRIVATE KEY-----\n`;
     }
 
     return cleaned;
