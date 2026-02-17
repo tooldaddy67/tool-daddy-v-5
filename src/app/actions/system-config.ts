@@ -1,6 +1,5 @@
 'use server';
 
-import { getAdminDb } from '@/lib/firebase-admin';
 import { revalidatePath } from 'next/cache';
 
 export interface SystemConfig {
