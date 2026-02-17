@@ -14,43 +14,90 @@ function cleanPrivateKey(key: string | undefined): string | undefined {
         cleaned = cleaned.slice(1, -1).trim();
     }
 
-    // 2. Handle literal \n sequences often found in env vars
+    // 2. Normalize literal \n results to real newlines first
     cleaned = cleaned.replace(/\\n/g, '\n');
 
-    // 3. Ensure it has the headers and footers structure correctly formatted
-    if (!cleaned.includes('\n') && cleaned.includes('-----BEGIN PRIVATE KEY-----')) {
-        cleaned = cleaned.replace(/ /g, '\n');
+    const beginMarker = '-----BEGIN PRIVATE KEY-----';
+    const endMarker = '-----END PRIVATE KEY-----';
+
+    // 3. Extract the base64 part
+    // We look for anything between BEGIN and END markers
+    if (cleaned.includes(beginMarker) && cleaned.includes(endMarker)) {
+        const startIdx = cleaned.indexOf(beginMarker) + beginMarker.length;
+        const endIdx = cleaned.indexOf(endMarker);
+
+        // Raw base64 content: Strip everything that isn't a valid base64 character
+        let base64Content = cleaned.substring(startIdx, endIdx).replace(/[^a-zA-Z0-9+/=]/g, '');
+
+        if (base64Content.length < 100) {
+            console.warn(`[FirebaseAdmin] Warning: Extracted base64 content is suspiciously short (${base64Content.length} chars).`);
+        }
+
+        // Handle missing padding (crucial for DER parsing)
+        const paddingNeeded = (4 - (base64Content.length % 4)) % 4;
+        if (paddingNeeded > 0) {
+            console.log(`[FirebaseAdmin] cleanPrivateKey: Adding ${paddingNeeded} padding chars to base64 content.`);
+            base64Content = base64Content.padEnd(base64Content.length + paddingNeeded, '=');
+        }
+
+        // Reconstruct with standard 64-char wrapping (RFC 1421 / PEM standard style)
+        let formattedBase64 = '';
+        for (let i = 0; i < base64Content.length; i += 64) {
+            formattedBase64 += base64Content.substring(i, i + 64) + '\n';
+        }
+
+        cleaned = `${beginMarker}\n${formattedBase64}${endMarker}\n`;
     }
 
-    if (cleaned.includes('-----BEGIN PRIVATE KEY-----') && !cleaned.includes('-----BEGIN PRIVATE KEY-----\n')) {
-        cleaned = cleaned.replace('-----BEGIN PRIVATE KEY-----', '-----BEGIN PRIVATE KEY-----\n');
-    }
-    if (cleaned.includes('-----END PRIVATE KEY-----') && !cleaned.includes('\n-----END PRIVATE KEY-----')) {
-        cleaned = cleaned.replace('-----END PRIVATE KEY-----', '\n-----END PRIVATE KEY-----');
+    console.log(`[FirebaseAdmin] cleanPrivateKey (Super Nuclear): Result length=${cleaned.length}, base64Length=${cleaned.length - 52}`);
+    if (cleaned.length > 100) {
+        console.log(`[FirebaseAdmin] cleanPrivateKey: Key Snippet (start/end only): ${cleaned.substring(0, 35)}...${cleaned.substring(cleaned.length - 35)}`);
     }
 
-    return cleaned.trim();
+    return cleaned;
 }
 
-function getInitializeApp() {
-    if (admin.apps.length > 0) return admin.apps[0]!;
+const ADMIN_APP_NAME = 'tool-daddy-admin';
+
+export function getInitializeApp() {
+    // Check for the specific named app
+    const existingApp = admin.apps.find(app => app && app.name === ADMIN_APP_NAME);
+    if (existingApp) {
+        return existingApp!;
+    }
 
     try {
-        let privateKey = cleanPrivateKey(process.env.FIREBASE_PRIVATE_KEY);
-        let clientEmail = process.env.FIREBASE_CLIENT_EMAIL?.trim();
-        let projectId = (process.env.FIREBASE_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID)?.trim();
+        const rawKey = process.env.FIREBASE_PRIVATE_KEY;
+        const rawEmail = process.env.FIREBASE_CLIENT_EMAIL;
+        const rawPid = process.env.FIREBASE_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+        const rawJson = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
 
-        // Strip quotes from other creds too
-        if (clientEmail?.startsWith('"') && clientEmail.endsWith('"')) clientEmail = clientEmail.slice(1, -1);
-        if (clientEmail?.startsWith("'") && clientEmail.endsWith("'")) clientEmail = clientEmail.slice(1, -1);
-        if (projectId?.startsWith('"') && projectId.endsWith('"')) projectId = projectId.slice(1, -1);
-        if (projectId?.startsWith("'") && projectId.endsWith("'")) projectId = projectId.slice(1, -1);
+        console.log(`[FirebaseAdmin] Starting Initialization Diagnostic (${ADMIN_APP_NAME}):`);
+        console.log(` - PID: ${rawPid || '[MISSING]'}`);
+        console.log(` - EMAIL: ${rawEmail || '[MISSING]'}`);
+        console.log(` - KEY: ${rawKey ? `[PRESENT, length=${rawKey.length}]` : '[MISSING]'}`);
+        console.log(` - JSON_KEY: ${rawJson ? `[PRESENT, length=${rawJson.length}]` : '[MISSING]'}`);
 
-        console.log(`[FirebaseAdmin] Attempting Init: PID=${!!projectId}, EMAIL=${!!clientEmail}, KEY_LEN=${privateKey?.length || 0}`);
+        let privateKey = cleanPrivateKey(rawKey);
+        let clientEmail = rawEmail?.trim();
+        let projectId = rawPid?.trim();
+
+        // Strip quotes
+        const strip = (s: string | undefined) => {
+            if (!s) return s;
+            let val = s.trim();
+            if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+                return val.slice(1, -1).trim();
+            }
+            return val;
+        };
+
+        projectId = strip(projectId);
+        clientEmail = strip(clientEmail);
 
         // Strategy 1: Individual Credentials
         if (projectId && clientEmail && privateKey) {
-            console.log(`[FirebaseAdmin] Using Individual Credentials Strategy for: ${projectId}`);
+            console.log(`[FirebaseAdmin] Strategy 1: Attempting Individual Cert for ${projectId}`);
             try {
                 return admin.initializeApp({
                     credential: admin.credential.cert({
@@ -58,47 +105,47 @@ function getInitializeApp() {
                         clientEmail,
                         privateKey,
                     }),
-                });
+                }, ADMIN_APP_NAME);
             } catch (certError: any) {
-                console.error('[FirebaseAdmin] Individual Creds strategy failed:', certError.message);
+                console.error('[FirebaseAdmin] Strategy 1 Failed:', certError.message);
             }
         }
 
         // Strategy 2: JSON Key
-        if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
-            console.log('[FirebaseAdmin] Using JSON key Strategy.');
-            let key = process.env.FIREBASE_SERVICE_ACCOUNT_KEY.trim();
-            if ((key.startsWith("'") && key.endsWith("'")) || (key.startsWith('"') && key.endsWith('"'))) {
-                key = key.slice(1, -1);
-            }
-
-            try {
-                const serviceAccount = JSON.parse(key);
-                if (serviceAccount.private_key) {
-                    serviceAccount.private_key = cleanPrivateKey(serviceAccount.private_key);
+        if (rawJson) {
+            console.log('[FirebaseAdmin] Strategy 2: Attempting JSON Service Account Key');
+            let key = strip(rawJson);
+            if (key) {
+                try {
+                    const serviceAccount = JSON.parse(key);
+                    console.log(`[FirebaseAdmin] Strategy 2: JSON parsed successfully. Keys: ${Object.keys(serviceAccount).join(', ')}`);
+                    if (serviceAccount.private_key) {
+                        console.log(`[FirebaseAdmin] Strategy 2: Found private_key, length=${serviceAccount.private_key.length}`);
+                        serviceAccount.private_key = cleanPrivateKey(serviceAccount.private_key);
+                    } else {
+                        console.warn('[FirebaseAdmin] Strategy 2: No private_key field found in JSON');
+                    }
+                    return admin.initializeApp({
+                        credential: admin.credential.cert(serviceAccount),
+                    }, ADMIN_APP_NAME);
+                } catch (jsonError: any) {
+                    console.error('[FirebaseAdmin] Strategy 2 Failed:', jsonError.message);
+                    if (jsonError.stack) console.error(jsonError.stack);
                 }
-
-                return admin.initializeApp({
-                    credential: admin.credential.cert(serviceAccount),
-                });
-            } catch (jsonError: any) {
-                console.error('[FirebaseAdmin] JSON key strategy failed:', jsonError.message);
             }
         }
 
-        // Strategy 3: Default (ADC / Project ID only)
-        if (projectId) {
-            console.log(`[FirebaseAdmin] Using Default/PID Strategy: ${projectId}`);
-            try {
-                return admin.initializeApp({ projectId });
-            } catch (e: any) {
-                console.error('[FirebaseAdmin] Default strategy failed:', e.message);
-            }
+        // Strategy 3: Default (ADC)
+        console.log(`[FirebaseAdmin] Strategy 3: Falling back to Default/ADC for ${projectId || 'unknown project'}`);
+        try {
+            return admin.initializeApp(projectId ? { projectId } : {}, ADMIN_APP_NAME);
+        } catch (e: any) {
+            console.error('[FirebaseAdmin] Strategy 3 Failed:', e.message);
         }
 
-        throw new Error('All Firebase Admin initialization strategies failed. Ensure FIREBASE_PRIVATE_KEY or FIREBASE_SERVICE_ACCOUNT_KEY are correctly set.');
+        throw new Error('All Firebase Admin initialization strategies failed. Verify environment variables.');
     } catch (error: any) {
-        console.error('[FirebaseAdmin] Fatal Initialization Error:', error.message);
+        console.error('[FirebaseAdmin] FATAL:', error.message);
         throw error;
     }
 }

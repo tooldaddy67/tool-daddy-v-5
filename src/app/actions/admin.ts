@@ -1,6 +1,7 @@
 'use server';
 
 import { headers } from 'next/headers';
+import admin from 'firebase-admin';
 import { getAdminDb } from '@/lib/firebase-admin';
 
 export interface AdminAuthResponse {
@@ -10,19 +11,35 @@ export interface AdminAuthResponse {
     error?: string;
 }
 
+// In-memory cache for IP lockout status to avoid slow Firestore reads on every page load
+// This persists across requests on the same server instance (warm lambdas)
+interface CacheEntry {
+    response: AdminAuthResponse;
+    timestamp: number;
+}
+// Use global to persist across HMR in development
+const globalForLockout = global as unknown as { lockoutCache: Record<string, CacheEntry> };
+const lockoutCache = globalForLockout.lockoutCache || (globalForLockout.lockoutCache = {});
+const CACHE_TTL = 300000; // 5 minutes (300,000 ms)
+
 async function getIp() {
-    const headerList = await headers();
+    try {
+        const headerList = await headers();
 
-    // Log headers to debug IP detection (redacted)
-    const ipHeaders = ['x-forwarded-for', 'x-real-ip', 'cf-connecting-ip', 'x-client-ip', 'true-client-ip'];
-    console.log('[AdminAuth] Header Scan:', ipHeaders.map(h => `${h}: ${headerList.get(h) ? '[SET]' : '[MISSING]'}`).join(', '));
+        // Log headers to debug IP detection (redacted)
+        const ipHeaders = ['x-forwarded-for', 'x-real-ip', 'cf-connecting-ip', 'x-client-ip', 'true-client-ip'];
+        console.log('[AdminAuth] Header Scan:', ipHeaders.map(h => `${h}: ${headerList.get(h) ? '[SET]' : '[MISSING]'}`).join(', '));
 
-    for (const header of ipHeaders) {
-        const value = headerList.get(header);
-        if (value) {
-            const ip = value.split(',')[0].trim();
-            if (ip) return ip;
+        for (const header of ipHeaders) {
+            const value = headerList.get(header);
+            if (value) {
+                const ip = value.split(',')[0].trim();
+                if (ip) return ip;
+            }
         }
+    } catch (e) {
+        // Fallback for non-Next.js environment (testing)
+        return '127.0.0.1';
     }
 
     return '127.0.0.1';
@@ -137,19 +154,44 @@ export async function verifyAdminPassword(password: string): Promise<AdminAuthRe
 }
 
 export async function checkIpLockout(): Promise<AdminAuthResponse> {
+    const start = Date.now();
     try {
         const ip = await getIp();
+        const now = Date.now();
+
+        // Check cache first
+        const cached = lockoutCache[ip];
+        if (cached && (now - cached.timestamp < CACHE_TTL)) {
+            console.log(`[AdminAuth] Cache HIT for IP: [${ip}] (valid for ${Math.round((CACHE_TTL - (now - cached.timestamp)) / 1000)}s)`);
+            return cached.response;
+        }
+
+        const ipTaken = Date.now();
 
         const adminDb = getAdminDb();
+        const dbInit = Date.now();
+
         if (!adminDb) return { isValid: false, isLocked: false, lockedUntil: 0 };
 
         const lockoutRef = adminDb.collection('admin_lockouts').doc(ip);
-        const lockoutDoc = await lockoutRef.get();
+
+        // CRITICAL PERFORMANCE FIX: Implement a hard timeout for the DB fetch
+        // If Firestore is slow or unreachable, we don't want to block the entire site for 8s.
+        const dbFetchPromise = lockoutRef.get();
+        const timeoutPromise = new Promise<null>((_, reject) =>
+            setTimeout(() => reject(new Error('DATABASE_TIMEOUT')), 1500)
+        );
+
+        const lockoutDoc = await Promise.race([dbFetchPromise, timeoutPromise]) as admin.firestore.DocumentSnapshot;
+        const docFetched = Date.now();
+
+        console.log(`[AdminAuth] Performance: IP=${ipTaken - start}ms, DB_INIT=${dbInit - ipTaken}ms, FETCH=${docFetched - dbInit}ms, TOTAL=${Date.now() - start}ms`);
+
+        let result: AdminAuthResponse = { isValid: false, isLocked: false };
 
         if (lockoutDoc.exists) {
             const data = lockoutDoc.data();
             if (data) {
-                const now = Date.now();
                 let lockedUntil: number = 0;
 
                 try {
@@ -164,28 +206,63 @@ export async function checkIpLockout(): Promise<AdminAuthResponse> {
                 }
 
                 if (lockedUntil > now) {
-                    // Redact IP in production logs but show first segment for debugging
                     const redactedIp = ip === '127.0.0.1' ? ip : `${ip.split('.')[0]}.X.X.X`;
                     console.log(`[AdminAuth] >>> BLOCKING SITE for IP: [${redactedIp}] until ${new Date(lockedUntil).toISOString()}`);
-                    return { isValid: false, isLocked: true, lockedUntil };
-                }
-
-                // Secondary safety: if attempts are huge but no lockedUntil, 
-                // lock them anyway ONLY if the last attempt was recent (within 30 mins)
-                const lastAttempt = data.lastAttempt?.toMillis?.() || data.lastAttempt?.getTime?.() || 0;
-                const isRecentFailure = lastAttempt && (now - lastAttempt < 30 * 60 * 1000);
-
-                if (data.attempts >= 4 && !lockedUntil && isRecentFailure) {
-                    const newLockedUntil = Date.now() + 3 * 60 * 1000;
-                    await lockoutRef.set({ lockedUntil: new Date(newLockedUntil) }, { merge: true });
-                    return { isValid: false, isLocked: true, lockedUntil: newLockedUntil };
+                    result = { isValid: false, isLocked: true, lockedUntil };
+                } else if (data.attempts >= 4 && !lockedUntil) {
+                    // Secondary safety check
+                    const lastAttempt = data.lastAttempt?.toMillis?.() || data.lastAttempt?.getTime?.() || 0;
+                    const isRecentFailure = lastAttempt && (now - lastAttempt < 30 * 60 * 1000);
+                    if (isRecentFailure) {
+                        const newLockedUntil = Date.now() + 3 * 60 * 1000;
+                        await lockoutRef.set({ lockedUntil: new Date(newLockedUntil) }, { merge: true });
+                        result = { isValid: false, isLocked: true, lockedUntil: newLockedUntil };
+                    }
                 }
             }
         }
 
-        return { isValid: false, isLocked: false };
-    } catch (error) {
+        // Update cache
+        lockoutCache[ip] = {
+            response: result,
+            timestamp: Date.now()
+        };
+
+        return result;
+    } catch (error: any) {
         console.error('[AdminAuth] Error in checkIpLockout:', error);
-        return { isValid: false, isLocked: false };
+
+        // CRITICAL PERFORMANCE FIX: Cache the failure!
+        // If we hit a timeout or credential error, we MUST cache 'not locked' for the next 60s
+        // otherwise every single request will wait 8 seconds for a failing connection.
+        const errorResponse: AdminAuthResponse = { isValid: false, isLocked: false };
+
+        try {
+            // We need the IP again since the previous attempt might have failed early
+            const headerList = await headers();
+            let ip = '127.0.0.1';
+            const ipHeaders = ['x-forwarded-for', 'x-real-ip', 'cf-connecting-ip', 'x-client-ip', 'true-client-ip'];
+            for (const header of ipHeaders) {
+                const value = headerList.get(header);
+                if (value) {
+                    ip = value.split(',')[0].trim();
+                    break;
+                }
+            }
+
+            lockoutCache[ip] = {
+                response: errorResponse,
+                timestamp: Date.now()
+            };
+            console.log(`[AdminAuth] Cached FAILURE response for IP: [${ip}] to prevent performance degradation.`);
+        } catch (ipError) {
+            // If even headers fail, we use a generic 'local' key
+            lockoutCache['error-fallback'] = {
+                response: errorResponse,
+                timestamp: Date.now()
+            };
+        }
+
+        return errorResponse;
     }
 }

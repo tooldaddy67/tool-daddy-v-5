@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, Grid, History, Settings, User, LogIn } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { useUser } from "@/firebase";
 import { UserAuthButton } from "@/components/user-auth-button";
 
@@ -49,7 +49,7 @@ export function MobileNav() {
                             {item.label}
                         </span>
                         {isActive(item.href) && (
-                            <motion.div
+                            <m.div
                                 layoutId="activeNav"
                                 className="absolute -top-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary shadow-[0_0_10px_rgba(var(--primary),0.5)]"
                             />

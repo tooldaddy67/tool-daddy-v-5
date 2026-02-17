@@ -2,6 +2,13 @@ import { NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limiter';
 import { logAuditEvent } from '@/lib/audit-log';
+import { z } from 'zod';
+import { sanitizeString } from '@/lib/sanitization';
+
+const OtpVerifySchema = z.object({
+    email: z.string().email('Invalid email address').trim(),
+    code: z.string().length(6, 'Verification code must be 6 digits').regex(/^\d+$/, 'Invalid code format'),
+}).strict();
 
 export async function POST(req: Request) {
     try {
@@ -10,11 +17,15 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Too many attempts. Please try again later.' }, { status: 429 });
         }
 
-        const { email, code } = await req.json();
+        const body = await req.json();
+        const validation = OtpVerifySchema.safeParse(body);
 
-        if (!email || !code) {
-            return NextResponse.json({ error: 'Email and code are required' }, { status: 400 });
+        if (!validation.success) {
+            return NextResponse.json({ error: validation.error.issues[0].message }, { status: 400 });
         }
+
+        const email = sanitizeString(validation.data.email);
+        const code = sanitizeString(validation.data.code);
 
         const docRef = adminDb.collection('otp_codes').doc(email);
         const docSnap = await docRef.get();

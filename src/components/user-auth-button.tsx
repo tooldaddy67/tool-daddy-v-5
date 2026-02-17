@@ -311,7 +311,7 @@ export function UserAuthButton({ customTrigger }: UserAuthButtonProps) {
                         {customTrigger}
                     </div>
                 ) : (
-                    <Button onClick={() => setIsAuthDialogOpen(true)} variant="default" size="sm" className="gap-2">
+                    <Button onClick={() => setIsAuthDialogOpen(true)} variant="default" size="sm" className="gap-2" aria-label="Sign In">
                         <LogIn className="h-4 w-4" />
                         <span className="hidden sm:inline auth-text">Sign In</span>
                     </Button>

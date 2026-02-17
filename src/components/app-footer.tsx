@@ -42,7 +42,7 @@ export default function AppFooter() {
         </div>
         <div className="flex flex-col items-center sm:items-end gap-2 text-xs text-muted-foreground/60 text-center sm:text-right w-full sm:w-auto">
           <div className="flex flex-wrap justify-center sm:justify-end items-center gap-3 md:gap-4 text-xs md:text-sm text-foreground/80">
-            <Link href="https://discord.gg/TgErTdrGrG" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
+            <Link href="https://discord.gg/TgErTdrGrG" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2" aria-label="Join our Discord community">
               <DiscordIcon />
             </Link>
             <Link href="/about" className="text-muted-foreground hover:text-foreground transition-colors whitespace-nowrap">

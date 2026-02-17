@@ -10,13 +10,15 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 import Script from 'next/script';
+import NextDynamic from 'next/dynamic';
 import { LazyMotion, domAnimation } from 'framer-motion';
 
-import AppSidebar from '@/components/app-sidebar';
 import PageHeader from '@/components/page-header';
-import AppFooter from '@/components/app-footer';
-import { MobileNav } from '@/components/mobile/mobile-nav';
 import { ClientOnlyExtras } from '@/components/client-only-extras';
+
+const AppSidebar = NextDynamic(() => import('@/components/app-sidebar'));
+const AppFooter = NextDynamic(() => import('@/components/app-footer'));
+const MobileNav = NextDynamic(() => import('@/components/mobile/mobile-nav').then(mod => mod.MobileNav));
 
 const inter = Inter({
   subsets: ['latin'],
@@ -79,7 +81,6 @@ import { SettingsProvider } from '@/components/settings-provider';
 import { SidebarProviderWrapper } from '@/components/sidebar-provider-wrapper';
 import { checkIpLockout } from '@/app/actions/admin';
 import { BrutalLockout } from '@/components/brutal-lockout';
-import { FloatingFeedback } from '@/components/floating-feedback';
 
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
@@ -153,7 +154,6 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
                       <MobileNav />
                     </main>
                   </SidebarProviderWrapper>
-                  <FloatingFeedback />
                 </LazyMotion>
               )}
             </SettingsProvider>
@@ -161,7 +161,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
           <Toaster />
         </ThemeProvider>
 
-        <Script id="google-tag-manager" strategy="lazyOnload">
+        <Script id="google-tag-manager" strategy="afterInteractive">
           {`
             (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
             new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
@@ -170,8 +170,8 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
             })(window,document,'script','dataLayer','GTM-P2725PBH');
           `}
         </Script>
-        <Script src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_ID || 'G-95Z6VMSH51'}`} strategy="lazyOnload" />
-        <Script id="google-analytics" strategy="lazyOnload">
+        <Script src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_ID || 'G-95Z6VMSH51'}`} strategy="afterInteractive" />
+        <Script id="google-analytics" strategy="afterInteractive">
           {`
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}

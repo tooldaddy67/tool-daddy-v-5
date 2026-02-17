@@ -3,6 +3,12 @@ import { adminDb } from '@/lib/firebase-admin';
 import { sendEmail } from '@/lib/send-email';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limiter';
 import { logAuditEvent } from '@/lib/audit-log';
+import { z } from 'zod';
+import { sanitizeString } from '@/lib/sanitization';
+
+const OtpSendSchema = z.object({
+  email: z.string().email('Invalid email address').min(5).max(255).trim(),
+}).strict();
 
 export async function POST(req: Request) {
   try {
@@ -19,11 +25,14 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Too many requests. Please try again later.' }, { status: 429 });
     }
 
-    const { email } = await req.json();
+    const body = await req.json();
+    const validation = OtpSendSchema.safeParse(body);
 
-    if (!email) {
-      return NextResponse.json({ error: 'Email is required' }, { status: 400 });
+    if (!validation.success) {
+      return NextResponse.json({ error: validation.error.issues[0].message }, { status: 400 });
     }
+
+    const email = sanitizeString(validation.data.email);
 
     console.log('[OTP] Generating OTP for:', email);
 

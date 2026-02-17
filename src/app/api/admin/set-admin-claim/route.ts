@@ -1,5 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminAuth } from '@/lib/firebase-admin';
+import { z } from 'zod';
+import { sanitizeString } from '@/lib/sanitization';
+
+const SetAdminClaimSchema = z.object({
+    uid: z.string().max(128).optional(),
+    email: z.string().email().optional(),
+    admin: z.boolean().optional(),
+}).strict().refine(data => data.uid || data.email, {
+    message: "Either uid or email must be provided"
+});
 
 const BOOTSTRAP_ADMIN_EMAILS = [
     'admin@tooldaddy.com',
@@ -47,20 +57,23 @@ export async function POST(request: NextRequest) {
         }
 
         const body = await request.json();
-        const { uid, email, admin } = body;
+        const validation = SetAdminClaimSchema.safeParse(body);
 
-        if (!uid && !email) {
-            return NextResponse.json(
-                { error: 'Provide uid or email of the target user' },
-                { status: 400 }
-            );
+        if (!validation.success) {
+            return NextResponse.json({ error: validation.error.issues[0].message }, { status: 400 });
         }
+
+        const { uid, email, admin } = validation.data;
 
         // Resolve uid from email if needed
         let targetUid = uid;
         if (!targetUid && email) {
             const userRecord = await adminAuth.getUserByEmail(email);
             targetUid = userRecord.uid;
+        }
+
+        if (!targetUid) {
+            return NextResponse.json({ error: 'Failed to resolve user ID' }, { status: 400 });
         }
 
         // Set or remove admin claim

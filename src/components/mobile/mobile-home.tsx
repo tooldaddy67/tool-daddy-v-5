@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { MobileHeader } from "@/components/mobile/mobile-header";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import { Search, Sparkles, Zap, Shield, Minimize, KeyRound, Rocket, ArrowRight, Star, Image, Wrench, Replace } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -74,7 +74,7 @@ export function MobileHome() {
             {/* Header / Top Info */}
             <div className="pt-12 px-6 pb-6 space-y-6">
                 <div className="flex items-center justify-between">
-                    <motion.div
+                    <m.div
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
                     >
@@ -82,7 +82,7 @@ export function MobileHome() {
                             {greeting}
                         </h1>
                         <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mt-1 opacity-60">Ready to build something?</p>
-                    </motion.div>
+                    </m.div>
 
                     <div className="flex items-center gap-2">
                         <ThemeToggle />
@@ -91,7 +91,7 @@ export function MobileHome() {
                 </div>
 
                 {/* Search Bar - Functional */}
-                <motion.div
+                <m.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.1 }}
@@ -105,9 +105,9 @@ export function MobileHome() {
                         onChange={(e) => setSearchQuery(e.target.value)}
                         className="w-full h-14 bg-secondary/50 border border-border/40 rounded-2xl pl-12 pr-4 text-sm font-bold focus:bg-secondary focus:border-primary/50 transition-all outline-none"
                     />
-                </motion.div>
+                </m.div>
 
-                <motion.div
+                <m.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.2 }}
@@ -124,20 +124,20 @@ export function MobileHome() {
                             </Link>
                         ))}
                     </div>
-                </motion.div>
+                </m.div>
             </div>
 
             <div className="px-6 space-y-10 flex-1">
                 {/* Search Results */}
                 <AnimatePresence>
                     {searchQuery && (
-                        <motion.div
+                        <m.div
                             initial={{ opacity: 0, height: 0 }}
                             animate={{ opacity: 1, height: 'auto' }}
                             exit={{ opacity: 0, height: 0 }}
                             className="bg-secondary/30 rounded-3xl border border-white/5 p-4 space-y-3 overflow-hidden"
                         >
-                            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground px-2">Search Results</h3>
+                            <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground px-2">Search Results</h2>
                             <div className="space-y-2">
                                 {filteredTools.length > 0 ? filteredTools.map((tool) => (
                                     <Link
@@ -157,14 +157,14 @@ export function MobileHome() {
                                     <p className="text-center py-4 text-xs text-muted-foreground">No tools found matching your search.</p>
                                 )}
                             </div>
-                        </motion.div>
+                        </m.div>
                     )}
                 </AnimatePresence>
 
                 {/* Hero Feature Cards */}
                 <div className="grid grid-cols-2 gap-4">
                     {/* Left Card - Dark Theme (Converters) */}
-                    <motion.div
+                    <m.div
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ delay: 0.2 }}
@@ -175,7 +175,7 @@ export function MobileHome() {
                             <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center mb-3">
                                 <Replace className="w-5 h-5 text-white" />
                             </div>
-                            <h3 className="text-xl font-bold text-white leading-tight">Smart<br />Converters</h3>
+                            <h2 className="text-xl font-bold text-white leading-tight">Smart<br />Converters</h2>
                         </div>
 
                         <div className="flex items-center justify-between mt-4">
@@ -184,10 +184,10 @@ export function MobileHome() {
                                 <ArrowRight className="w-4 h-4 text-black" />
                             </div>
                         </div>
-                    </motion.div>
+                    </m.div>
 
                     {/* Right Card - Light Theme (Power Utilities) */}
-                    <motion.div
+                    <m.div
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ delay: 0.3 }}
@@ -198,7 +198,7 @@ export function MobileHome() {
                             <div className="w-10 h-10 rounded-full bg-black/5 flex items-center justify-center mb-3">
                                 <Wrench className="w-5 h-5 text-black" />
                             </div>
-                            <h3 className="text-xl font-bold text-black leading-tight">Power<br />Utilities</h3>
+                            <h2 className="text-xl font-bold text-black leading-tight">Power<br />Utilities</h2>
                         </div>
 
                         <div className="flex items-center justify-between mt-4">
@@ -207,7 +207,7 @@ export function MobileHome() {
                                 <ArrowRight className="w-4 h-4 text-white" />
                             </div>
                         </div>
-                    </motion.div>
+                    </m.div>
                 </div>
 
                 {/* Jump Back In - Recent Activity */}
@@ -238,7 +238,7 @@ function RecommendationList({ tools }: { tools: any[] }) {
     return (
         <div ref={ref} className="space-y-3 min-h-[300px]">
             {inView ? tools.map((tool, idx) => (
-                <motion.div
+                <m.div
                     key={tool.href}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -263,7 +263,7 @@ function RecommendationList({ tools }: { tools: any[] }) {
                             <ArrowRight className="w-4 h-4" />
                         </div>
                     </Link>
-                </motion.div>
+                </m.div>
             )) : (
                 <div className="w-full h-32 bg-muted/10 animate-pulse rounded-[2rem]" />
             )}

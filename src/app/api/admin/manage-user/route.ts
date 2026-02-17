@@ -2,6 +2,24 @@ import { NextRequest, NextResponse } from 'next/server';
 import { adminAuth, adminFirestore } from '@/lib/firebase-admin';
 import { deleteUserDataAdmin } from '@/lib/admin-data-service';
 import { logAuditEvent } from '@/lib/audit-log';
+import { z } from 'zod';
+import { sanitizeString } from '@/lib/sanitization';
+
+const UserManagementSchema = z.object({
+    targetUid: z.string().min(10, 'Invalid UID').max(128),
+    action: z.enum([
+        'TERMINATE_ADMIN',
+        'FREEZE_ACCOUNT',
+        'UNFREEZE_ACCOUNT',
+        'BAN_EMAIL',
+        'UNBAN_EMAIL',
+        'DELETE_DATA',
+        'CHANGE_PASSWORD',
+        'CONFIG_SYNC'
+    ]),
+    newPassword: z.string().min(6).max(128).optional(),
+    details: z.record(z.any()).optional(),
+}).strict();
 
 const BOOTSTRAP_ADMIN_EMAILS = [
     'admin@tooldaddy.com',
@@ -49,11 +67,13 @@ export async function POST(request: NextRequest) {
         }
 
         const body = await request.json();
-        const { targetUid, action } = body;
+        const validation = UserManagementSchema.safeParse(body);
 
-        if (!targetUid || !action) {
-            return NextResponse.json({ error: 'Missing targetUid or action' }, { status: 400 });
+        if (!validation.success) {
+            return NextResponse.json({ error: 'Invalid operation data', details: validation.error.format() }, { status: 400 });
         }
+
+        const { targetUid, action } = validation.data;
 
         // Get target user info
         const targetUser = await adminAuth.getUser(targetUid);

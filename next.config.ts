@@ -11,7 +11,7 @@ const nextConfig: NextConfig = {
 
   reactStrictMode: true,
   // ✅ Performance Optimizations
-  productionBrowserSourceMaps: false, // Disable source maps in production
+  productionBrowserSourceMaps: true, // Enable source maps in production for easier debugging and to fix 404 errors
   compress: true, // Enable gzip compression
 
   // ✅ Cache optimization

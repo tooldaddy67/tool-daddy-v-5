@@ -53,9 +53,9 @@ function LazyCategory({
                 <>
                     <div className="pr-6 mb-8 flex items-center gap-4 relative z-20">
                         <div className="w-2 h-10 bg-primary rounded-full shadow-[0_0_15px_hsl(var(--primary)/0.4)] relative z-30" />
-                        <h3 className="text-3xl font-black tracking-tighter text-white uppercase text-left leading-tight relative z-30 block opacity-100">
+                        <h2 className="text-3xl font-black tracking-tighter text-white uppercase text-left leading-tight relative z-30 block opacity-100">
                             {category.title}
-                        </h3>
+                        </h2>
                     </div>
 
                     <div className={cn(
@@ -129,9 +129,9 @@ export function MobileToolsGrid({ searchQuery, initialCategory }: MobileToolsGri
                         </h1>
                         <div className="h-1 w-12 bg-primary rounded-full shadow-[0_0_10px_hsl(var(--primary)/0.3)]" />
                     </div>
-                    <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground opacity-60">
+                    <h2 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground opacity-60">
                         Found {filteredTools.length} result{filteredTools.length !== 1 && 's'} for "{searchQuery}"
-                    </h3>
+                    </h2>
                     <div className="grid grid-cols-2 gap-3 transition-all duration-500">
                         {filteredTools.map((tool, idx) => (
                             <ToolCard
