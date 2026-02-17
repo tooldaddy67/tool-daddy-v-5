@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { adminAuth } from '@/lib/firebase-admin';
+import { getAdminAuth, getAdminDb } from '@/lib/firebase-admin';
 import { z } from 'zod';
 import { sanitizeString } from '@/lib/sanitization';
 
@@ -18,9 +18,7 @@ const BOOTSTRAP_ADMIN_EMAILS = [
 
 async function checkFirestoreAdmin(uid: string): Promise<boolean> {
     try {
-        const { adminFirestore } = await import('@/lib/firebase-admin');
-        if (!adminFirestore) return false;
-        const userDoc = await adminFirestore.collection('users').doc(uid).get();
+        const userDoc = await getAdminDb().collection('users').doc(uid).get();
         return userDoc.exists && userDoc.data()?.isAdmin === true;
     } catch (e) {
         return false;
@@ -37,7 +35,8 @@ export async function POST(request: NextRequest) {
         }
 
         const token = authHeader.split('Bearer ')[1];
-        const callerToken = await adminAuth.verifyIdToken(token);
+        const auth = getAdminAuth();
+        const callerToken = await auth.verifyIdToken(token);
         const callerUid = callerToken.uid;
         const callerEmail = callerToken.email;
 
@@ -68,7 +67,7 @@ export async function POST(request: NextRequest) {
         // Resolve uid from email if needed
         let targetUid = uid;
         if (!targetUid && email) {
-            const userRecord = await adminAuth.getUserByEmail(email);
+            const userRecord = await auth.getUserByEmail(email);
             targetUid = userRecord.uid;
         }
 
@@ -78,10 +77,10 @@ export async function POST(request: NextRequest) {
 
         // Set or remove admin claim
         const isAdmin = admin !== false; // default: true
-        await adminAuth.setCustomUserClaims(targetUid, { admin: isAdmin });
+        await auth.setCustomUserClaims(targetUid, { admin: isAdmin });
 
         // Force token refresh for the target user
-        await adminAuth.revokeRefreshTokens(targetUid);
+        await auth.revokeRefreshTokens(targetUid);
 
         return NextResponse.json({
             success: true,

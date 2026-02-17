@@ -5,20 +5,7 @@ import { Bell, Check, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useFirebase, useCollection, useMemoFirebase } from '@/firebase';
-import {
-    collection,
-    query,
-    orderBy,
-    writeBatch,
-    doc,
-    where,
-    Timestamp,
-    getDocs,
-    addDoc,
-    serverTimestamp,
-} from 'firebase/firestore';
-import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { useFirebase } from '@/firebase';
 import { cn } from '@/lib/utils';
 
 type Notification = {
@@ -26,7 +13,7 @@ type Notification = {
     title: string;
     message: string;
     read: boolean;
-    createdAt: Timestamp;
+    createdAt: any;
 };
 
 function timeAgo(date: Date): string {
@@ -51,93 +38,12 @@ export function NotificationBell() {
     const cleanupRan = useRef(false);
     const welcomeSent = useRef(false);
 
-    // Query notifications for logged-in (non-anonymous) users
-    const notifCollectionPath = useMemo(() => {
-        if (!user || user.isAnonymous || !firestore || !settings.dataPersistence) return null;
-        return collection(firestore, 'users', user.uid, 'notifications');
-    }, [firestore, user, settings.dataPersistence]);
+    const notifications: Notification[] = [];
+    const isLoading = false;
+    const unreadCount = 0;
 
-    const notifQuery = useMemoFirebase(() => {
-        if (!notifCollectionPath) return null;
-        return query(notifCollectionPath, orderBy('createdAt', 'desc'));
-    }, [notifCollectionPath]);
-
-    const { data: notifications, isLoading } = useCollection<Notification>(notifQuery);
-
-    const unreadCount = useMemo(() => {
-        if (!notifications) return 0;
-        return notifications.filter((n) => !n.read).length;
-    }, [notifications]);
-
-    // Cleanup notifications older than 7 days (throttled to once per day)
-    useEffect(() => {
-        if (!notifCollectionPath || !firestore || cleanupRan.current || !settings.dataPersistence) return;
-
-        const lastCleanup = localStorage.getItem('last-notif-cleanup');
-        const now = Date.now();
-        if (lastCleanup && now - Number(lastCleanup) < 24 * 60 * 60 * 1000) return;
-
-        cleanupRan.current = true;
-
-        const sevenDaysAgo = new Date(now - 7 * 24 * 60 * 60 * 1000);
-        const cleanupQuery = query(
-            notifCollectionPath,
-            where('createdAt', '<', Timestamp.fromDate(sevenDaysAgo))
-        );
-
-        getDocs(cleanupQuery).then((snapshot) => {
-            if (snapshot.empty) {
-                localStorage.setItem('last-notif-cleanup', String(now));
-                return;
-            }
-            const batch = writeBatch(firestore);
-            snapshot.docs.forEach((d) => batch.delete(d.ref));
-            batch.commit().then(() => {
-                localStorage.setItem('last-notif-cleanup', String(now));
-            });
-        }).catch(console.error);
-    }, [notifCollectionPath, firestore, settings.dataPersistence]);
-
-    // Send welcome notification if user has 0 notifications
-    useEffect(() => {
-        if (
-            !notifCollectionPath ||
-            !notifications ||
-            isLoading ||
-            welcomeSent.current ||
-            !settings.notifications
-        ) return;
-
-        if (notifications.length === 0) {
-            welcomeSent.current = true;
-            addDoc(notifCollectionPath, {
-                title: 'Welcome to Tool Daddy! 👋',
-                message: 'Explore our suite of tools to get started.',
-                read: false,
-                createdAt: serverTimestamp(),
-            }).catch(console.error);
-        }
-    }, [notifCollectionPath, notifications, isLoading, settings.notifications]);
-
-    // Mark all as read
-    const handleMarkAllRead = useCallback(() => {
-        if (!notifications || !user || !firestore) return;
-        const unread = notifications.filter((n) => !n.read);
-        unread.forEach((n) => {
-            const docRef = doc(firestore, 'users', user.uid, 'notifications', n.id);
-            updateDocumentNonBlocking(docRef, { read: true });
-        });
-    }, [notifications, user, firestore]);
-
-    // Mark single as read
-    const handleMarkRead = useCallback(
-        (notifId: string) => {
-            if (!user || !firestore) return;
-            const docRef = doc(firestore, 'users', user.uid, 'notifications', notifId);
-            updateDocumentNonBlocking(docRef, { read: true });
-        },
-        [user, firestore]
-    );
+    const handleMarkAllRead = useCallback(() => { }, []);
+    const handleMarkRead = useCallback((notifId: string) => { }, []);
 
     // Don't show for anonymous/loading users OR if notifications are disabled
     if (isUserLoading || !user || user.isAnonymous || !settings.notifications) return null;

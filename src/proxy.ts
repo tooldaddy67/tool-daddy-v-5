@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { checkRateLimit } from '@/lib/rate-limiter';
+import { checkRateLimitEdge } from '@/lib/rate-limiter-edge';
 
 // Sensitive routes that require stricter rate limiting
 const SENSITIVE_ROUTES = [
@@ -21,7 +21,7 @@ export async function proxy(request: NextRequest) {
 		const limit = isSensitive ? 10 : 60; // 10 requests/min for sensitive, 60 for others
 		const windowMs = 60 * 1000;
 
-		if (!checkRateLimit(`${pathname}:${ip}`, limit, windowMs)) {
+		if (!checkRateLimitEdge(`${pathname}:${ip}`, limit, windowMs)) {
 			return NextResponse.json(
 				{ error: 'Too many requests. Please try again later.' },
 				{

@@ -1,6 +1,6 @@
 'use server';
 
-import { adminFirestore } from '@/lib/firebase-admin';
+import { getAdminDb } from '@/lib/firebase-admin';
 import { revalidatePath } from 'next/cache';
 
 export interface SystemConfig {
@@ -19,10 +19,8 @@ const CONFIG_DOC_PATH = 'system/config';
 
 export async function getSystemConfig(): Promise<SystemConfig> {
     try {
-        if (!adminFirestore) {
-            return getDefaultConfig();
-        }
-        const doc = await adminFirestore.doc(CONFIG_DOC_PATH).get();
+        const db = getAdminDb();
+        const doc = await db.doc(CONFIG_DOC_PATH).get();
         if (!doc.exists) {
             return getDefaultConfig();
         }
@@ -52,9 +50,9 @@ import { logAuditEvent } from '@/lib/audit-log';
 
 export async function updateSystemConfig(config: Partial<SystemConfig>, adminUid: string, adminEmail: string = 'system') {
     try {
-        if (!adminFirestore) throw new Error('Database connection failed');
+        const db = getAdminDb();
 
-        await adminFirestore.doc(CONFIG_DOC_PATH).set({
+        await db.doc(CONFIG_DOC_PATH).set({
             ...config,
             lastUpdated: new Date(),
             updatedBy: adminUid

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { adminFirestore, adminAuth } from '@/lib/firebase-admin';
+import { getAdminDb, getAdminAuth } from '@/lib/firebase-admin';
 
 const BOOTSTRAP_ADMIN_EMAILS = [
     'admin@tooldaddy.com',
@@ -21,7 +21,9 @@ export async function GET(request: NextRequest) {
         }
 
         const token = authHeader.split('Bearer ')[1];
-        const decodedToken = await adminAuth.verifyIdToken(token);
+        const auth = getAdminAuth();
+        const db = getAdminDb();
+        const decodedToken = await auth.verifyIdToken(token);
 
         if (!isAdminByToken(decodedToken)) {
             return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
@@ -31,7 +33,7 @@ export async function GET(request: NextRequest) {
         const last24h = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
         // 2. Fetch Audit Logs for Analytics
-        const logsSnapshot = await adminFirestore.collection('audit_logs')
+        const logsSnapshot = await db.collection('audit_logs')
             .where('timestamp', '>=', last24h)
             .get();
 

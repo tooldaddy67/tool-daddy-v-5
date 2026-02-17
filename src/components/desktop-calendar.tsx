@@ -7,8 +7,6 @@ import {
     Menu,
     Calendar as CalendarIcon,
     ChevronDown,
-    ChevronLeft,
-    ChevronRight
 } from 'lucide-react';
 import {
     DropdownMenu,
@@ -16,9 +14,8 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
-import { addMonths, format, subMonths } from 'date-fns';
+import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { Timestamp } from 'firebase/firestore';
 
 interface DesktopCalendarProps {
     tasks?: { id: string, dueDate?: any, completed: boolean }[];
@@ -29,10 +26,7 @@ export function DesktopCalendar({ tasks }: DesktopCalendarProps) {
     const [month, setMonth] = useState<Date>(new Date());
 
     // Identify days with tasks
-    const daysWithTasks = tasks?.filter(t => t.dueDate && !t.completed).map(t => {
-        if (t.dueDate instanceof Timestamp) return t.dueDate.toDate();
-        return new Date(t.dueDate);
-    }) || [];
+    const daysWithTasks = tasks?.filter(t => t.dueDate && !t.completed).map(t => new Date(t.dueDate)) || [];
 
     const isDayWithTask = (day: Date) => {
         return daysWithTasks.some(d =>
@@ -40,10 +34,6 @@ export function DesktopCalendar({ tasks }: DesktopCalendarProps) {
             d.getMonth() === day.getMonth() &&
             d.getFullYear() === day.getFullYear()
         );
-    };
-
-    const handleMonthChange = (newMonth: Date) => {
-        setMonth(newMonth);
     };
 
     return (
@@ -114,13 +104,6 @@ export function DesktopCalendar({ tasks }: DesktopCalendarProps) {
                     }}
                 />
             </div>
-
-            {/* Custom Nav overlay if needed, or just let user click months. 
-                The image shows just a month dropdown. 
-                But standard UX usually expects prev/next. 
-                I'll add small subtle prev/next buttons next to the dropdown or in the corner if it feels right, 
-                but for now sticking to the image (Menu + Dropdown).
-            */}
         </div>
     );
 }

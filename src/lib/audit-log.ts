@@ -1,5 +1,3 @@
-import { adminFirestore } from './firebase-admin';
-
 export type LogLevel = 'DEBUG' | 'INFO' | 'WARN' | 'ERROR' | 'FATAL';
 
 export interface AuditEvent {
@@ -15,33 +13,26 @@ export interface AuditEvent {
   userAgent?: string;
 }
 
-export async function logAuditEvent({
-  userId,
-  action,
-  userEmail,
-  target,
-  status = 'success',
-  level = 'INFO',
-  details = {},
-  duration,
-  ip,
-  userAgent
-}: AuditEvent) {
+/**
+ * Logs an audit event to the server console.
+ */
+export async function logAuditEvent(event: AuditEvent) {
+  const {
+    userId,
+    action,
+    status = 'success',
+    level = 'INFO',
+    details = {},
+  } = event;
+
   try {
-    if (!adminFirestore) return;
-    await adminFirestore.collection('audit_logs').add({
-      userId,
-      action,
-      userEmail: userEmail || 'system@internal',
-      target: target || 'global',
-      status,
+    const logEntry = {
+      ...event,
       level: status === 'error' ? 'ERROR' : (status === 'warning' ? 'WARN' : level),
-      details,
-      duration: duration || null,
-      ip: ip || '0.0.0.0',
-      userAgent: userAgent || 'internal/system',
-      timestamp: new Date()
-    });
+      timestamp: new Date().toISOString()
+    };
+
+    console.log(`[AUDIT] ${action} - ${status} - User: ${userId}`, logEntry);
   } catch (error) {
     console.error('Failed to log audit event:', error);
   }

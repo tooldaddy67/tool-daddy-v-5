@@ -5,8 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { History, FileText, ListTodo, ArrowRight, Loader2, Sparkles, Clock, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
-import { useFirebase, useCollection, useDoc, useMemoFirebase } from '@/firebase'
-import { collection, query, orderBy, limit, doc } from 'firebase/firestore'
+import { useFirebase } from '@/firebase'
 import { useHistory } from '@/hooks/use-history'
 import { cn } from '@/lib/utils'
 // @ts-ignore
@@ -94,29 +93,23 @@ function HistoryWidget() {
 function NotesWidget() {
     const { user, firestore } = useFirebase()
 
-    const noteDocRef = useMemoFirebase(() => {
-        if (!user || user.isAnonymous || !firestore) return null
-        return doc(firestore, 'users', user.uid, 'settings', 'notepad')
-    }, [user, firestore])
+    const isCloudLoading = false;
+    const cloudNote = { content: null };
 
-    const { data: cloudNote, isLoading: isCloudLoading } = useDoc<{ content: string }>(noteDocRef)
-
-    // Fallback to local storage for guests
+    // Use local storage
     const [localNote, setLocalNote] = useState<string | null>(null)
     useEffect(() => {
-        if (user?.isAnonymous) {
-            const stored = localStorage.getItem('simple-notepad-content')
-            setLocalNote(stored)
-        }
-    }, [user])
+        const stored = localStorage.getItem('simple-notepad-content')
+        setLocalNote(stored)
+    }, [])
 
     const previewContent = useMemo(() => {
-        const content = user?.isAnonymous ? localNote : cloudNote?.content
+        const content = localNote
         if (!content) return "Your notepad is empty."
         // Strip basic HTML/Markdown-like markers for preview
         const stripped = content.replace(/<[^>]*>/g, '').substring(0, 150)
         return stripped + (content.length > 150 ? "..." : "")
-    }, [user, cloudNote, localNote])
+    }, [localNote])
 
     return (
         <motion.div
@@ -160,22 +153,24 @@ function NotesWidget() {
 function TasksWidget() {
     const { user, firestore } = useFirebase()
 
-    // First get the active list ID (simulating simple access to first list for dashboard)
-    const listsQuery = useMemoFirebase(() => {
-        if (!user || !firestore) return null
-        return query(collection(firestore, 'users', user.uid, 'todolists'), orderBy('createdAt', 'desc'), limit(1))
-    }, [user, firestore])
+    const [localTasks, setLocalTasks] = useState<any[]>([])
+    const isLoading = false
 
-    const { data: lists } = useCollection<{ id: string }>(listsQuery)
-    const activeListId = lists?.[0]?.id
+    useEffect(() => {
+        const storedLists = localStorage.getItem('tool-daddy-todo-lists')
+        if (storedLists) {
+            const lists = JSON.parse(storedLists)
+            const activeList = lists[0]
+            if (activeList) {
+                const storedTasks = localStorage.getItem(`tool-daddy-tasks-${activeList.id}`)
+                if (storedTasks) {
+                    setLocalTasks(JSON.parse(storedTasks).slice(0, 5))
+                }
+            }
+        }
+    }, [])
 
-    const tasksQuery = useMemoFirebase(() => {
-        if (!user || !firestore || !activeListId) return null
-        // Simplify query to avoid requiring a composite index (orderBy completed + orderBy createdAt)
-        return query(collection(firestore, 'users', user.uid, 'todolists', activeListId, 'tasks'), orderBy('createdAt', 'desc'), limit(5))
-    }, [user, firestore, activeListId])
-
-    const { data: tasks, isLoading } = useCollection<{ text: string, completed: boolean }>(tasksQuery)
+    const tasks = localTasks
 
     return (
         <motion.div

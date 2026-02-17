@@ -5,9 +5,7 @@ import { useState, useMemo, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useFirebase, useCollection, useMemoFirebase } from "@/firebase";
-import { collection, query, orderBy, doc, Timestamp } from "firebase/firestore";
-import { updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
+import { useFirebase } from "@/firebase";
 import { cn } from "@/lib/utils";
 import { useSettings } from "@/components/settings-provider";
 
@@ -29,31 +27,11 @@ export function NotificationsPopover() {
     const { settings } = useSettings();
     const [open, setOpen] = useState(false);
 
-    const notifCollectionPath = useMemo(() => {
-        if (!user || user.isAnonymous || !firestore || !settings.dataPersistence) return null;
-        return collection(firestore, 'users', user.uid, 'notifications');
-    }, [firestore, user, settings.dataPersistence]);
+    const notifications: any[] = [];
+    const isLoading = false;
+    const unreadCount = 0;
 
-    const notifQuery = useMemoFirebase(() => {
-        if (!notifCollectionPath) return null;
-        return query(notifCollectionPath, orderBy('createdAt', 'desc'));
-    }, [notifCollectionPath]);
-
-    const { data: notifications, isLoading } = useCollection<any>(notifQuery);
-
-    const unreadCount = useMemo(() => {
-        if (!notifications) return 0;
-        return notifications.filter((n: any) => !n.read).length;
-    }, [notifications]);
-
-    const handleMarkAllRead = useCallback(() => {
-        if (!notifications || !user || !firestore) return;
-        const unread = notifications.filter((n: any) => !n.read);
-        unread.forEach((n: any) => {
-            const docRef = doc(firestore, 'users', user.uid, 'notifications', n.id);
-            updateDocumentNonBlocking(docRef, { read: true });
-        });
-    }, [notifications, user, firestore]);
+    const handleMarkAllRead = useCallback(() => { }, []);
 
     // Don't show for anonymous/loading users OR if notifications are disabled
     if (isUserLoading || !user || user.isAnonymous || !settings.notifications) return null;

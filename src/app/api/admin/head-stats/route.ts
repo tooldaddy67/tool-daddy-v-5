@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { adminAuth, adminFirestore } from '@/lib/firebase-admin';
+import { getAdminAuth, getAdminDb } from '@/lib/firebase-admin';
 
 const BOOTSTRAP_ADMIN_EMAILS = [
     'admin@tooldaddy.com',
@@ -14,8 +14,7 @@ function isAdminByToken(decodedToken: { admin?: boolean; email?: string }): bool
 
 async function checkFirestoreAdmin(uid: string): Promise<boolean> {
     try {
-        if (!adminFirestore) return false;
-        const userDoc = await adminFirestore.collection('users').doc(uid).get();
+        const userDoc = await getAdminDb().collection('users').doc(uid).get();
         return userDoc.exists && userDoc.data()?.isAdmin === true;
     } catch (e) {
         return false;
@@ -31,7 +30,9 @@ export async function GET(request: NextRequest) {
         }
 
         const token = authHeader.split('Bearer ')[1];
-        const decodedToken = await adminAuth.verifyIdToken(token);
+        const auth = getAdminAuth();
+        const db = getAdminDb();
+        const decodedToken = await auth.verifyIdToken(token);
         const uid = decodedToken.uid;
         const email = decodedToken.email;
 
@@ -51,12 +52,12 @@ export async function GET(request: NextRequest) {
         let combinedEvents: any[] = [];
         try {
             // A. Audit Logs (Increased Depth)
-            const auditSnapshot = await adminFirestore.collection('audit_logs')
+            const auditSnapshot = await db.collection('audit_logs')
                 .orderBy('timestamp', 'desc')
                 .limit(100)
                 .get();
 
-            const auditLogs = auditSnapshot.docs.map(doc => {
+            const auditLogs = auditSnapshot.docs.map((doc: any) => {
                 const data = doc.data();
                 let ts = data.timestamp;
                 if (ts && typeof ts.toDate === 'function') ts = ts.toDate();
@@ -72,12 +73,12 @@ export async function GET(request: NextRequest) {
             });
 
             // B. Tool History (Global Activity - Increased Depth)
-            const historySnapshot = await adminFirestore.collectionGroup('history')
+            const historySnapshot = await db.collectionGroup('history')
                 .orderBy('timestamp', 'desc')
                 .limit(100)
                 .get();
 
-            const toolLogs = historySnapshot.docs.map(doc => {
+            const toolLogs = historySnapshot.docs.map((doc: any) => {
                 const data = doc.data();
                 let ts = data.timestamp;
                 if (typeof ts === 'string') ts = new Date(ts);
@@ -95,12 +96,12 @@ export async function GET(request: NextRequest) {
             });
 
             // C. Feedback
-            const feedbackSnapshot = await adminFirestore.collection('feedback')
+            const feedbackSnapshot = await db.collection('feedback')
                 .orderBy('createdAt', 'desc')
                 .limit(50)
                 .get();
 
-            const feedbackLogs = feedbackSnapshot.docs.map(doc => {
+            const feedbackLogs = feedbackSnapshot.docs.map((doc: any) => {
                 const data = doc.data();
                 let ts = data.createdAt;
                 if (ts && typeof ts.toDate === 'function') ts = ts.toDate();
@@ -159,15 +160,15 @@ export async function GET(request: NextRequest) {
             const limitVal = parseInt(searchParams.get('limit') || '10');
 
             // A. Fetch Banned Emails List
-            const bannedSnapshot = await adminFirestore.collection('banned_emails').get();
+            const bannedSnapshot = await db.collection('banned_emails').get();
             const bannedEmails = new Set(bannedSnapshot.docs.map(doc => doc.id));
 
             // B. Get Users from Auth (List up to 1000 to allow search filtering for now)
-            const userList = await adminAuth.listUsers(1000);
+            const userList = await auth.listUsers(1000);
 
             // Filter and Map All Users
             allUsers = userList.users
-                .filter(u => {
+                .filter((u: any) => {
                     // Only show users with email (not anonymous)
                     if (!u.email) return false;
 
@@ -183,7 +184,7 @@ export async function GET(request: NextRequest) {
                     }
                     return true;
                 })
-                .map(u => ({
+                .map((u: any) => ({
                     uid: u.uid,
                     name: u.displayName || u.email?.split('@')[0] || 'App User',
                     email: u.email,
@@ -196,12 +197,12 @@ export async function GET(request: NextRequest) {
                 .slice(0, limitVal);
 
             // Fetch Admins (Deeper Search)
-            const firestoreAdminsSnapshot = await adminFirestore.collection('users')
+            const firestoreAdminsSnapshot = await db.collection('users')
                 .where('isAdmin', '==', true)
                 .limit(20)
                 .get();
 
-            const firestoreAdmins = firestoreAdminsSnapshot.docs.map(doc => ({
+            const firestoreAdmins = firestoreAdminsSnapshot.docs.map((doc: any) => ({
                 uid: doc.id,
                 ...doc.data()
             } as { uid: string; isAdmin: boolean; displayName?: string; email?: string }));
@@ -210,11 +211,11 @@ export async function GET(request: NextRequest) {
 
             for (const u of firestoreAdmins) {
                 try {
-                    const authUser = await adminAuth.getUser(u.uid);
+                    const authUser = await auth.getUser(u.uid);
                     combinedMap.set(u.uid, {
                         uid: u.uid,
-                        name: authUser.displayName || authUser.email?.split('@')[0] || u.displayName || 'Authorized Admin',
-                        email: authUser.email || u.email || 'No Email Record',
+                        name: authUser.displayName || authUser.email?.split('@')[0] || (u as any).displayName || 'Authorized Admin',
+                        email: authUser.email || (u as any).email || 'No Email Record',
                         role: 'Global Admin',
                         disabled: authUser.disabled,
                         isBanned: bannedEmails.has(authUser.email || ''),
@@ -225,8 +226,8 @@ export async function GET(request: NextRequest) {
                 } catch (e) {
                     combinedMap.set(u.uid, {
                         uid: u.uid,
-                        name: u.displayName || u.email?.split('@')[0] || 'Legacy Admin',
-                        email: u.email || 'No Auth record',
+                        name: (u as any).displayName || (u as any).email?.split('@')[0] || 'Legacy Admin',
+                        email: (u as any).email || 'No Auth record',
                         role: 'Legacy Admin',
                         disabled: false,
                         isBanned: false,
@@ -238,8 +239,8 @@ export async function GET(request: NextRequest) {
             }
 
             userList.users
-                .filter(u => u.customClaims?.admin === true || u.customClaims?.headAdmin === true || BOOTSTRAP_ADMIN_EMAILS.includes(u.email || ''))
-                .forEach(u => {
+                .filter((u: any) => u.customClaims?.admin === true || u.customClaims?.headAdmin === true || BOOTSTRAP_ADMIN_EMAILS.includes(u.email || ''))
+                .forEach((u: any) => {
                     const isBootstrap = BOOTSTRAP_ADMIN_EMAILS.includes(u.email || '');
                     const isHeadAdmin = u.customClaims?.headAdmin === true || isBootstrap;
 
@@ -269,7 +270,7 @@ export async function GET(request: NextRequest) {
         // 4. System Metrics (REAL-TIME)
         let loadIntensity = 0;
         try {
-            const historyCount = await adminFirestore.collectionGroup('history')
+            const historyCount = await db.collectionGroup('history')
                 .where('timestamp', '>=', new Date(Date.now() - 3600000)) // last hour
                 .count().get();
             loadIntensity = historyCount.data().count;
@@ -284,7 +285,7 @@ export async function GET(request: NextRequest) {
         let dbStatus = 'Optimal';
         try {
             const dbStart = Date.now();
-            await adminFirestore.doc('system/config').get();
+            await db.doc('system/config').get();
             const dbLatency = Date.now() - dbStart;
             dbStatus = dbLatency < 150 ? 'Optimal' : 'Degraded';
         } catch (e) {
@@ -292,7 +293,7 @@ export async function GET(request: NextRequest) {
         }
 
         // 5. Config/System Vars
-        const configDoc = await adminFirestore.doc('system/config').get();
+        const configDoc = await db.doc('system/config').get();
         const configData = (configDoc.exists ? configDoc.data() : {}) || {};
 
         const config = {

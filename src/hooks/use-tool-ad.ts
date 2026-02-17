@@ -2,8 +2,6 @@
 
 import { useState, useMemo } from 'react';
 import { useFirebase } from '@/firebase';
-import { useDoc } from '@/firebase/firestore/use-doc';
-import { doc } from 'firebase/firestore';
 
 export type ToolType = 'standard' | 'heavy' | 'ai' | 'external' | 'heavy_ai';
 
@@ -15,20 +13,11 @@ const BOOTSTRAP_ADMIN_EMAILS = [
 export function useToolAd(toolType: ToolType = 'standard') {
     const [isAdOpen, setIsAdOpen] = useState(false);
     const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
-    const { user, firestore } = useFirebase();
-
-    // 1. Check Firestore for Admin status (Reactive)
-    const userDocRef = useMemo(() => {
-        if (!user?.uid || !firestore) return null;
-        return doc(firestore, 'users', user.uid);
-    }, [user?.uid, firestore]);
-
-    const { data: userData } = useDoc(userDocRef);
+    const { user } = useFirebase();
 
     // 2. Comprehensive Admin Check
     const isAdmin = typeof window !== 'undefined' && (
         sessionStorage.getItem('head-admin-auth') === 'true' ||
-        userData?.isAdmin === true ||
         (user?.email && BOOTSTRAP_ADMIN_EMAILS.includes(user.email))
     );
 

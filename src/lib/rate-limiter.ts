@@ -1,11 +1,8 @@
 import { headers } from 'next/headers';
-import { adminFirestore } from '@/lib/firebase-admin';
-import { getSystemConfig } from '@/app/actions/system-config';
-import admin from 'firebase-admin';
 
 /**
- * Robust rate limiting for Tool Daddy
- * Supports both in-memory and Firestore-backed persistent limiting
+ * Simplified in-memory rate limiting for Tool Daddy. 
+ * Database persistence removed.
  */
 
 interface RateLimitEntry {
@@ -17,7 +14,7 @@ const globalStore = global as unknown as { _rateLimitStore?: Map<string, RateLim
 const rateLimitStore = globalStore._rateLimitStore || new Map<string, RateLimitEntry>();
 if (process.env.NODE_ENV !== 'production') globalStore._rateLimitStore = rateLimitStore;
 
-// Cleanup old in-memory entries every 5 minutes
+// Cleanup old entries every 5 minutes
 if (typeof setInterval !== 'undefined') {
   setInterval(() => {
     const now = Date.now();
@@ -29,20 +26,16 @@ if (typeof setInterval !== 'undefined') {
   }, 5 * 60 * 1000);
 }
 
-/**
- * Get client identifier (IP + UA) for rate limiting
- */
 export async function getRateLimitIdentifier(): Promise<string> {
   const headersList = await headers();
   const ip = headersList.get('x-forwarded-for')?.split(',')[0].trim() || '0.0.0.0';
   const userAgent = headersList.get('user-agent') || 'unknown';
-  // Base64 encode to avoid invalid Firestore characters
   return btoa(`${ip}-${userAgent}`).replace(/[/+=]/g, '_');
 }
 
 /**
- * Persistent Rate Limiter using Firestore
- * Pulls limits from Global System Config
+ * Simple rate limiter that replaces the previous Firestore-backed version.
+ * Now operates strictly in-memory.
  */
 export async function checkPersistentRateLimit(toolId?: string): Promise<{
   allowed: boolean;
@@ -50,69 +43,48 @@ export async function checkPersistentRateLimit(toolId?: string): Promise<{
   limit: number;
   resetTime?: number;
 }> {
-  try {
-    const config = await getSystemConfig();
-    const identifier = await getRateLimitIdentifier();
+  const identifier = await getRateLimitIdentifier();
 
-    // Determine the limit: Tool specific > Global Auth > Global Public
-    // For simplicity, we use publicRateLimit as default
-    let limit = config.publicRateLimit;
-    if (toolId && config.toolRateLimits && config.toolRateLimits[toolId]) {
-      limit = config.toolRateLimits[toolId];
-    }
+  // Hardcoded default limits since system-config is gone
+  const DEFAULT_LIMIT = 30;
+  const limits: Record<string, number> = {
+    'ai-text-humanizer': 5,
+    'ai-image-enhancer': 2
+  };
 
-    if (!adminFirestore) {
-      return { allowed: true, remaining: limit, limit };
-    }
+  const limit = (toolId && limits[toolId]) || DEFAULT_LIMIT;
+  const now = Date.now();
+  const windowMs = 60 * 1000;
 
-    const windowMs = 60 * 1000; // 1 minute window
-    const now = Date.now();
-    const windowStart = now - windowMs;
+  const entry = rateLimitStore.get(identifier);
 
-    const rateLimitDocRef = adminFirestore.collection('rate-limits').doc(identifier);
-    const docSnap = await rateLimitDocRef.get();
-
-    let timestamps: admin.firestore.Timestamp[] = [];
-    if (docSnap.exists) {
-      const data = docSnap.data();
-      const allTimestamps: admin.firestore.Timestamp[] = data?.timestamps || [];
-      timestamps = allTimestamps.filter(ts => ts.toMillis() > windowStart);
-    }
-
-    if (timestamps.length >= limit) {
-      const oldestRequest = timestamps.sort((a, b) => a.toMillis() - b.toMillis())[0];
-      const resetSeconds = Math.ceil((oldestRequest.toMillis() + windowMs - now) / 1000);
-      return {
-        allowed: false,
-        remaining: 0,
-        limit,
-        resetTime: resetSeconds
-      };
-    }
-
-    // Optimistically update (or we could do this after the action)
-    const newTimestamp = admin.firestore.Timestamp.fromMillis(now);
-    const newTimestamps = [...timestamps, newTimestamp];
-
-    // Fire and forget update
-    rateLimitDocRef.set({ timestamps: newTimestamps }, { merge: true }).catch(err => {
-      console.error('Rate limit log failed:', err);
-    });
-
-    return {
-      allowed: true,
-      remaining: limit - newTimestamps.length,
-      limit
+  if (!entry || now > entry.resetTime) {
+    const newEntry = {
+      count: 1,
+      resetTime: now + windowMs,
     };
-  } catch (error) {
-    console.error('Persistent Rate Limit Error:', error);
-    return { allowed: true, remaining: 1, limit: 1 }; // Fallback allowed
+    rateLimitStore.set(identifier, newEntry);
+    return { allowed: true, remaining: limit - 1, limit };
   }
+
+  if (entry.count >= limit) {
+    const resetSeconds = Math.ceil((entry.resetTime - now) / 1000);
+    return {
+      allowed: false,
+      remaining: 0,
+      limit,
+      resetTime: resetSeconds
+    };
+  }
+
+  entry.count++;
+  return {
+    allowed: true,
+    remaining: limit - entry.count,
+    limit
+  };
 }
 
-/**
- * In-memory fallback (original logic)
- */
 export function checkRateLimit(
   identifier: string,
   limit: number = 30,

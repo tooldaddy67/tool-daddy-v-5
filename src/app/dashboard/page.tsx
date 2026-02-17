@@ -7,7 +7,6 @@ import { useFirebase } from '@/firebase';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardDescription, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Loader2, User, Clock, Settings, LayoutDashboard, Search } from 'lucide-react';
-import { collection, query, orderBy, limit, onSnapshot, where } from 'firebase/firestore';
 import { formatDistanceToNow } from 'date-fns';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -15,10 +14,10 @@ import { updateProfile } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 
 export default function DashboardPage() {
-    const { user, firestore, isUserLoading } = useFirebase();
+    const { user, isUserLoading } = useFirebase();
     const router = useRouter();
     const [history, setHistory] = useState<any[]>([]);
-    const [isLoadingHistory, setIsLoadingHistory] = useState(true);
+    const [isLoadingHistory, setIsLoadingHistory] = useState(false);
     const [newName, setNewName] = useState('');
     const { toast } = useToast();
 
@@ -29,26 +28,23 @@ export default function DashboardPage() {
         }
     }, [user, isUserLoading, router]);
 
-    // Fetch History
+    // History fetching disabled (System rebuild in progress)
     useEffect(() => {
-        if (!user || !firestore) return;
-
-        const historyRef = collection(firestore, 'users', user.uid, 'history');
-        const q = query(historyRef, orderBy('timestamp', 'desc'), limit(50));
-
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            const historyData = snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data(),
-                // Convert Firestore timestamp to Date
-                timestamp: doc.data().timestamp?.toDate() || new Date(),
-            }));
-            setHistory(historyData);
-            setIsLoadingHistory(false);
-        });
-
-        return () => unsubscribe();
-    }, [user, firestore]);
+        // We could load from local storage here if we wanted to match the new useHistory behavior
+        const localData = localStorage.getItem('tool-daddy-history');
+        if (localData) {
+            try {
+                const parsed = JSON.parse(localData);
+                setHistory(parsed.map((item: any) => ({
+                    ...item,
+                    timestamp: new Date(item.timestamp)
+                })));
+            } catch (e) {
+                console.error("Failed to parse local history", e);
+            }
+        }
+        setIsLoadingHistory(false);
+    }, [user]);
 
     // Update Profile Name
     const handleUpdateName = async () => {

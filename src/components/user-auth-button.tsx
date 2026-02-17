@@ -21,9 +21,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useUser, useAuth, useFirebase } from '@/firebase';
-import { signOut, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink, updateProfile } from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { useUser, useAuth } from '@/firebase';
+import { signOut, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink, updateProfile } from 'firebase/auth';
 import { LogIn, LogOut, User as UserIcon, Loader2, Sparkles, UserPlus, CheckCircle2, ShieldCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -36,7 +35,6 @@ interface UserAuthButtonProps {
 export function UserAuthButton({ customTrigger }: UserAuthButtonProps) {
     const { user, isUserLoading } = useUser();
     const auth = useAuth();
-    const { firestore } = useFirebase();
     const { toast } = useToast();
     const { settings, updateSettings } = useSettings();
     const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false);
@@ -55,11 +53,7 @@ export function UserAuthButton({ customTrigger }: UserAuthButtonProps) {
     const [otpCode, setOtpCode] = useState('');
 
     useEffect(() => {
-        if (user) {
-            checkAdminStatus();
-        } else {
-            setIsAdmin(false);
-        }
+        setIsAdmin(false);
     }, [user]);
 
     // Reset OTP state when dialog closes
@@ -70,18 +64,6 @@ export function UserAuthButton({ customTrigger }: UserAuthButtonProps) {
         }
     }, [isAuthDialogOpen]);
 
-    const checkAdminStatus = async () => {
-        if (!user || !firestore) return;
-        try {
-            const docRef = doc(firestore, 'users', user.uid);
-            const snap = await getDoc(docRef);
-            if (snap.exists() && snap.data().isAdmin === true) {
-                setIsAdmin(true);
-            }
-        } catch (e) {
-            console.error("Error checking admin status", e);
-        }
-    };
 
     useEffect(() => {
         // Check for email link on load
@@ -287,17 +269,6 @@ export function UserAuthButton({ customTrigger }: UserAuthButtonProps) {
                             </div>
                         </DropdownMenuLabel>
                         <DropdownMenuSeparator />
-                        {isAdmin && (
-                            <>
-                                <Link href="/admin/dashboard" className="w-full cursor-pointer">
-                                    <DropdownMenuItem>
-                                        <ShieldCheck className="mr-2 h-4 w-4" />
-                                        <span>Admin</span>
-                                    </DropdownMenuItem>
-                                </Link>
-                                <DropdownMenuSeparator />
-                            </>
-                        )}
                         <DropdownMenuItem onClick={handleSignOut} className="text-red-500 focus:text-red-500">
                             <LogOut className="mr-2 h-4 w-4" />
                             <span>Log out</span>

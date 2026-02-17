@@ -12,13 +12,11 @@ export function FirebaseClientProvider({ children }: { children: React.ReactNode
         return getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
     }, []);
 
-    const firestore = useMemo(() => getFirestore(firebaseApp), [firebaseApp]);
     const auth = useMemo(() => getAuth(firebaseApp), [firebaseApp]);
 
     return (
         <FirebaseProvider
             firebaseApp={firebaseApp}
-            firestore={firestore}
             auth={auth}
         >
             {children}

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { adminAuth, adminFirestore } from '@/lib/firebase-admin';
+import { getAdminAuth, getAdminDb } from '@/lib/firebase-admin';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limiter';
 
 // Bootstrap admin emails — used before custom claims are set up
@@ -16,8 +16,7 @@ function isAdminByToken(decodedToken: { admin?: boolean; email?: string }): bool
 
 async function checkFirestoreAdmin(uid: string): Promise<boolean> {
     try {
-        if (!adminFirestore) return false;
-        const userDoc = await adminFirestore.collection('users').doc(uid).get();
+        const userDoc = await getAdminDb().collection('users').doc(uid).get();
         return userDoc.exists && userDoc.data()?.isAdmin === true;
     } catch (e) {
         console.error(`Admin check failed for UID ${uid}:`, e);
@@ -27,7 +26,7 @@ async function checkFirestoreAdmin(uid: string): Promise<boolean> {
 
 export async function GET(request: NextRequest) {
     try {
-        console.log('Analytics API: Start request');
+        console.log('Analytics API: Start request - forced recompile');
         // Rate limit: 10 requests per minute
         const ip = await getClientIp();
         if (!checkRateLimit(`analytics:${ip}`, 10, 60 * 1000)) {
@@ -40,7 +39,7 @@ export async function GET(request: NextRequest) {
         }
 
         const token = authHeader.split('Bearer ')[1];
-        const decodedToken = await adminAuth.verifyIdToken(token);
+        const decodedToken = await getAdminAuth().verifyIdToken(token);
         const uid = decodedToken.uid;
         const email = decodedToken.email;
 
@@ -67,7 +66,7 @@ export async function GET(request: NextRequest) {
         let totalUsers = 0;
         try {
             // listUsers is paginated, get first page for count
-            const listResult = await adminAuth.listUsers(1000);
+            const listResult = await getAdminAuth().listUsers(1000);
             totalUsers = listResult.users.length;
         } catch (e) {
             console.error('Error listing users:', e);
@@ -76,7 +75,7 @@ export async function GET(request: NextRequest) {
         // 2. Total feedback items
         let totalFeedback = 0;
         try {
-            const feedbackSnapshot = await adminFirestore.collection('feedback').count().get();
+            const feedbackSnapshot = await getAdminDb().collection('feedback').count().get();
             totalFeedback = feedbackSnapshot.data().count;
         } catch (e) {
             console.error('Error counting feedback:', e);
@@ -92,7 +91,7 @@ export async function GET(request: NextRequest) {
 
         try {
             // Aggregate from all users' history using collectionGroup
-            const historySnapshot = await adminFirestore
+            const historySnapshot = await getAdminDb()
                 .collectionGroup('history')
                 .where('timestamp', '>=', sevenDaysAgo)
                 .orderBy('timestamp', 'desc')

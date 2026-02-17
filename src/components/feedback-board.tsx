@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth, useFirebase } from '@/firebase';
-import { collection, query, where, orderBy, onSnapshot, addDoc, serverTimestamp, updateDoc, doc, arrayUnion, arrayRemove, increment, deleteDoc, getDoc } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -73,19 +72,8 @@ export function FeedbackBoard() {
     }, []);
 
     useEffect(() => {
-        const checkAdmin = async () => {
-            if (!user || !firestore) return;
-            try {
-                const userDoc = await getDoc(doc(firestore, 'users', user.uid));
-                if (userDoc.exists() && userDoc.data().isAdmin === true) {
-                    setIsAdmin(true);
-                }
-            } catch (err) {
-                console.error("Error checking admin status:", err);
-            }
-        };
-        checkAdmin();
-    }, [user, firestore]);
+        setIsAdmin(false);
+    }, [user]);
 
     // Form State
     const [newItemType, setNewItemType] = useState<'bug' | 'suggestion'>('bug');
@@ -93,206 +81,28 @@ export function FeedbackBoard() {
     const [newItemDesc, setNewItemDesc] = useState('');
 
     useEffect(() => {
-        if (!firestore) return;
-
-        const q = query(collection(firestore, 'feedback'), orderBy('upvotes', 'desc'), orderBy('createdAt', 'desc'));
-
-        const unsubscribe = onSnapshot(q, async (snapshot) => {
-            const allItems: FeedbackItem[] = snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-            } as FeedbackItem));
-
-            setBugs(allItems.filter(item => item.type === 'bug'));
-            setSuggestions(allItems.filter(item => item.type === 'suggestion'));
-            setError(null);
-
-            // Fetch author names for new items
-            const newUids = allItems.map(i => i.userId).filter(uid => !authorMap[uid]);
-            if (newUids.length > 0) {
-                const uniqueUids = Array.from(new Set(newUids));
-                const newAuthorData: Record<string, string> = { ...authorMap };
-
-                await Promise.all(uniqueUids.map(async (uid) => {
-                    try {
-                        const uDoc = await getDoc(doc(firestore, 'users', uid));
-                        if (uDoc.exists()) {
-                            const userData = uDoc.data();
-                            newAuthorData[uid] = userData.displayName || userData.email || 'Unknown User';
-                        } else {
-                            newAuthorData[uid] = 'Deleted User';
-                        }
-                    } catch (e) {
-                        newAuthorData[uid] = 'User';
-                    }
-                }));
-                setAuthorMap(newAuthorData);
-            }
-        }, (err) => {
-            console.error("Error fetching feedback:", err);
-            if (err.code === 'permission-denied') {
-                setError("Missing permissions. Please deploy Firestore rules.");
-            } else {
-                setError("Failed to load feedback.");
-            }
-        });
-
-        return () => unsubscribe();
-    }, [firestore]);
+        // Database removed - showing empty state
+        setBugs([]);
+        setSuggestions([]);
+    }, []);
 
     if (!mounted) return null; // Prevent hydration mismatch
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!user || !firestore) {
-            toast({ title: "Sign in required", description: "You must be signed in to submit feedback.", variant: "destructive" });
-            return;
-        }
-
-        setIsSubmitting(true);
-        try {
-            await addDoc(collection(firestore, 'feedback'), {
-                type: newItemType,
-                title: newItemTitle,
-                description: newItemDesc,
-                status: 'pending',
-                upvotes: 0,
-                upvotedBy: [],
-                userId: user.uid,
-                userName: user.displayName || user.email?.split('@')[0] || 'User',
-                createdAt: serverTimestamp()
-            });
-
-            toast({ title: "Feedback Submitted", description: "Thank you for your contribution!" });
-            setOpenSubmitDialog(false);
-            setNewItemTitle('');
-            setNewItemDesc('');
-        } catch (error) {
-            console.error("Error submitting feedback:", error);
-            toast({ title: "Error", description: "Failed to submit feedback.", variant: "destructive" });
-        } finally {
-            setIsSubmitting(false);
-        }
+        toast({ title: "Feature Disabled", description: "Feedback is currently unavailable during system rebuild.", variant: "destructive" });
     };
 
     const handleUpvote = async (item: FeedbackItem) => {
-        if (!user || !firestore) {
-            toast({ title: "Sign in required", description: "You must be signed in to vote.", variant: "destructive" });
-            return;
-        }
-
-        const upvotedBy = item.upvotedBy || [];
-        const userUpvoted = upvotedBy.includes(user.uid);
-        const feedbackRef = doc(firestore, 'feedback', item.id);
-
-        // Optimistic UI Update
-        const updatedItems = (items: FeedbackItem[]) =>
-            items.map(i => {
-                if (i.id === item.id) {
-                    return {
-                        ...i,
-                        upvotes: userUpvoted ? i.upvotes - 1 : i.upvotes + 1,
-                        upvotedBy: userUpvoted
-                            ? i.upvotedBy.filter(id => id !== user.uid)
-                            : [...(i.upvotedBy || []), user.uid]
-                    };
-                }
-                return i;
-            });
-
-        // Apply to both lists (they are filtered later but easier to just update both if they contain the item)
-        setBugs(prev => updatedItems(prev));
-        setSuggestions(prev => updatedItems(prev));
-
-        try {
-            if (userUpvoted) {
-                await updateDoc(feedbackRef, {
-                    upvotes: increment(-1),
-                    upvotedBy: arrayRemove(user.uid)
-                });
-            } else {
-                await updateDoc(feedbackRef, {
-                    upvotes: increment(1),
-                    upvotedBy: arrayUnion(user.uid)
-                });
-            }
-        } catch (error: any) {
-            console.error("Error updating vote:", error);
-
-            // Rollback optimistic update on error
-            // (The onSnapshot will eventually fix the state, but we should revert it now for clarity)
-            // Actually, onSnapshot will fire immediately with the server's truth (or error state), 
-            // but we'll show a toast to explain why it reverted.
-
-            let errorMsg = "Failed to update vote.";
-            if (error?.code === 'permission-denied') {
-                errorMsg = "Firestore permission denied. You can only update your own profile/settings in some rulesets. Ask Admin to allow 'update' on 'feedback' for all authenticated users.";
-            } else if (error?.message) {
-                errorMsg = error.message;
-            }
-
-            toast({
-                title: "Vote failed",
-                description: errorMsg,
-                variant: "destructive"
-            });
-        }
+        toast({ title: "Feature Disabled", description: "Voting is currently unavailable.", variant: "destructive" });
     };
 
     const handleDelete = async (itemId: string) => {
-        if (!firestore) return;
-
-        try {
-            await deleteDoc(doc(firestore, 'feedback', itemId));
-            toast({ title: "Deleted", description: "Feedback item has been removed." });
-        } catch (error: any) {
-            console.error("Error deleting feedback:", error);
-            toast({
-                title: "Delete failed",
-                description: error.code === 'permission-denied'
-                    ? "You don't have permission to delete this."
-                    : "An error occurred while deleting.",
-                variant: "destructive"
-            });
-        } finally {
-            setItemToDelete(null);
-        }
+        toast({ title: "Feature Disabled", variant: "destructive" });
     };
 
-    const handleSaveReply = async (itemId: string) => {
-        if (!firestore || !isAdmin) return;
-        if (!replyText.trim()) {
-            setReplyingTo(null);
-            return;
-        }
-
-        setIsReplying(true);
-        try {
-            await updateDoc(doc(firestore, 'feedback', itemId), {
-                adminReply: replyText,
-                adminReplyAt: serverTimestamp()
-            });
-            toast({ title: "Reply Saved", description: "Your response is now visible to the community." });
-            setReplyingTo(null);
-            setReplyText('');
-        } catch (error) {
-            console.error("Error saving reply:", error);
-            toast({ title: "Failed to save", description: "An error occurred.", variant: "destructive" });
-        } finally {
-            setIsReplying(false);
-        }
-    };
-
-    const handleStatusChange = async (itemId: string, newStatus: string) => {
-        if (!firestore || !isAdmin) return;
-        try {
-            await updateDoc(doc(firestore, 'feedback', itemId), { status: newStatus });
-            toast({ title: "Status Updated", description: `Item is now ${newStatus.replace('-', ' ')}.` });
-        } catch (error) {
-            console.error("Error updating status:", error);
-            toast({ title: "Update failed", variant: "destructive" });
-        }
-    };
+    const handleSaveReply = async (itemId: string) => { };
+    const handleStatusChange = async (itemId: string, newStatus: string) => { };
 
     const StatusBadge = ({ status, itemId }: { status: string, itemId?: string }) => {
         const styles = {

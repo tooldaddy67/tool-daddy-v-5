@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { useUser, useFirestore, useDoc } from '@/firebase';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { useUser } from '@/firebase';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -54,7 +53,6 @@ import { useSettings } from '@/components/settings-provider';
 
 export default function SimpleNotepad() {
   const { user, isUserLoading: isAuthLoading } = useUser();
-  const firestore = useFirestore();
   const { settings } = useSettings();
   const [content, setContent] = useState('');
   const [wordCount, setWordCount] = useState(0);
@@ -73,46 +71,16 @@ export default function SimpleNotepad() {
   const [toolbar, setToolbar] = useState({ visible: false, top: 0, left: 0 });
   const [activeStyle, setActiveStyle] = useState('Paragraph');
 
-  // Firestore Ref
-  const notepadDocRef = useMemo(() => {
-    if (!user || user.isAnonymous || !firestore || !settings.dataPersistence) return null;
-    return doc(firestore, 'users', user.uid, 'settings', 'notepad'); // Storing in settings/notepad for simplicity
-  }, [firestore, user, settings.dataPersistence]);
-
-  const { data: cloudData, isLoading: isCloudLoading } = useDoc(notepadDocRef);
-
-  // Load Initial Content (Local -> Cloud strategy)
+  // Load Initial Content (Local only)
   useEffect(() => {
     if (isAuthLoading) return;
 
-    if (user && !user.isAnonymous && settings.dataPersistence) {
-      // If logged in and cloud data exists, use it
-      if (!isCloudLoading && cloudData) {
-        const cloudContent = (cloudData as any).content || '';
-        const sanitized = DOMPurify.sanitize(cloudContent);
-        if (editorRef.current) editorRef.current.innerHTML = sanitized;
-        setContent(sanitized);
-        updateCounts(sanitized);
-      } else if (!isCloudLoading && !cloudData) {
-        // New user or no cloud data, try loading local
-        const savedContent = localStorage.getItem(LOCAL_STORAGE_KEY);
-        if (savedContent) {
-          if (editorRef.current) editorRef.current.innerHTML = savedContent;
-          setContent(savedContent);
-          updateCounts(savedContent);
-          // Prompt sync or just save to cloud
-          if (notepadDocRef) setDoc(notepadDocRef, { content: savedContent, updatedAt: serverTimestamp() });
-        }
-      }
-    } else {
-      // Guest mode or Data Persistence Disabled
-      const savedContent = localStorage.getItem(LOCAL_STORAGE_KEY);
-      if (savedContent) {
-        const sanitized = DOMPurify.sanitize(savedContent);
-        if (editorRef.current) editorRef.current.innerHTML = sanitized;
-        setContent(sanitized);
-        updateCounts(sanitized);
-      }
+    const savedContent = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (savedContent) {
+      const sanitized = DOMPurify.sanitize(savedContent);
+      if (editorRef.current) editorRef.current.innerHTML = sanitized;
+      setContent(sanitized);
+      updateCounts(sanitized);
     }
 
     const editor = editorRef.current;
@@ -129,7 +97,7 @@ export default function SimpleNotepad() {
       document.removeEventListener('selectionchange', handleSelectionChange);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthLoading, isCloudLoading, !!cloudData, !!user, settings.dataPersistence]);
+  }, [isAuthLoading, !!user]);
 
   const handlePaste = (event: ClipboardEvent) => {
     event.preventDefault();
@@ -161,11 +129,6 @@ export default function SimpleNotepad() {
     setContent(sanitizedContent);
     localStorage.setItem(LOCAL_STORAGE_KEY, sanitizedContent);
     updateCounts(sanitizedContent);
-
-    // Save to Cloud (Debounced ideally, but direct for now for simplicity)
-    if (notepadDocRef) {
-      setDoc(notepadDocRef, { content: sanitizedContent, updatedAt: serverTimestamp() }, { merge: true });
-    }
   };
 
   const handleClear = () => {
@@ -174,9 +137,6 @@ export default function SimpleNotepad() {
       editorRef.current.innerHTML = '';
     }
     localStorage.removeItem(LOCAL_STORAGE_KEY);
-    if (notepadDocRef) {
-      setDoc(notepadDocRef, { content: '', updatedAt: serverTimestamp() }, { merge: true });
-    }
     updateCounts('');
     toast({ title: 'Notepad Cleared' });
   };

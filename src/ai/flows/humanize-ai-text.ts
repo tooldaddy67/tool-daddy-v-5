@@ -7,10 +7,7 @@
 import { humanizerSystemPrompt } from './prompts/humanizer-prompt';
 import { type HumanizeTextInput, type HumanizeTextOutput } from './humanize-ai-text.types';
 import { headers } from 'next/headers';
-import { adminFirestore } from '@/lib/firebase-admin';
 import { createFlowAi } from '@/ai/genkit';
-import admin from 'firebase-admin';
-import { checkMaintenanceMode } from '@/app/actions/system-config';
 import { checkPersistentRateLimit } from '@/lib/rate-limiter';
 
 const ai = createFlowAi('humanizer');
@@ -29,9 +26,6 @@ const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 60 seconds
 // The function now returns a structured object to avoid throwing unhandled server errors.
 export async function humanizeText(input: HumanizeTextInput): Promise<{ data: HumanizeTextOutput | null; error: string | null; }> {
     try {
-        // --- Phase 0: Maintenance Check ---
-        await checkMaintenanceMode();
-
         // --- Phase 2: Rate Limit Enforcement ---
         const rateLimit = await checkPersistentRateLimit('ai-text-humanizer');
 

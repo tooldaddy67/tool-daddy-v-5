@@ -1,0 +1,268 @@
+[2026-02-17T17:15:42.553Z] VERIFY ATTEMPT: IP=::1, PW_SET=true
+[2026-02-17T17:15:42.554Z] Comparison: InputLen=29, EnvLen=29, Match=true
+[2026-02-17T17:15:42.555Z] Admin DB initialized: true
+[2026-02-17T17:15:42.555Z] Starting doc fetch for IP=::1...
+[2026-02-17T17:15:47.577Z] Doc fetch FAILED: DATABASE_TIMEOUT
+[2026-02-17T17:17:02.987Z] VERIFY ATTEMPT: IP=::1, PW_SET=true
+[2026-02-17T17:17:02.988Z] Comparison: InputLen=29, EnvLen=29, Match=true
+[2026-02-17T17:17:02.989Z] [Init] Using existing app: tool-daddy-admin (Project: tool-daddy-v-5)
+[2026-02-17T17:17:02.989Z] Admin DB initialized: true
+[2026-02-17T17:17:02.990Z] Starting doc fetch for IP=::1...
+[2026-02-17T17:17:07.996Z] Doc fetch FAILED: DATABASE_TIMEOUT
+[2026-02-17T17:18:44.522Z] [Init] Using existing app: tool-daddy-admin (Project: tool-daddy-v-5)
+[2026-02-17T17:18:44.577Z] [Init] Using existing app: tool-daddy-admin (Project: tool-daddy-v-5)
+[2026-02-17T17:18:44.626Z] [Init] Using existing app: tool-daddy-admin (Project: tool-daddy-v-5)
+[2026-02-17T17:19:06.191Z] [Init] Using existing app: tool-daddy-admin (Project: tool-daddy-v-5)
+[2026-02-17T17:19:06.265Z] [Init] Using existing app: tool-daddy-admin (Project: tool-daddy-v-5)
+[2026-02-17T17:19:06.317Z] [Init] Using existing app: tool-daddy-admin (Project: tool-daddy-v-5)
+[2026-02-17T17:19:23.773Z] [Init] Using existing app: tool-daddy-admin (Project: tool-daddy-v-5)
+[2026-02-17T17:19:23.842Z] [Init] Using existing app: tool-daddy-admin (Project: tool-daddy-v-5)
+[2026-02-17T17:19:23.924Z] [Init] Using existing app: tool-daddy-admin (Project: tool-daddy-v-5)
+[2026-02-17T17:19:28.778Z] checkIpLockout FATAL: DATABASE_TIMEOUT
+[2026-02-17T17:19:28.845Z] checkIpLockout FATAL: DATABASE_TIMEOUT
+[2026-02-17T17:19:28.935Z] checkIpLockout FATAL: DATABASE_TIMEOUT
+[2026-02-17T17:19:44.704Z] [Init] Using existing app: tool-daddy-admin (Project: tool-daddy-v-5)
+[2026-02-17T17:19:44.783Z] [Init] Using existing app: tool-daddy-admin (Project: tool-daddy-v-5)
+[2026-02-17T17:19:44.838Z] [Init] Using existing app: tool-daddy-admin (Project: tool-daddy-v-5)
+[2026-02-17T17:19:49.713Z] checkIpLockout FATAL: DATABASE_TIMEOUT
+[2026-02-17T17:19:49.793Z] checkIpLockout FATAL: DATABASE_TIMEOUT
+[2026-02-17T17:19:49.854Z] checkIpLockout FATAL: DATABASE_TIMEOUT
+[2026-02-17T17:20:09.044Z] [Init] Dev Mode: Deleting existing app tool-daddy-admin
+[2026-02-17T17:20:09.048Z] [Init] Starting Init: PID=tool-daddy-v-5, EMAIL=undefined, KEY=false, JSON=true
+[2026-02-17T17:20:09.048Z] [Init] Strategy 2: Attempting JSON key
+[2026-02-17T17:20:09.049Z] [Init] Strategy 2: JSON parsed. Project=tool-daddy-v-5
+[2026-02-17T17:20:09.056Z] [Init] Strategy 2 FAILED: Failed to parse private key: Error: Too few bytes to parse DER.
+[2026-02-17T17:20:09.057Z] [Init] Strategy 3: Fallback to ADC for tool-daddy-v-5
+[2026-02-17T17:20:09.059Z] [Init] Strategy 3 SUCCESS
+[2026-02-17T17:20:09.163Z] [Init] Dev Mode: Deleting existing app tool-daddy-admin
+[2026-02-17T17:20:09.164Z] [Init] Starting Init: PID=tool-daddy-v-5, EMAIL=undefined, KEY=false, JSON=true
+[2026-02-17T17:20:09.165Z] [Init] Strategy 2: Attempting JSON key
+[2026-02-17T17:20:09.165Z] [Init] Strategy 2: JSON parsed. Project=tool-daddy-v-5
+[2026-02-17T17:20:09.167Z] [Init] Strategy 2 FAILED: Failed to parse private key: Error: Too few bytes to parse DER.
+[2026-02-17T17:20:09.167Z] [Init] Strategy 3: Fallback to ADC for tool-daddy-v-5
+[2026-02-17T17:20:09.168Z] [Init] Strategy 3 SUCCESS
+[2026-02-17T17:20:09.217Z] [Init] Dev Mode: Deleting existing app tool-daddy-admin
+[2026-02-17T17:20:09.218Z] [Init] Starting Init: PID=tool-daddy-v-5, EMAIL=undefined, KEY=false, JSON=true
+[2026-02-17T17:20:09.219Z] [Init] Strategy 2: Attempting JSON key
+[2026-02-17T17:20:09.219Z] [Init] Strategy 2: JSON parsed. Project=tool-daddy-v-5
+[2026-02-17T17:20:09.221Z] [Init] Strategy 2 FAILED: Failed to parse private key: Error: Too few bytes to parse DER.
+[2026-02-17T17:20:09.221Z] [Init] Strategy 3: Fallback to ADC for tool-daddy-v-5
+[2026-02-17T17:20:09.222Z] [Init] Strategy 3 SUCCESS
+[2026-02-17T17:20:14.079Z] checkIpLockout FATAL: DATABASE_TIMEOUT
+[2026-02-17T17:20:14.188Z] checkIpLockout FATAL: DATABASE_TIMEOUT
+[2026-02-17T17:20:14.235Z] checkIpLockout FATAL: DATABASE_TIMEOUT
+[2026-02-17T17:20:29.325Z] [Init] Dev Mode: Deleting existing app tool-daddy-admin
+[2026-02-17T17:20:29.326Z] [Init] Starting Init: PID=tool-daddy-v-5, EMAIL=undefined, KEY=false, JSON=true
+[2026-02-17T17:20:29.326Z] [Init] Strategy 2: Attempting JSON key
+[2026-02-17T17:20:29.327Z] [Init] Strategy 2: JSON parsed. Project=tool-daddy-v-5
+[2026-02-17T17:20:29.328Z] [Init] Strategy 2 FAILED: Failed to parse private key: Error: Too few bytes to parse DER.
+[2026-02-17T17:20:29.328Z] [Init] Strategy 3: Fallback to ADC for tool-daddy-v-5
+[2026-02-17T17:20:29.329Z] [Init] Strategy 3 SUCCESS
+[2026-02-17T17:20:29.331Z] [checkIpLockout] Starting fetch for IP=__1...
+[2026-02-17T17:20:29.379Z] [Init] Dev Mode: Deleting existing app tool-daddy-admin
+[2026-02-17T17:20:29.380Z] [Init] Starting Init: PID=tool-daddy-v-5, EMAIL=undefined, KEY=false, JSON=true
+[2026-02-17T17:20:29.380Z] [Init] Strategy 2: Attempting JSON key
+[2026-02-17T17:20:29.381Z] [Init] Strategy 2: JSON parsed. Project=tool-daddy-v-5
+[2026-02-17T17:20:29.382Z] [Init] Strategy 2 FAILED: Failed to parse private key: Error: Too few bytes to parse DER.
+[2026-02-17T17:20:29.383Z] [Init] Strategy 3: Fallback to ADC for tool-daddy-v-5
+[2026-02-17T17:20:29.384Z] [Init] Strategy 3 SUCCESS
+[2026-02-17T17:20:29.388Z] [checkIpLockout] Starting fetch for IP=__1...
+[2026-02-17T17:20:29.448Z] [Init] Dev Mode: Deleting existing app tool-daddy-admin
+[2026-02-17T17:20:29.449Z] [Init] Starting Init: PID=tool-daddy-v-5, EMAIL=undefined, KEY=false, JSON=true
+[2026-02-17T17:20:29.449Z] [Init] Strategy 2: Attempting JSON key
+[2026-02-17T17:20:29.449Z] [Init] Strategy 2: JSON parsed. Project=tool-daddy-v-5
+[2026-02-17T17:20:29.450Z] [Init] Strategy 2 FAILED: Failed to parse private key: Error: Too few bytes to parse DER.
+[2026-02-17T17:20:29.451Z] [Init] Strategy 3: Fallback to ADC for tool-daddy-v-5
+[2026-02-17T17:20:29.452Z] [Init] Strategy 3 SUCCESS
+[2026-02-17T17:20:29.455Z] [checkIpLockout] Starting fetch for IP=__1...
+[2026-02-17T17:20:34.342Z] checkIpLockout FATAL: DATABASE_TIMEOUT
+[2026-02-17T17:20:34.396Z] checkIpLockout FATAL: DATABASE_TIMEOUT
+[2026-02-17T17:20:34.466Z] checkIpLockout FATAL: DATABASE_TIMEOUT
+[2026-02-17T17:21:45.235Z] [Init] Dev Mode: Deleting existing app tool-daddy-admin
+[2026-02-17T17:21:45.236Z] [Init] Starting Init: PID=tool-daddy-v-5, EMAIL=undefined, KEY=false, JSON=true
+[2026-02-17T17:21:45.236Z] [Init] Strategy 2: Attempting JSON key
+[2026-02-17T17:21:45.237Z] [Init] Strategy 2: JSON parsed. Project=tool-daddy-v-5
+[2026-02-17T17:21:45.239Z] [Init] Strategy 2 FAILED: Failed to parse private key: Error: Too few bytes to parse DER.
+[2026-02-17T17:21:45.239Z] [Init] Strategy 3: Fallback to ADC for tool-daddy-v-5
+[2026-02-17T17:21:45.240Z] [Init] Strategy 3 SUCCESS
+[2026-02-17T17:21:45.244Z] [checkIpLockout] Starting fetch for IP=__1...
+[2026-02-17T17:21:50.259Z] checkIpLockout FATAL: DATABASE_TIMEOUT
+[2026-02-17T17:21:51.914Z] [Init] Dev Mode: Deleting existing app tool-daddy-admin
+[2026-02-17T17:21:51.915Z] [Init] Starting Init: PID=tool-daddy-v-5, EMAIL=undefined, KEY=false, JSON=true
+[2026-02-17T17:21:51.915Z] [Init] Strategy 2: Attempting JSON key
+[2026-02-17T17:21:51.916Z] [Init] Strategy 2: JSON parsed. Project=tool-daddy-v-5
+[2026-02-17T17:21:51.917Z] [Init] Strategy 2 FAILED: Failed to parse private key: Error: Too few bytes to parse DER.
+[2026-02-17T17:21:51.918Z] [Init] Strategy 3: Fallback to ADC for tool-daddy-v-5
+[2026-02-17T17:21:51.919Z] [Init] Strategy 3 SUCCESS
+[2026-02-17T17:21:52.437Z] [Init] Dev Mode: Deleting existing app tool-daddy-admin
+[2026-02-17T17:21:52.438Z] [Init] Starting Init: PID=tool-daddy-v-5, EMAIL=undefined, KEY=false, JSON=true
+[2026-02-17T17:21:52.438Z] [Init] Strategy 2: Attempting JSON key
+[2026-02-17T17:21:52.439Z] [Init] Strategy 2: JSON parsed. Project=tool-daddy-v-5
+[2026-02-17T17:21:52.441Z] [Init] Strategy 2 FAILED: Failed to parse private key: Error: Too few bytes to parse DER.
+[2026-02-17T17:21:52.443Z] [Init] Strategy 3: Fallback to ADC for tool-daddy-v-5
+[2026-02-17T17:21:52.444Z] [Init] Strategy 3 SUCCESS
+[2026-02-17T17:21:52.632Z] [Init] Dev Mode: Deleting existing app tool-daddy-admin
+[2026-02-17T17:21:52.632Z] [Init] Starting Init: PID=tool-daddy-v-5, EMAIL=undefined, KEY=false, JSON=true
+[2026-02-17T17:21:52.633Z] [Init] Strategy 2: Attempting JSON key
+[2026-02-17T17:21:52.633Z] [Init] Strategy 2: JSON parsed. Project=tool-daddy-v-5
+[2026-02-17T17:21:52.635Z] [Init] Strategy 2 FAILED: Failed to parse private key: Error: Too few bytes to parse DER.
+[2026-02-17T17:21:52.637Z] [Init] Strategy 3: Fallback to ADC for tool-daddy-v-5
+[2026-02-17T17:21:52.637Z] [Init] Strategy 3 SUCCESS
+[2026-02-17T17:21:59.300Z] VERIFY ATTEMPT: IP=__1, PW_SET=true
+[2026-02-17T17:21:59.301Z] Comparison: InputLen=29, EnvLen=29, Match=true
+[2026-02-17T17:21:59.301Z] [Init] Dev Mode: Deleting existing app tool-daddy-admin
+[2026-02-17T17:21:59.302Z] [Init] Starting Init: PID=tool-daddy-v-5, EMAIL=undefined, KEY=false, JSON=true
+[2026-02-17T17:21:59.302Z] [Init] Strategy 2: Attempting JSON key
+[2026-02-17T17:21:59.302Z] [Init] Strategy 2: JSON parsed. Project=tool-daddy-v-5
+[2026-02-17T17:21:59.304Z] [Init] Strategy 2 FAILED: Failed to parse private key: Error: Too few bytes to parse DER.
+[2026-02-17T17:21:59.305Z] [Init] Strategy 3: Fallback to ADC for tool-daddy-v-5
+[2026-02-17T17:21:59.306Z] [Init] Strategy 3 SUCCESS
+[2026-02-17T17:21:59.310Z] Admin DB initialized: true
+[2026-02-17T17:21:59.311Z] Starting doc fetch for IP=__1...
+[2026-02-17T17:22:04.315Z] Doc fetch FAILED: DATABASE_TIMEOUT
+[2026-02-17T17:24:57.079Z] [Init] Starting Init: PID=tool-daddy-v-5, EMAIL=undefined, KEY=false, JSON=true
+[2026-02-17T17:24:57.080Z] [Init] Strategy 2: Attempting JSON key
+[2026-02-17T17:24:57.081Z] [Init] Strategy 2: JSON parsed. Project=tool-daddy-v-5
+[2026-02-17T17:24:57.082Z] [Init] Strategy 2: Key cleaned. 1703 -> 1702
+[2026-02-17T17:24:57.082Z] [Init] Strategy 2 FAILED: Failed to parse private key: Error: Too few bytes to parse DER.
+[2026-02-17T17:24:57.083Z] [Init] Strategy 3: Fallback to ADC for tool-daddy-v-5
+[2026-02-17T17:24:57.084Z] [Init] Strategy 3 SUCCESS
+[2026-02-17T17:24:57.087Z] [checkIpLockout] Starting fetch for IP=__1...
+[2026-02-17T17:24:57.152Z] [Init] Starting Init: PID=tool-daddy-v-5, EMAIL=undefined, KEY=false, JSON=true
+[2026-02-17T17:24:57.153Z] [Init] Strategy 2: Attempting JSON key
+[2026-02-17T17:24:57.154Z] [Init] Strategy 2: JSON parsed. Project=tool-daddy-v-5
+[2026-02-17T17:24:57.154Z] [Init] Strategy 2: Key cleaned. 1703 -> 1702
+[2026-02-17T17:24:57.155Z] [Init] Strategy 2 FAILED: Failed to parse private key: Error: Too few bytes to parse DER.
+[2026-02-17T17:24:57.155Z] [Init] Strategy 3: Fallback to ADC for tool-daddy-v-5
+[2026-02-17T17:24:57.156Z] [Init] Strategy 3 SUCCESS
+[2026-02-17T17:24:57.159Z] [checkIpLockout] Starting fetch for IP=__1...
+[2026-02-17T17:24:57.206Z] [Init] Starting Init: PID=tool-daddy-v-5, EMAIL=undefined, KEY=false, JSON=true
+[2026-02-17T17:24:57.206Z] [Init] Strategy 2: Attempting JSON key
+[2026-02-17T17:24:57.207Z] [Init] Strategy 2: JSON parsed. Project=tool-daddy-v-5
+[2026-02-17T17:24:57.207Z] [Init] Strategy 2: Key cleaned. 1703 -> 1702
+[2026-02-17T17:24:57.207Z] [Init] Strategy 2 FAILED: Failed to parse private key: Error: Too few bytes to parse DER.
+[2026-02-17T17:24:57.208Z] [Init] Strategy 3: Fallback to ADC for tool-daddy-v-5
+[2026-02-17T17:24:57.209Z] [Init] Strategy 3 SUCCESS
+[2026-02-17T17:24:57.211Z] [checkIpLockout] Starting fetch for IP=__1...
+[2026-02-17T17:25:02.098Z] checkIpLockout FATAL: DATABASE_TIMEOUT
+[2026-02-17T17:25:02.174Z] checkIpLockout FATAL: DATABASE_TIMEOUT
+[2026-02-17T17:25:02.223Z] checkIpLockout FATAL: DATABASE_TIMEOUT
+[2026-02-17T17:25:20.114Z] [Init] Starting Init: PID=tool-daddy-v-5, EMAIL=undefined, KEY=false, JSON=true
+[2026-02-17T17:25:20.115Z] [Init] Strategy 2: Attempting JSON key
+[2026-02-17T17:25:20.115Z] [Init] Strategy 2: JSON parsed. Project=tool-daddy-v-5
+[2026-02-17T17:25:20.115Z] [Init] Strategy 2: Key cleaned. 1703 -> 1678
+[2026-02-17T17:25:20.116Z] [Init] Strategy 2 FAILED: Failed to parse private key: Error: Too few bytes to parse DER.
+[2026-02-17T17:25:20.117Z] [Init] Strategy 3: Fallback to ADC for tool-daddy-v-5
+[2026-02-17T17:25:20.117Z] [Init] Strategy 3 SUCCESS
+[2026-02-17T17:25:20.121Z] [Init] Starting Init: PID=tool-daddy-v-5, EMAIL=undefined, KEY=false, JSON=true
+[2026-02-17T17:25:20.121Z] [Init] Strategy 2: Attempting JSON key
+[2026-02-17T17:25:20.121Z] [Init] Strategy 2: JSON parsed. Project=tool-daddy-v-5
+[2026-02-17T17:25:20.122Z] [Init] Strategy 2: Key cleaned. 1703 -> 1678
+[2026-02-17T17:25:20.123Z] [Init] Strategy 2 FAILED: Failed to parse private key: Error: Too few bytes to parse DER.
+[2026-02-17T17:25:20.124Z] [Init] Strategy 3: Fallback to ADC for tool-daddy-v-5
+[2026-02-17T17:25:20.124Z] [Init] Strategy 3 SUCCESS
+[2026-02-17T17:25:20.159Z] [Init] Starting Init: PID=tool-daddy-v-5, EMAIL=undefined, KEY=false, JSON=true
+[2026-02-17T17:25:20.159Z] [Init] Strategy 2: Attempting JSON key
+[2026-02-17T17:25:20.160Z] [Init] Strategy 2: JSON parsed. Project=tool-daddy-v-5
+[2026-02-17T17:25:20.160Z] [Init] Strategy 2: Key cleaned. 1703 -> 1678
+[2026-02-17T17:25:20.161Z] [Init] Strategy 2 FAILED: Failed to parse private key: Error: Too few bytes to parse DER.
+[2026-02-17T17:25:20.162Z] [Init] Strategy 3: Fallback to ADC for tool-daddy-v-5
+[2026-02-17T17:25:20.162Z] [Init] Strategy 3 SUCCESS
+[2026-02-17T17:25:20.166Z] [checkIpLockout] Starting fetch for IP=__1...
+[2026-02-17T17:25:20.211Z] [Init] Starting Init: PID=tool-daddy-v-5, EMAIL=undefined, KEY=false, JSON=true
+[2026-02-17T17:25:20.211Z] [Init] Strategy 2: Attempting JSON key
+[2026-02-17T17:25:20.212Z] [Init] Strategy 2: JSON parsed. Project=tool-daddy-v-5
+[2026-02-17T17:25:20.212Z] [Init] Strategy 2: Key cleaned. 1703 -> 1678
+[2026-02-17T17:25:20.213Z] [Init] Strategy 2 FAILED: Failed to parse private key: Error: Too few bytes to parse DER.
+[2026-02-17T17:25:20.214Z] [Init] Strategy 3: Fallback to ADC for tool-daddy-v-5
+[2026-02-17T17:25:20.214Z] [Init] Strategy 3 SUCCESS
+[2026-02-17T17:25:20.217Z] [checkIpLockout] Starting fetch for IP=__1...
+[2026-02-17T17:25:20.285Z] [Init] Starting Init: PID=tool-daddy-v-5, EMAIL=undefined, KEY=false, JSON=true
+[2026-02-17T17:25:20.286Z] [Init] Strategy 2: Attempting JSON key
+[2026-02-17T17:25:20.286Z] [Init] Strategy 2: JSON parsed. Project=tool-daddy-v-5
+[2026-02-17T17:25:20.287Z] [Init] Strategy 2: Key cleaned. 1703 -> 1678
+[2026-02-17T17:25:20.288Z] [Init] Strategy 2 FAILED: Failed to parse private key: Error: Too few bytes to parse DER.
+[2026-02-17T17:25:20.289Z] [Init] Strategy 3: Fallback to ADC for tool-daddy-v-5
+[2026-02-17T17:25:20.290Z] [Init] Strategy 3 SUCCESS
+[2026-02-17T17:25:20.294Z] [checkIpLockout] Starting fetch for IP=__1...
+[2026-02-17T17:25:25.168Z] checkIpLockout FATAL: DATABASE_TIMEOUT
+[2026-02-17T17:25:25.225Z] checkIpLockout FATAL: DATABASE_TIMEOUT
+[2026-02-17T17:25:25.296Z] checkIpLockout FATAL: DATABASE_TIMEOUT
+[2026-02-17T17:28:20.725Z] [Init] Starting Init: PID=tool-daddy-v-5, EMAIL=undefined, KEY=false, JSON=true
+[2026-02-17T17:28:20.726Z] [Init] Strategy 2: Attempting JSON key
+[2026-02-17T17:28:20.726Z] [Init] Strategy 2: JSON parsed. Project=tool-daddy-v-5
+[2026-02-17T17:28:20.727Z] [Init] Strategy 2: Key cleaned. 1703 -> 1703
+[2026-02-17T17:28:20.728Z] [Init] Strategy 2 FAILED: Failed to parse private key: Error: Too few bytes to parse DER.
+[2026-02-17T17:28:20.729Z] [Init] Strategy 3: Fallback to ADC for tool-daddy-v-5
+[2026-02-17T17:28:20.729Z] [Init] Strategy 3 SUCCESS
+[2026-02-17T17:28:20.732Z] [checkIpLockout] Starting fetch for IP=__1...
+[2026-02-17T17:28:20.798Z] [Init] Starting Init: PID=tool-daddy-v-5, EMAIL=undefined, KEY=false, JSON=true
+[2026-02-17T17:28:20.798Z] [Init] Strategy 2: Attempting JSON key
+[2026-02-17T17:28:20.798Z] [Init] Strategy 2: JSON parsed. Project=tool-daddy-v-5
+[2026-02-17T17:28:20.799Z] [Init] Strategy 2: Key cleaned. 1703 -> 1703
+[2026-02-17T17:28:20.799Z] [Init] Strategy 2 FAILED: Failed to parse private key: Error: Too few bytes to parse DER.
+[2026-02-17T17:28:20.799Z] [Init] Strategy 3: Fallback to ADC for tool-daddy-v-5
+[2026-02-17T17:28:20.800Z] [Init] Strategy 3 SUCCESS
+[2026-02-17T17:28:20.802Z] [checkIpLockout] Starting fetch for IP=__1...
+[2026-02-17T17:28:20.827Z] [Init] Starting Init: PID=tool-daddy-v-5, EMAIL=undefined, KEY=false, JSON=true
+[2026-02-17T17:28:20.828Z] [Init] Strategy 2: Attempting JSON key
+[2026-02-17T17:28:20.828Z] [Init] Strategy 2: JSON parsed. Project=tool-daddy-v-5
+[2026-02-17T17:28:20.828Z] [Init] Strategy 2: Key cleaned. 1703 -> 1703
+[2026-02-17T17:28:20.828Z] [Init] Strategy 2 FAILED: Failed to parse private key: Error: Too few bytes to parse DER.
+[2026-02-17T17:28:20.829Z] [Init] Strategy 3: Fallback to ADC for tool-daddy-v-5
+[2026-02-17T17:28:20.829Z] [Init] Strategy 3 SUCCESS
+[2026-02-17T17:28:20.831Z] [checkIpLockout] Starting fetch for IP=__1...
+[2026-02-17T17:28:25.737Z] checkIpLockout FATAL: DATABASE_TIMEOUT
+[2026-02-17T17:28:25.814Z] checkIpLockout FATAL: DATABASE_TIMEOUT
+[2026-02-17T17:28:25.845Z] checkIpLockout FATAL: DATABASE_TIMEOUT
+[2026-02-17T17:31:12.400Z] VERIFY ATTEMPT: IP=__1, PW_SET=true
+[2026-02-17T17:31:12.401Z] Comparison: InputLen=29, EnvLen=29, Match=true
+[2026-02-17T17:31:12.402Z] [Init] Starting Init: PID=tool-daddy-v-5, EMAIL=undefined, KEY=false, JSON=true
+[2026-02-17T17:31:12.402Z] [Init] Strategy 2: Attempting JSON key
+[2026-02-17T17:31:12.402Z] [Init] Strategy 2: JSON parsed. Project=tool-daddy-v-5
+[2026-02-17T17:31:12.403Z] [Init] Strategy 2: Key cleaned. 1703 -> 1703
+[2026-02-17T17:31:12.403Z] [Init] Strategy 2 FAILED: Failed to parse private key: Error: Too few bytes to parse DER.
+[2026-02-17T17:31:12.404Z] [Init] Strategy 3: Fallback to ADC for tool-daddy-v-5
+[2026-02-17T17:31:12.405Z] [Init] Strategy 3 SUCCESS
+[2026-02-17T17:31:12.407Z] Admin DB initialized: true
+[2026-02-17T17:31:12.408Z] Starting doc fetch for IP=__1...
+[2026-02-17T17:31:17.410Z] Doc fetch FAILED: DATABASE_TIMEOUT
+[2026-02-17T17:31:37.509Z] [Init] Starting Init: PID=tool-daddy-v-5, EMAIL=undefined, KEY=false, JSON=true
+[2026-02-17T17:31:37.509Z] [Init] Strategy 2: Attempting JSON key
+[2026-02-17T17:31:37.509Z] [Init] Strategy 2: JSON parsed. Project=tool-daddy-v-5
+[2026-02-17T17:31:37.510Z] [Init] Strategy 2: Key cleaned. 1703 -> 1703
+[2026-02-17T17:31:37.510Z] [Init] Strategy 2 FAILED: Failed to parse private key: Error: Too few bytes to parse DER.
+[2026-02-17T17:31:37.511Z] [Init] Strategy 3: Fallback to ADC for tool-daddy-v-5
+[2026-02-17T17:31:37.511Z] [Init] Strategy 3 SUCCESS
+[2026-02-17T17:31:37.514Z] [checkIpLockout] Starting fetch for IP=__1...
+[2026-02-17T17:31:37.578Z] [Init] Starting Init: PID=tool-daddy-v-5, EMAIL=undefined, KEY=false, JSON=true
+[2026-02-17T17:31:37.579Z] [Init] Strategy 2: Attempting JSON key
+[2026-02-17T17:31:37.579Z] [Init] Strategy 2: JSON parsed. Project=tool-daddy-v-5
+[2026-02-17T17:31:37.580Z] [Init] Strategy 2: Key cleaned. 1703 -> 1703
+[2026-02-17T17:31:37.580Z] [Init] Strategy 2 FAILED: Failed to parse private key: Error: Too few bytes to parse DER.
+[2026-02-17T17:31:37.581Z] [Init] Strategy 3: Fallback to ADC for tool-daddy-v-5
+[2026-02-17T17:31:37.582Z] [Init] Strategy 3 SUCCESS
+[2026-02-17T17:31:37.585Z] [checkIpLockout] Starting fetch for IP=__1...
+[2026-02-17T17:31:37.629Z] [Init] Starting Init: PID=tool-daddy-v-5, EMAIL=undefined, KEY=false, JSON=true
+[2026-02-17T17:31:37.629Z] [Init] Strategy 2: Attempting JSON key
+[2026-02-17T17:31:37.630Z] [Init] Strategy 2: JSON parsed. Project=tool-daddy-v-5
+[2026-02-17T17:31:37.630Z] [Init] Strategy 2: Key cleaned. 1703 -> 1703
+[2026-02-17T17:31:37.631Z] [Init] Strategy 2 FAILED: Failed to parse private key: Error: Too few bytes to parse DER.
+[2026-02-17T17:31:37.632Z] [Init] Strategy 3: Fallback to ADC for tool-daddy-v-5
+[2026-02-17T17:31:37.632Z] [Init] Strategy 3 SUCCESS
+[2026-02-17T17:31:37.635Z] [checkIpLockout] Starting fetch for IP=__1...
+[2026-02-17T17:31:42.530Z] checkIpLockout FATAL: DATABASE_TIMEOUT
+[2026-02-17T17:31:42.592Z] checkIpLockout FATAL: DATABASE_TIMEOUT
+[2026-02-17T17:31:42.638Z] checkIpLockout FATAL: DATABASE_TIMEOUT
+[2026-02-17T17:32:52.216Z] VERIFY ATTEMPT: IP=__1, PW_SET=true
+[2026-02-17T17:32:52.217Z] Comparison: InputLen=29, EnvLen=29, Match=true
+[2026-02-17T17:32:52.218Z] [Init] Starting Init: PID=tool-daddy-v-5, EMAIL=undefined, KEY=false, JSON=true
+[2026-02-17T17:32:52.218Z] [Init] Strategy 2: Attempting JSON key
+[2026-02-17T17:32:52.218Z] [Init] Strategy 2: JSON parsed. Project=tool-daddy-v-5
+[2026-02-17T17:32:52.219Z] [Init] Strategy 2: Key cleaned. 1703 -> 1703
+[2026-02-17T17:32:52.220Z] [Init] Strategy 2 FAILED: Failed to parse private key: Error: Too few bytes to parse DER.
+[2026-02-17T17:32:52.222Z] [Init] Strategy 3: Fallback to ADC for tool-daddy-v-5
+[2026-02-17T17:32:52.222Z] [Init] Strategy 3 SUCCESS
+[2026-02-17T17:32:52.225Z] Admin DB initialized: true
+[2026-02-17T17:32:52.226Z] Starting doc fetch for IP=__1...
+[2026-02-17T17:32:57.230Z] Doc fetch FAILED: DATABASE_TIMEOUT

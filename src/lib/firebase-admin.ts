@@ -1,46 +1,62 @@
 import admin from 'firebase-admin';
+import * as fs from 'fs';
+import * as path from 'path';
+
+function debugFileLog(msg: string) {
+    try {
+        const logPath = path.join(process.cwd(), 'admin_debug.log');
+        const timestamp = new Date().toISOString();
+        fs.appendFileSync(logPath, `[${timestamp}] [Init] ${msg}\n`);
+    } catch (e) {
+        // Ignore logging errors
+    }
+}
 
 /**
  * Robustly cleans a PEM private key from environment variables.
- * Handles literal \n, surrounding quotes, and whitespace.
  */
 function cleanPrivateKey(key: string | undefined): string | undefined {
     if (!key) return undefined;
 
-    let cleaned = key.trim();
+    // Normalize to string and trim
+    let cleaned = String(key).trim();
 
-    // 1. Remove surrounding quotes if they exist
-    if ((cleaned.startsWith('"') && cleaned.endsWith('"')) || (cleaned.startsWith("'") && cleaned.endsWith("'"))) {
-        cleaned = cleaned.slice(1, -1).trim();
+    // 1. Remove surrounding quotes (including escaped ones)
+    cleaned = cleaned.replace(/^["']|["']$/g, '').trim();
+
+    // 2. Handle literal escaped newlines which are common in env vars
+    cleaned = cleaned.replace(/\\n/g, '\n').replace(/\\r/g, '\r');
+
+    // 3. Extract the base64 body if markers are present
+    const markers = ['-----BEGIN PRIVATE KEY-----', '-----END PRIVATE KEY-----'];
+    let body = cleaned;
+    if (body.includes(markers[0])) {
+        const parts = body.split(markers[0]);
+        if (parts.length > 1) {
+            body = parts[1].split(markers[1])[0] || body;
+        }
     }
 
-    // 2. Normalize literal \n results to real newlines
-    cleaned = cleaned.replace(/\\n/g, '\n');
+    // Strip ALL non-base64 characters
+    const base64Only = body.replace(/[^\w+/=]/g, '');
 
-    // 3. Basic validation: ensure BEGIN and END markers are present
-    if (cleaned.includes('-----BEGIN PRIVATE KEY-----') && cleaned.includes('-----END PRIVATE KEY-----')) {
-        // Safe logging of reconstructed key length and snippet
-        console.log(`[FirebaseAdmin] cleanPrivateKey: Standardized key length=${cleaned.length}`);
-        return cleaned;
-    }
+    // PEM format: 64 chars per line
+    const lines = base64Only.match(/.{1,64}/g) || [];
+    const pemBody = lines.join('\n');
 
-    // If it's just a raw base64 string without markers, try to reconstruct it
-    // Some people put the raw base64 in the env var
-    if (!cleaned.includes('-----')) {
-        console.log('[FirebaseAdmin] cleanPrivateKey: Reconstructing key from raw base64');
-        return `-----BEGIN PRIVATE KEY-----\n${cleaned}\n-----END PRIVATE KEY-----\n`;
-    }
-
-    return cleaned;
+    return `${markers[0]}\n${pemBody}\n${markers[1]}\n`;
 }
 
 const ADMIN_APP_NAME = 'tool-daddy-admin';
 
 export function getInitializeApp() {
-    // Check for the specific named app
     const existingApp = admin.apps.find(app => app && app.name === ADMIN_APP_NAME);
     if (existingApp) {
-        return existingApp!;
+        if (process.env.NODE_ENV === 'development') {
+            try { existingApp.delete(); } catch (e) { }
+        } else {
+            return existingApp!;
+        }
     }
 
     try {
@@ -49,18 +65,13 @@ export function getInitializeApp() {
         const rawPid = process.env.FIREBASE_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
         const rawJson = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
 
-        console.log(`[FirebaseAdmin] Starting Initialization Diagnostic (${ADMIN_APP_NAME}):`);
-        console.log(` - PID: ${rawPid || '[MISSING]'}`);
-        console.log(` - EMAIL: ${rawEmail || '[MISSING]'}`);
-        console.log(` - KEY: ${rawKey ? `[PRESENT, length=${rawKey.length}]` : '[MISSING]'}`);
-        console.log(` - JSON_KEY: ${rawJson ? `[PRESENT, length=${rawJson.length}]` : '[MISSING]'}`);
+        debugFileLog(`Starting Init: PID=${rawPid}, EMAIL=${rawEmail}, KEY=${!!rawKey}, JSON=${!!rawJson}`);
 
         let privateKey = cleanPrivateKey(rawKey);
         let clientEmail = rawEmail?.trim();
         let projectId = rawPid?.trim();
 
-        // Strip quotes
-        const strip = (s: string | undefined) => {
+        const stripQuotes = (s: string | undefined) => {
             if (!s) return s;
             let val = s.trim();
             if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
@@ -69,83 +80,65 @@ export function getInitializeApp() {
             return val;
         };
 
-        projectId = strip(projectId);
-        clientEmail = strip(clientEmail);
+        projectId = stripQuotes(projectId);
+        clientEmail = stripQuotes(clientEmail);
 
-        // Strategy 1: Individual Credentials
         if (projectId && clientEmail && privateKey) {
-            console.log(`[FirebaseAdmin] Strategy 1: Attempting Individual Cert for ${projectId}`);
+            debugFileLog(`Strategy 1: Attempting cert for ${projectId}`);
             try {
-                return admin.initializeApp({
-                    credential: admin.credential.cert({
-                        projectId,
-                        clientEmail,
-                        privateKey,
-                    }),
+                const app = admin.initializeApp({
+                    credential: admin.credential.cert({ projectId, clientEmail, privateKey }),
                 }, ADMIN_APP_NAME);
+                debugFileLog(`Strategy 1 SUCCESS`);
+                return app;
             } catch (certError: any) {
+                debugFileLog(`Strategy 1 FAILED: ${certError.message}`);
                 console.error('[FirebaseAdmin] Strategy 1 Failed:', certError.message);
             }
         }
 
-        // Strategy 2: JSON Key
         if (rawJson) {
-            console.log('[FirebaseAdmin] Strategy 2: Attempting JSON Service Account Key');
-            let key = strip(rawJson);
-            if (key) {
+            debugFileLog(`Strategy 2: Attempting JSON key`);
+            let jsonString = stripQuotes(rawJson);
+            if (jsonString) {
                 try {
-                    const serviceAccount = JSON.parse(key);
-                    console.log(`[FirebaseAdmin] Strategy 2: JSON parsed successfully. Keys: ${Object.keys(serviceAccount).join(', ')}`);
-                    if (serviceAccount.private_key) {
-                        console.log(`[FirebaseAdmin] Strategy 2: Found private_key, length=${serviceAccount.private_key.length}`);
-                        serviceAccount.private_key = cleanPrivateKey(serviceAccount.private_key);
-                    } else {
-                        console.warn('[FirebaseAdmin] Strategy 2: No private_key field found in JSON');
+                    const sa = JSON.parse(jsonString);
+                    debugFileLog(`Strategy 2: JSON parsed. Project=${sa.project_id}`);
+                    if (sa.private_key) {
+                        const originalLen = sa.private_key.length;
+                        sa.private_key = cleanPrivateKey(sa.private_key);
+                        debugFileLog(`Strategy 2: Key cleaned. ${originalLen} -> ${sa.private_key?.length}`);
                     }
-                    return admin.initializeApp({
-                        credential: admin.credential.cert(serviceAccount),
+                    const app = admin.initializeApp({
+                        credential: admin.credential.cert(sa),
                     }, ADMIN_APP_NAME);
+                    debugFileLog(`Strategy 2 SUCCESS`);
+                    return app;
                 } catch (jsonError: any) {
+                    debugFileLog(`Strategy 2 FAILED: ${jsonError.message}`);
                     console.error('[FirebaseAdmin] Strategy 2 Failed:', jsonError.message);
-                    if (jsonError.stack) console.error(jsonError.stack);
                 }
             }
         }
 
-        // Strategy 3: Default (ADC)
-        console.log(`[FirebaseAdmin] Strategy 3: Falling back to Default/ADC for ${projectId || 'unknown project'}`);
+        debugFileLog(`Strategy 3: Fallback to ADC for ${projectId || 'unknown'}`);
         try {
-            return admin.initializeApp(projectId ? { projectId } : {}, ADMIN_APP_NAME);
+            const app = admin.initializeApp(projectId ? { projectId } : {}, ADMIN_APP_NAME);
+            debugFileLog(`Strategy 3 SUCCESS`);
+            return app;
         } catch (e: any) {
+            debugFileLog(`Strategy 3 FAILED: ${e.message}`);
             console.error('[FirebaseAdmin] Strategy 3 Failed:', e.message);
         }
 
-        throw new Error('All Firebase Admin initialization strategies failed. Verify environment variables.');
+        throw new Error('All Firebase Admin initialization strategies failed.');
     } catch (error: any) {
+        debugFileLog(`FATAL: ${error.message}`);
         console.error('[FirebaseAdmin] FATAL:', error.message);
         throw error;
     }
 }
 
-/**
- * Gets the Admin Auth instance, initializing the app if necessary.
- */
-export const getAdminAuth = (): admin.auth.Auth => {
-    const app = getInitializeApp();
-    return admin.auth(app);
-};
-
-/**
- * Gets the Admin Firestore instance, initializing the app if necessary.
- */
-export const getAdminDb = (): admin.firestore.Firestore => {
-    const app = getInitializeApp();
-    return admin.firestore(app);
-};
-
-// For backward compatibility
-export const adminAuth = null as unknown as admin.auth.Auth;
-export const adminFirestore = null as unknown as admin.firestore.Firestore;
-export const adminDb = null as unknown as admin.firestore.Firestore;
+export const getAdminAuth = () => admin.auth(getInitializeApp());
 
 export default admin;

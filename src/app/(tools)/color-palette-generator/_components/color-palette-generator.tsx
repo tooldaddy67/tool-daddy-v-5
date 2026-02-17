@@ -16,17 +16,13 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { useFirebase, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, orderBy, serverTimestamp, doc, writeBatch } from 'firebase/firestore';
 import { useHistory } from '@/hooks/use-history';
-
 import { useSettings } from '@/components/settings-provider';
 
 const STORAGE_KEY = 'userColorPalettes';
 
 export default function ColorPaletteGenerator() {
   const { toast } = useToast();
-  const { firestore, user, isUserLoading } = useFirebase();
   const { settings } = useSettings();
   const { addToHistory } = useHistory();
   const [palettes, setPalettes] = useState<Palette[]>(mockPalettes);
@@ -50,50 +46,10 @@ export default function ColorPaletteGenerator() {
     }
   }, []);
 
-  // Firestore path
-  const palettesCollectionPath = useMemo(() => {
-    if (!user || user.isAnonymous || !firestore || !settings.dataPersistence) return null;
-    return collection(firestore, 'users', user.uid, 'palettes');
-  }, [firestore, user, settings.dataPersistence]);
+  // Palettes (FORCE LOCAL)
+  const userPalettes = localPalettes;
 
-  const palettesQuery = useMemoFirebase(() => {
-    if (!palettesCollectionPath) return null;
-    return query(palettesCollectionPath, orderBy('createdAt', 'desc'));
-  }, [palettesCollectionPath]);
-
-  // Real-time Cloud Palettes
-  const { data: cloudPalettes, isLoading: isCloudLoading } = useCollection<Palette>(palettesQuery);
-
-  // Combine Palettes
-  const userPalettes = useMemo(() => {
-    if (user && !user.isAnonymous && settings.dataPersistence) return cloudPalettes || [];
-    return localPalettes;
-  }, [user, cloudPalettes, localPalettes, settings.dataPersistence]);
-
-  // Sync to Cloud on login
-  useEffect(() => {
-    if (user && !user.isAnonymous && isLocalLoaded && localPalettes.length > 0 && palettesCollectionPath && settings.dataPersistence) {
-      const syncToCloud = async () => {
-        try {
-          const batch = writeBatch(firestore);
-          localPalettes.forEach((palette) => {
-            const docRef = doc(palettesCollectionPath, palette.id);
-            batch.set(docRef, {
-              ...palette,
-              createdAt: serverTimestamp() // Ensure server timestamp on cloud
-            });
-          });
-          await batch.commit();
-          setLocalPalettes([]);
-          localStorage.removeItem(STORAGE_KEY);
-          toast({ title: "Palettes synced!", description: "Your guest palettes have been moved to your account." });
-        } catch (e) {
-          console.error("Failed to sync palettes to cloud", e);
-        }
-      };
-      syncToCloud();
-    }
-  }, [user, isLocalLoaded, firestore, palettesCollectionPath, localPalettes, toast, settings.dataPersistence]);
+  // Sync to Cloud disabled
 
   // Function to shuffle an array (Fisher-Yates shuffle)
   const shuffleArray = (array: any[]) => {
@@ -142,26 +98,10 @@ export default function ColorPaletteGenerator() {
       createdAt: new Date().toISOString(),
     };
 
-    if (palettesCollectionPath) {
-      try {
-        const docRef = doc(palettesCollectionPath, paletteId);
-        const batch = writeBatch(firestore);
-        batch.set(docRef, {
-          ...newPalette,
-          createdAt: serverTimestamp()
-        });
-        await batch.commit();
-        toast({ title: "Palette saved to cloud!" });
-      } catch (error) {
-        toast({ title: "Error saving palette", variant: "destructive" });
-        return;
-      }
-    } else {
-      const updated = [newPalette, ...localPalettes];
-      setLocalPalettes(updated);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-      toast({ title: "Palette saved locally" });
-    }
+    const updated = [newPalette, ...localPalettes];
+    setLocalPalettes(updated);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    toast({ title: "Palette saved locally" });
 
     addToHistory({
       tool: 'Color Palette',
@@ -175,22 +115,10 @@ export default function ColorPaletteGenerator() {
 
   // Delete user palette
   const handleDeletePalette = async (id: string) => {
-    if (palettesCollectionPath) {
-      try {
-        const docRef = doc(palettesCollectionPath, id);
-        const batch = writeBatch(firestore);
-        batch.delete(docRef);
-        await batch.commit();
-        toast({ title: "Palette deleted from cloud" });
-      } catch (error) {
-        toast({ title: "Error deleting palette", variant: "destructive" });
-      }
-    } else {
-      const updated = localPalettes.filter(p => p.id !== id);
-      setLocalPalettes(updated);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-      toast({ title: "Palette deleted locally" });
-    }
+    const updated = localPalettes.filter(p => p.id !== id);
+    setLocalPalettes(updated);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    toast({ title: "Palette deleted locally" });
   };
 
   const handleReload = () => {

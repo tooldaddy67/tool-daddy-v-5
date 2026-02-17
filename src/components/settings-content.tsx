@@ -16,7 +16,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useUser, useAuth, useFirebase } from '@/firebase';
 import { updateProfile, GoogleAuthProvider, reauthenticateWithPopup, EmailAuthProvider, reauthenticateWithCredential, sendPasswordResetEmail } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
 import { Settings, Type, Palette, CheckCircle2, Layers, Maximize, Activity, Gauge, Image as ImageIcon, Sparkles, UserIcon, ShieldCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -50,7 +49,6 @@ export function SettingsContent({ isDialog = false, onClose }: SettingsContentPr
     const { user } = useUser();
     const auth = useAuth();
     const router = useRouter();
-    const { firestore } = useFirebase();
     const { toast } = useToast();
     const { settings, updateSettings } = useSettings();
     const [showAllFonts, setShowAllFonts] = useState(false);
@@ -66,19 +64,6 @@ export function SettingsContent({ isDialog = false, onClose }: SettingsContentPr
     const [showReauthDialog, setShowReauthDialog] = useState(false);
     const [reauthPassword, setReauthPassword] = useState('');
 
-    // Fetch isAdmin status
-    useEffect(() => {
-        async function checkAdmin() {
-            if (user && firestore) {
-                const { getDoc } = await import('firebase/firestore');
-                const userDoc = await getDoc(doc(firestore, 'users', user.uid));
-                if (userDoc.exists()) {
-                    setIsAdmin(!!userDoc.data()?.isAdmin);
-                }
-            }
-        }
-        checkAdmin();
-    }, [user, firestore]);
 
 
     const handleDataPersistenceChange = async (enabled: boolean) => {
@@ -93,11 +78,9 @@ export function SettingsContent({ isDialog = false, onClose }: SettingsContentPr
     const confirmDisablePersistence = async () => {
         setIsDeletingData(true);
         try {
-            if (user && firestore) {
-                await deleteUserData(firestore, user.uid);
-            }
+            await deleteUserData();
             await updateSettings({ dataPersistence: false });
-            toast({ title: "Cloud Storage Disabled", description: "All cloud data has been deleted." });
+            toast({ title: "Local Data Deleted", description: "All local tool data has been cleared." });
         } catch (error) {
             console.error(error);
             toast({ title: "Error", description: "Failed to delete data.", variant: "destructive" });
@@ -108,7 +91,7 @@ export function SettingsContent({ isDialog = false, onClose }: SettingsContentPr
 
     const handleReauthAndDelete = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!auth.currentUser || !firestore) return;
+        if (!auth.currentUser) return;
 
         setIsReauthenticating(true);
         try {
@@ -116,7 +99,7 @@ export function SettingsContent({ isDialog = false, onClose }: SettingsContentPr
             await reauthenticateWithCredential(auth.currentUser, credential);
 
             // Re-auth successful, delete account
-            await deleteUserAccount(firestore, auth.currentUser);
+            await deleteUserAccount(auth.currentUser);
             setShowReauthDialog(false);
             if (onClose) onClose();
             toast({ title: "Account Deleted", description: "We're sorry to see you go." });
@@ -137,12 +120,12 @@ export function SettingsContent({ isDialog = false, onClose }: SettingsContentPr
     const handleDeleteAccount = async () => {
         setIsDeletingAccount(true);
         try {
-            if (!user || !firestore || !auth.currentUser) {
+            if (!user || !auth.currentUser) {
                 toast({ title: "Error", description: "Failed to delete account. Please try again later.", variant: "destructive" });
                 return;
             }
 
-            await deleteUserAccount(firestore, auth.currentUser);
+            await deleteUserAccount(auth.currentUser);
             if (onClose) onClose();
             toast({ title: "Account Deleted", description: "We're sorry to see you go." });
             window.location.href = '/';
@@ -165,12 +148,10 @@ export function SettingsContent({ isDialog = false, onClose }: SettingsContentPr
                             await reauthenticateWithPopup(auth.currentUser, provider);
 
                             // Retry deletion after successful re-auth
-                            if (firestore) {
-                                await deleteUserAccount(firestore, auth.currentUser);
-                                if (onClose) onClose();
-                                toast({ title: "Account Deleted", description: "We're sorry to see you go." });
-                                window.location.href = '/';
-                            }
+                            await deleteUserAccount(auth.currentUser);
+                            if (onClose) onClose();
+                            toast({ title: "Account Deleted", description: "We're sorry to see you go." });
+                            window.location.href = '/';
                         }
                     } catch (reAuthError: any) {
                         console.error("Re-auth failed", reAuthError);
@@ -258,33 +239,6 @@ export function SettingsContent({ isDialog = false, onClose }: SettingsContentPr
                                         </Button>
                                     </div>
 
-                                    {!isAdmin && (
-                                        <div className="pt-2">
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                className="w-full text-xs opacity-50 hover:opacity-100 justify-start px-0"
-                                                onClick={async () => {
-                                                    const code = window.prompt("Enter Admin Access Code:");
-                                                    if (code === "tooldaddy-omlet-is-gay-famboy") {
-                                                        if (!user || !firestore) return;
-                                                        try {
-                                                            await setDoc(doc(firestore, 'users', user.uid), { isAdmin: true }, { merge: true });
-                                                            toast({ title: "Admin Access Granted", description: "You are now an admin. Refresh page to see changes." });
-                                                            setIsAdmin(true);
-                                                        } catch (e) {
-                                                            console.error(e);
-                                                            toast({ title: "Error", description: "Failed to update profile", variant: "destructive" });
-                                                        }
-                                                    } else if (code) {
-                                                        toast({ title: "Invalid Code", variant: "destructive" });
-                                                    }
-                                                }}
-                                            >
-                                                <ShieldCheck className="mr-2 h-3 w-3" /> Request Admin Access
-                                            </Button>
-                                        </div>
-                                    )}
                                 </div>
                             </div>
                         )}
@@ -676,7 +630,8 @@ export function SettingsContent({ isDialog = false, onClose }: SettingsContentPr
                                         checked={settings.dataPersistence}
                                         onCheckedChange={(checked) => {
                                             if (checked) {
-                                                handleDataPersistenceChange(true);
+                                                updateSettings({ dataPersistence: true });
+                                                toast({ title: "Feature Enabled", description: "Data persistence is now active." });
                                             } else {
                                                 setShowDisablePersistenceDialog(true);
                                             }
@@ -689,8 +644,7 @@ export function SettingsContent({ isDialog = false, onClose }: SettingsContentPr
                                         <AlertDialogHeader>
                                             <AlertDialogTitle>Disable Cloud Storage?</AlertDialogTitle>
                                             <AlertDialogDescription>
-                                                This will <strong>permanently delete</strong> all your saved data (History, Palettes, Todos) from our servers.
-                                                Future data will not be saved. This action cannot be undone.
+                                                This will <strong>permanently delete</strong> all your locally saved tool data. This action cannot be undone.
                                             </AlertDialogDescription>
                                         </AlertDialogHeader>
                                         <AlertDialogFooter>
@@ -730,27 +684,6 @@ export function SettingsContent({ isDialog = false, onClose }: SettingsContentPr
                                 <div className="space-y-3 pt-4">
                                     <h3 className="text-xs font-bold uppercase opacity-50 tracking-wider">Account Management</h3>
                                     <div className="grid grid-cols-1 gap-3">
-                                        {isAdmin && (
-                                            <Button
-                                                variant="outline"
-                                                className="w-full justify-between h-12 bg-primary/5 border-primary/20 hover:bg-primary/10 group"
-                                                onClick={() => {
-                                                    if (onClose) onClose();
-                                                    router.push('/admin/dashboard');
-                                                }}
-                                            >
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                                                        <ShieldCheck className="w-4 h-4 text-primary" />
-                                                    </div>
-                                                    <div className="text-left">
-                                                        <span className="block text-sm font-bold">Admin Dashboard</span>
-                                                        <span className="text-[10px] text-muted-foreground">Manage site systems</span>
-                                                    </div>
-                                                </div>
-                                                <ChevronRight className="w-4 h-4 opacity-50 group-hover:translate-x-0.5 transition-transform" />
-                                            </Button>
-                                        )}
 
                                         <Button
                                             variant="outline"

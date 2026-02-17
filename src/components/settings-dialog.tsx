@@ -14,9 +14,8 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useUser, useAuth, useFirebase } from '@/firebase';
+import { useUser, useAuth } from '@/firebase';
 import { updateProfile, GoogleAuthProvider, reauthenticateWithPopup, EmailAuthProvider, reauthenticateWithCredential, sendPasswordResetEmail } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
 import { Settings, Type, Palette, CheckCircle2, Layers, Maximize, Activity, Gauge, Image as ImageIcon, Sparkles, UserIcon, ShieldCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -51,7 +50,6 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
     const { user } = useUser();
     const auth = useAuth();
     const router = useRouter();
-    const { firestore } = useFirebase();
     const { toast } = useToast();
     const { settings, updateSettings } = useSettings();
     const [showAllFonts, setShowAllFonts] = useState(false);
@@ -59,18 +57,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
     const [isAdmin, setIsAdmin] = useState(false);
 
     useEffect(() => {
-        if (!user) { setIsAdmin(false); return; }
-        user.getIdTokenResult().then((result) => {
-            if (result.claims.admin === true) {
-                setIsAdmin(true);
-            } else if (user.email === 'admin@tooldaddy.com') {
-                setIsAdmin(true);
-            } else {
-                // Also check if isAdmin is set in firestore doc (as per line 259)
-                // for now we stick to this, but we'll check doc too if needed.
-                setIsAdmin(false);
-            }
-        }).catch(() => setIsAdmin(false));
+        setIsAdmin(false);
     }, [user]);
 
     const [isDeletingData, setIsDeletingData] = useState(false);
@@ -95,11 +82,9 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
     const confirmDisablePersistence = async () => {
         setIsDeletingData(true);
         try {
-            if (user && firestore) {
-                await deleteUserData(firestore, user.uid);
-            }
+            await deleteUserData();
             await updateSettings({ dataPersistence: false });
-            toast({ title: "Cloud Storage Disabled", description: "All cloud data has been deleted." });
+            toast({ title: "Local Data Deleted", description: "All local tool data has been cleared." });
         } catch (error) {
             console.error(error);
             toast({ title: "Error", description: "Failed to delete data.", variant: "destructive" });
@@ -110,7 +95,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
 
     const handleReauthAndDelete = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!auth.currentUser || !firestore) return;
+        if (!auth || !auth.currentUser) return;
 
         setIsReauthenticating(true);
         try {
@@ -118,10 +103,10 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
             await reauthenticateWithCredential(auth.currentUser, credential);
 
             // Re-auth successful, delete account
-            await deleteUserAccount(firestore, auth.currentUser);
+            await deleteUserAccount(auth.currentUser);
             setShowReauthDialog(false);
             onOpenChange(false);
-            toast({ title: "Account Deleted", description: "We're sorry to see you go." });
+            toast({ title: "Account Deleted", description: "See you next time." });
             window.location.href = '/';
 
         } catch (error: any) {
@@ -139,20 +124,21 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
     const handleDeleteAccount = async () => {
         setIsDeletingAccount(true);
         try {
-            if (!user || !firestore || !auth.currentUser) {
+            if (!user || !auth || !auth.currentUser) {
                 toast({ title: "Error", description: "Failed to delete account. Please try again later.", variant: "destructive" });
                 return;
             }
 
-            await deleteUserAccount(firestore, auth.currentUser);
+            await deleteUserAccount(auth.currentUser);
             onOpenChange(false);
-            toast({ title: "Account Deleted", description: "We're sorry to see you go." });
+            toast({ title: "Account Deleted", description: "See you next time." });
             window.location.href = '/';
         } catch (error: any) {
             if (error.code === 'auth/requires-recent-login') {
                 console.log("Re-authentication required.");
                 // Check provider to decide re-auth method
-                const providerId = auth.currentUser?.providerData[0]?.providerId;
+                if (!auth || !auth.currentUser) return;
+                const providerId = auth.currentUser.providerData[0]?.providerId;
 
                 if (providerId === 'password') {
                     // Show password dialog
@@ -162,17 +148,15 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                     // Google Re-auth
                     toast({ title: "Security Check", description: "Please sign in again to confirm account deletion." });
                     try {
-                        if (auth.currentUser) {
+                        if (auth && auth.currentUser) {
                             const provider = new GoogleAuthProvider();
                             await reauthenticateWithPopup(auth.currentUser, provider);
 
                             // Retry deletion after successful re-auth
-                            if (firestore) {
-                                await deleteUserAccount(firestore, auth.currentUser);
-                                onOpenChange(false);
-                                toast({ title: "Account Deleted", description: "We're sorry to see you go." });
-                                window.location.href = '/';
-                            }
+                            await deleteUserAccount(auth.currentUser);
+                            onOpenChange(false);
+                            toast({ title: "Account Deleted", description: "See you next time." });
+                            window.location.href = '/';
                         }
                     } catch (reAuthError: any) {
                         console.error("Re-auth failed", reAuthError);
@@ -181,7 +165,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                         } else if (reAuthError.code === 'auth/cancelled-popup-request') {
                             // Ignore multiple popup requests
                         } else {
-                            toast({ title: "Verification Failed", description: "Could not verify your identity. Account not deleted.", variant: "destructive" });
+                            toast({ title: "Verification Failed", description: "Could not verify your identity.", variant: "destructive" });
                         }
                     }
                 } else {
@@ -261,33 +245,6 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                                             </Button>
                                         </div>
 
-                                        {!isAdmin && (
-                                            <div className="pt-2">
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    className="w-full text-xs opacity-50 hover:opacity-100 justify-start px-0"
-                                                    onClick={async () => {
-                                                        const code = window.prompt("Enter Admin Access Code:");
-                                                        if (code === "tooldaddy-omlet-is-gay-famboy") {
-                                                            if (!user || !firestore) return;
-                                                            try {
-                                                                await setDoc(doc(firestore, 'users', user.uid), { isAdmin: true }, { merge: true });
-                                                                toast({ title: "Admin Access Granted", description: "You are now an admin. Refresh page to see changes." });
-                                                                setIsAdmin(true);
-                                                            } catch (e) {
-                                                                console.error(e);
-                                                                toast({ title: "Error", description: "Failed to update profile", variant: "destructive" });
-                                                            }
-                                                        } else if (code) {
-                                                            toast({ title: "Invalid Code", variant: "destructive" });
-                                                        }
-                                                    }}
-                                                >
-                                                    <ShieldCheck className="mr-2 h-3 w-3" /> Request Admin Access
-                                                </Button>
-                                            </div>
-                                        )}
                                     </div>
                                 </div>
                             )}
@@ -598,27 +555,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
 
                                 <div className="space-y-6">
                                     {/* Data Persistence */}
-                                    <div className="flex items-center justify-between p-4 rounded-xl border border-border/50 bg-muted/30 hover:bg-muted/40 transition-colors">
-                                        <div className="space-y-1">
-                                            <div className="flex items-center gap-2 font-semibold">
-                                                <Database className="w-4 h-4 text-primary" />
-                                                Data Persistence
-                                            </div>
-                                            <p className="text-xs text-muted-foreground">
-                                                Save your palettes, todo lists, and history to the cloud. Disabling this will delete your cloud data.
-                                            </p>
-                                        </div>
-                                        <Switch
-                                            checked={settings.dataPersistence}
-                                            onCheckedChange={(checked) => {
-                                                if (checked) {
-                                                    handleDataPersistenceChange(true);
-                                                } else {
-                                                    setShowDisablePersistenceDialog(true);
-                                                }
-                                            }}
-                                        />
-                                    </div>
+                                    {/* Data Persistence - Hidden as it is always local now */}
 
                                     <AlertDialog open={showDisablePersistenceDialog} onOpenChange={setShowDisablePersistenceDialog}>
                                         <AlertDialogContent>
@@ -951,7 +888,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                                     variant="link"
                                     className="p-0 h-auto text-xs text-muted-foreground hover:text-primary"
                                     onClick={async () => {
-                                        if (auth.currentUser?.email) {
+                                        if (auth && auth.currentUser?.email) {
                                             try {
                                                 await sendPasswordResetEmail(auth, auth.currentUser.email);
                                                 toast({ title: "Email Sent", description: "Password reset link sent to your email." });

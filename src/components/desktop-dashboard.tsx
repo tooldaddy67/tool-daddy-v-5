@@ -1,10 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { useUser, useFirebase, useCollection, useMemoFirebase } from '@/firebase';
-import { useSettings } from '@/components/settings-provider';
-import { collection, query, orderBy, limit, doc, Timestamp, where } from 'firebase/firestore';
-import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { useFirebase } from '@/firebase';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -80,83 +77,49 @@ export function DesktopDashboard() {
     const today = new Date();
     const formattedDate = today.toLocaleDateString('en-US', { weekday: 'short', month: 'long', day: 'numeric' });
 
-    // --- Fetch Cloud Data ---
-    // 1. Fetch Lists
-    const listsQuery = useMemoFirebase(() => {
-        if (!user || user.isAnonymous || !firestore || !settings.dataPersistence) return null;
-        return query(collection(firestore, 'users', user.uid, 'todolists'), orderBy('createdAt', 'desc'));
-    }, [user, firestore, settings.dataPersistence]);
-
-    const { data: cloudLists, isLoading: listsLoading } = useCollection<{ id: string, name: string }>(listsQuery);
-
-    // --- Combine Data ---
-    // Use Cloud if logged in + persistence enabled, otherwise Local
-    const useCloud = user && !user.isAnonymous && settings.dataPersistence;
-
-    // Lists
-    const allLists = useMemo(() => {
-        if (useCloud) return cloudLists || [];
-        return localLists;
-    }, [useCloud, cloudLists, localLists]);
-
-    // Active List (Default to first)
-    const activeList = allLists?.[0];
+    // --- Combo logic forced to local ---
+    const useCloud = false;
+    const cloudLists: any[] = [];
+    const listsLoading = false;
+    const activeList = localLists?.[0];
     const activeListId = activeList?.id;
+    const cloudTasks: any[] = [];
+    const tasksLoading = false;
 
-    // Tasks
-    // If Cloud: Fetch for active list
-    const tasksQuery = useMemoFirebase(() => {
-        if (!useCloud || !firestore || !activeListId) return null;
-        return query(collection(firestore, 'users', user.uid, 'todolists', activeListId, 'tasks'), orderBy('createdAt', 'desc'), limit(20));
-    }, [useCloud, firestore, activeListId, user]);
-
-    const { data: cloudTasks, isLoading: tasksLoading } = useCollection<{ id: string, text: string, completed: boolean, dueDate?: Timestamp }>(tasksQuery);
-
-    // If Local: Get from state
     const displayTasks = useMemo(() => {
-        if (useCloud) return cloudTasks || [];
         if (!activeListId) return [];
-
-        // Transform local tasks to match shape if needed (dates are strings in JSON)
         const tasks = localTasks[activeListId] || [];
-        return tasks.map(t => ({
-            ...t,
-            // Mock Timestamp-like object for local dates if they exist and aren't already objects
-            dueDate: t.dueDate ? (t.dueDate.seconds ? t.dueDate : Timestamp.fromDate(new Date(t.dueDate))) : undefined
-        })).sort((a, b) => {
-            // Sort by createdAt desc locally to match query
+        return tasks.sort((a, b) => {
             return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
         });
-    }, [useCloud, cloudTasks, localTasks, activeListId]);
+    }, [localTasks, activeListId]);
 
-    const isLoading = useCloud ? (listsLoading || tasksLoading) : !isLocalLoaded;
+    const allLists = localLists;
+    const isLoading = false;
 
     // --- Interaction Handlers ---
     const handleToggleTask = (taskId: string, currentStatus: boolean) => {
-        if (useCloud) {
-            if (!firestore || !user || !activeListId) return;
-            const taskRef = doc(firestore, 'users', user.uid, 'todolists', activeListId, 'tasks', taskId);
-            updateDocumentNonBlocking(taskRef, { completed: !currentStatus });
-        } else {
-            // Handle Local Toggle
-            if (!activeListId) return;
-            const currentListTasks = localTasks[activeListId] || [];
-            const updatedTasks = currentListTasks.map(t =>
-                t.id === taskId ? { ...t, completed: !currentStatus } : t
-            );
+        // Handle Local Toggle
+        if (!activeListId) return;
+        const currentListTasks = localTasks[activeListId] || [];
+        const updatedTasks = currentListTasks.map(t =>
+            t.id === taskId ? { ...t, completed: !currentStatus } : t
+        );
 
-            setLocalTasks(prev => ({
-                ...prev,
-                [activeListId]: updatedTasks
-            }));
+        setLocalTasks(prev => ({
+            ...prev,
+            [activeListId]: updatedTasks
+        }));
 
-            localStorage.setItem(`${TASKS_STORAGE_KEY_PREFIX}${activeListId}`, JSON.stringify(updatedTasks));
-        }
+        localStorage.setItem(`${TASKS_STORAGE_KEY_PREFIX}${activeListId}`, JSON.stringify(updatedTasks));
     };
 
     // --- Derived Data ---
     const incompleteTasks = displayTasks?.filter(t => !t.completed) || [];
-    const upcomingTasks = displayTasks?.filter(t => t.dueDate && t.dueDate.toDate() >= new Date()).sort((a, b) => a.dueDate!.toMillis() - b.dueDate!.toMillis()) || [];
+    const upcomingTasks = displayTasks?.filter(t => {
+        const d = t.dueDate ? new Date(t.dueDate) : null;
+        return d && d >= new Date();
+    }).sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()) || [];
 
     if (isUserLoading || (user && !user.isAnonymous && listsLoading)) {
         return (
@@ -247,9 +210,9 @@ export function DesktopDashboard() {
                                                         <div className="flex items-center gap-4">
                                                             <Badge variant="outline" className={cn(
                                                                 "border-0 bg-opacity-10",
-                                                                (task.dueDate instanceof Timestamp ? task.dueDate.toDate() : new Date(task.dueDate)) < new Date() && !task.completed ? "bg-red-500 text-red-500" : "bg-blue-500 text-blue-500"
+                                                                new Date(task.dueDate) < new Date() && !task.completed ? "bg-red-500 text-red-500" : "bg-blue-500 text-blue-500"
                                                             )}>
-                                                                {task.dueDate instanceof Timestamp ? format(task.dueDate.toDate(), 'MMM d') : format(new Date(task.dueDate), 'MMM d')}
+                                                                {format(new Date(task.dueDate), 'MMM d')}
                                                             </Badge>
                                                         </div>
                                                     )}

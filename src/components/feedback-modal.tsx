@@ -22,13 +22,11 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { useFirebase } from '@/firebase';
-import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { collection, serverTimestamp } from 'firebase/firestore';
 import { Loader2, MessageSquare } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 export function FeedbackModal({ trigger }: { trigger?: React.ReactNode }) {
-    const { firestore, user } = useFirebase();
+    const { user } = useFirebase();
     const { toast } = useToast();
     const [open, setOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -46,45 +44,17 @@ export function FeedbackModal({ trigger }: { trigger?: React.ReactNode }) {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!message.trim()) return;
-        if (!firestore) {
-            toast({ title: "Service unavailable", description: "Database connection not ready.", variant: "destructive" });
-            return;
-        }
-
         setIsSubmitting(true);
-        try {
-            const feedbackData = {
-                type,
-                message,
-                email: user?.email || email || 'anonymous',
-                userId: user?.uid || 'anonymous',
-                url: window.location.href,
-                userAgent: navigator.userAgent,
-                createdAt: serverTimestamp(),
-                status: 'new'
-            };
-
-            const feedbackRef = collection(firestore, 'feedback');
-            await addDocumentNonBlocking(feedbackRef, feedbackData);
-
-            toast({
-                title: "Feedback sent!",
-                description: "Thank you for helping us improve.",
-            });
-            setOpen(false);
-            setMessage('');
-            setType('bug');
-        } catch (error) {
-            console.error("Error sending feedback:", error);
-            toast({
-                title: "Error sending feedback",
-                description: "Please try again later.",
-                variant: "destructive"
-            });
-        } finally {
-            setIsSubmitting(false);
-        }
+        // Simulate delay
+        await new Promise(resolve => setTimeout(resolve, 500));
+        toast({
+            title: "Feature Disabled",
+            description: "Feedback is currently unavailable during system rebuild.",
+            variant: "destructive"
+        });
+        setIsSubmitting(false);
+        setOpen(false);
+        setMessage('');
     };
 
     return (

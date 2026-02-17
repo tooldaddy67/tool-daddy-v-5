@@ -18,8 +18,5 @@ function initializeServerApp() {
 }
 
 export function getFirestoreServer() {
-    if (!serverApp) {
-        serverApp = initializeServerApp();
-    }
-    return getFirestore(serverApp);
+    return null;
 }

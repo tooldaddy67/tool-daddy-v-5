@@ -2,8 +2,6 @@
 
 import React, { createContext, useContext, useEffect, useState, useMemo } from 'react';
 import { useFirebase } from '@/firebase/provider';
-import { useDoc } from '@/firebase/firestore/use-doc';
-import { doc, setDoc } from 'firebase/firestore';
 import { cn } from '@/lib/utils';
 import dynamic from 'next/dynamic';
 
@@ -132,14 +130,6 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
-    const settingsDocRef = useMemo(() => {
-        if (!user || user.isAnonymous || !firestore) return null;
-        return doc(firestore, 'users', user.uid, 'settings', 'preferences');
-    }, [user, firestore]);
-
-    const { data: cloudSettings, isLoading: isCloudLoading } = useDoc<UserSettings>(settingsDocRef);
-
-    // Load from localStorage on mount
     // Load from localStorage on mount
     useEffect(() => {
         const stored = localStorage.getItem('tool-dady-settings');
@@ -152,58 +142,6 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
         }
         setIsLocalLoaded(true);
     }, []);
-
-    // Sync Cloud to Local
-    useEffect(() => {
-        if (cloudSettings) {
-            setLocalSettings(prev => {
-                const mergedSettings = {
-                    ...prev,
-                    ...cloudSettings,
-                };
-
-                // Ensure cardRoundness is consistent if missing in cloud but borderStyle is present
-                // This handles the case where users have "sharp" selected but no roundness value saved
-                if (cloudSettings.cardRoundness === undefined && cloudSettings.borderStyle) {
-                    mergedSettings.cardRoundness = RADIUS_MAP[cloudSettings.borderStyle as BorderStyle];
-                }
-
-                // FORCE ADJUSTMENT: If style is 'sharp', radius MUST be 0.
-                // This fixes legacy state where users selected 'sharp' but have a non-zero radius saved.
-                if (mergedSettings.borderStyle === 'sharp' && mergedSettings.cardRoundness !== 0) {
-                    mergedSettings.cardRoundness = 0;
-                }
-
-                // Apply defaults for other fields if missing
-                // FORCE ADJUSTMENT: Guests cannot have data persistence
-                if (!user || user.isAnonymous) {
-                    mergedSettings.dataPersistence = false;
-                } else {
-                    mergedSettings.dataPersistence = cloudSettings.dataPersistence ?? prev.dataPersistence ?? true;
-                }
-
-                mergedSettings.notifications = cloudSettings.notifications ?? prev.notifications ?? true;
-                mergedSettings.primaryColor = cloudSettings.primaryColor ?? prev.primaryColor ?? '271 91% 65%';
-                mergedSettings.siteTitle = cloudSettings.siteTitle ?? prev.siteTitle ?? 'Tool Daddy';
-                mergedSettings.sidebarStyle = cloudSettings.sidebarStyle ?? prev.sidebarStyle ?? 'full';
-                mergedSettings.cardStyle = cloudSettings.cardStyle ?? prev.cardStyle ?? 'glass';
-                mergedSettings.accentGradient = cloudSettings.accentGradient ?? prev.accentGradient ?? true;
-                mergedSettings.enableSound = cloudSettings.enableSound ?? prev.enableSound ?? true;
-                mergedSettings.showCursorEffect = cloudSettings.showCursorEffect ?? prev.showCursorEffect ?? false;
-                mergedSettings.showGrain = cloudSettings.showGrain ?? prev.showGrain ?? false;
-                mergedSettings.showScrollIndicator = cloudSettings.showScrollIndicator ?? prev.showScrollIndicator ?? true;
-
-                // Fallbacks for granular settings
-                mergedSettings.cardRoundness = mergedSettings.cardRoundness ?? prev.cardRoundness ?? 12;
-                mergedSettings.glassOpacity = cloudSettings.glassOpacity ?? prev.glassOpacity ?? 90;
-                mergedSettings.cardGlowStrength = cloudSettings.cardGlowStrength ?? prev.cardGlowStrength ?? 40;
-                mergedSettings.textGlow = cloudSettings.textGlow ?? prev.textGlow ?? false;
-
-                return mergedSettings;
-            });
-            localStorage.setItem('tool-dady-settings', JSON.stringify({ ...localSettings, ...cloudSettings }));
-        }
-    }, [cloudSettings]);
 
     // Apply Settings to Body
     useEffect(() => {
@@ -260,28 +198,15 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
             newSettings.cardRoundness = RADIUS_MAP[newSettings.borderStyle];
         }
 
-        // Prevent guests from enabling data persistence
-        if ((!user || user.isAnonymous) && newSettings.dataPersistence === true) {
-            newSettings.dataPersistence = false;
-        }
-
         const updated = { ...localSettings, ...newSettings };
         setLocalSettings(updated);
         localStorage.setItem('tool-dady-settings', JSON.stringify(updated));
-
-        if (settingsDocRef) {
-            try {
-                await setDoc(settingsDocRef, updated, { merge: true });
-            } catch (e) {
-                console.error('Failed to update cloud settings', e);
-            }
-        }
     };
 
     const value = {
         settings: localSettings,
         updateSettings,
-        isLoading: !isLocalLoaded || (!!user && !user.isAnonymous && isCloudLoading),
+        isLoading: !isLocalLoaded,
         settingsOpen,
         setSettingsOpen
     };

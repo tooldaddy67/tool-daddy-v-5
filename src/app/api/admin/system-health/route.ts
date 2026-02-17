@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { adminFirestore, adminAuth } from '@/lib/firebase-admin';
+import { getAdminAuth, getAdminDb } from '@/lib/firebase-admin';
 import { getClientIp, checkRateLimit } from '@/lib/rate-limiter';
 
 export async function GET(request: NextRequest) {
@@ -17,27 +17,27 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
         const token = authHeader.split('Bearer ')[1];
-        await adminAuth.verifyIdToken(token);
+        await getAdminAuth().verifyIdToken(token);
 
         // 1. Database Health
         const dbStart = Date.now();
         let dbStatus = 'healthy';
         let dbLatency = 0;
         try {
-            await adminFirestore.collection('system-config').limit(1).get();
+            await getAdminDb().collection('system-config').limit(1).get();
             dbLatency = Date.now() - dbStart;
         } catch (e) {
             dbStatus = 'degraded';
         }
 
         // 2. Aggregate counts for "Load" simulation
-        const historyCount = await adminFirestore.collectionGroup('history')
+        const historyCount = await getAdminDb().collectionGroup('history')
             .where('timestamp', '>=', new Date(Date.now() - 3600000)) // last hour
             .count().get();
         const loadIntensity = historyCount.data().count;
 
         // 3. Tool specific health (check if any specific tool is failing recently)
-        const recentFailures = await adminFirestore.collectionGroup('history')
+        const recentFailures = await getAdminDb().collectionGroup('history')
             .where('status', '==', 'error')
             .where('timestamp', '>=', new Date(Date.now() - 3600000))
             .count().get();

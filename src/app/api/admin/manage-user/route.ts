@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { adminAuth, adminFirestore } from '@/lib/firebase-admin';
+import { getAdminAuth, getAdminDb } from '@/lib/firebase-admin';
 import { deleteUserDataAdmin } from '@/lib/admin-data-service';
 import { logAuditEvent } from '@/lib/audit-log';
 import { z } from 'zod';
@@ -34,8 +34,7 @@ function isAdminByToken(decodedToken: { admin?: boolean; email?: string }): bool
 
 async function checkFirestoreAdmin(uid: string): Promise<boolean> {
     try {
-        if (!adminFirestore) return false;
-        const userDoc = await adminFirestore.collection('users').doc(uid).get();
+        const userDoc = await getAdminDb().collection('users').doc(uid).get();
         return userDoc.exists && userDoc.data()?.isAdmin === true;
     } catch (e) {
         return false;
@@ -51,7 +50,7 @@ export async function POST(request: NextRequest) {
         }
 
         const token = authHeader.split('Bearer ')[1];
-        const decodedToken = await adminAuth.verifyIdToken(token);
+        const decodedToken = await getAdminAuth().verifyIdToken(token);
         const callerUid = decodedToken.uid;
         const callerEmail = decodedToken.email;
 
@@ -76,7 +75,7 @@ export async function POST(request: NextRequest) {
         const { targetUid, action } = validation.data;
 
         // Get target user info
-        const targetUser = await adminAuth.getUser(targetUid);
+        const targetUser = await getAdminAuth().getUser(targetUid);
         if (BOOTSTRAP_ADMIN_EMAILS.includes(targetUser.email || '')) {
             return NextResponse.json({ error: 'Operation Forbidden: Cannot modify root bootstrap administrators.' }, { status: 403 });
         }
@@ -85,40 +84,40 @@ export async function POST(request: NextRequest) {
 
         switch (action) {
             case 'TERMINATE_ADMIN':
-                await adminAuth.setCustomUserClaims(targetUid, { admin: false });
-                await adminAuth.revokeRefreshTokens(targetUid);
+                await getAdminAuth().setCustomUserClaims(targetUid, { admin: false });
+                await getAdminAuth().revokeRefreshTokens(targetUid);
                 message = `Administrative privileges revoked for ${targetUser.email}`;
                 break;
 
             case 'FREEZE_ACCOUNT':
-                await adminAuth.updateUser(targetUid, { disabled: true });
-                await adminAuth.revokeRefreshTokens(targetUid);
+                await getAdminAuth().updateUser(targetUid, { disabled: true });
+                await getAdminAuth().revokeRefreshTokens(targetUid);
                 message = `Account access suspended for ${targetUser.email}`;
                 break;
 
             case 'UNFREEZE_ACCOUNT':
-                await adminAuth.updateUser(targetUid, { disabled: false });
+                await getAdminAuth().updateUser(targetUid, { disabled: false });
                 message = `Account access restored for ${targetUser.email}`;
                 break;
 
             case 'BAN_EMAIL':
                 if (targetUser.email) {
-                    await adminFirestore.collection('banned_emails').doc(targetUser.email).set({
+                    await getAdminDb().collection('banned_emails').doc(targetUser.email).set({
                         reason: 'Banned by Head Admin',
                         timestamp: new Date(),
                         bannedBy: callerUid
                     });
                 }
-                await adminAuth.updateUser(targetUid, { disabled: true });
-                await adminAuth.revokeRefreshTokens(targetUid);
+                await getAdminAuth().updateUser(targetUid, { disabled: true });
+                await getAdminAuth().revokeRefreshTokens(targetUid);
                 message = `Email ${targetUser.email} has been permanently blacklisted and account disabled.`;
                 break;
 
             case 'UNBAN_EMAIL':
                 if (targetUser.email) {
-                    await adminFirestore.collection('banned_emails').doc(targetUser.email).delete();
+                    await getAdminDb().collection('banned_emails').doc(targetUser.email).delete();
                 }
-                await adminAuth.updateUser(targetUid, { disabled: false });
+                await getAdminAuth().updateUser(targetUid, { disabled: false });
                 message = `Email ${targetUser.email} has been removed from blacklist.`;
                 break;
 
@@ -126,7 +125,7 @@ export async function POST(request: NextRequest) {
                 // Use the existing utility for full data deletion
                 await deleteUserDataAdmin(targetUid);
                 // Also delete from Auth
-                await adminAuth.deleteUser(targetUid);
+                await getAdminAuth().deleteUser(targetUid);
                 message = `User ${targetUser.email} and all associated data permanently deleted.`;
                 break;
 
@@ -135,8 +134,8 @@ export async function POST(request: NextRequest) {
                 if (!newPassword || newPassword.length < 6) {
                     return NextResponse.json({ error: 'Password must be at least 6 characters' }, { status: 400 });
                 }
-                await adminAuth.updateUser(targetUid, { password: newPassword });
-                await adminAuth.revokeRefreshTokens(targetUid);
+                await getAdminAuth().updateUser(targetUid, { password: newPassword });
+                await getAdminAuth().revokeRefreshTokens(targetUid);
                 message = `Password updated successfully for ${targetUser.email}. Existing sessions have been terminated for security.`;
                 break;
 
@@ -153,7 +152,7 @@ export async function POST(request: NextRequest) {
                     }
                 });
 
-                await adminFirestore.doc('system/config').set({
+                await getAdminDb().doc('system/config').set({
                     ...filteredDetails,
                     lastUpdated: new Date(),
                     updatedBy: callerUid
