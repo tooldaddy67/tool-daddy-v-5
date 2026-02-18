@@ -958,9 +958,9 @@ export function SettingsContent({ isDialog = false, onClose }: SettingsContentPr
                                     variant="link"
                                     className="p-0 h-auto text-xs text-muted-foreground hover:text-primary"
                                     onClick={async () => {
-                                        if (auth.currentUser?.email) {
+                                        if (user?.email && auth) {
                                             try {
-                                                await sendPasswordResetEmail(auth, auth.currentUser.email);
+                                                await auth.auth.resetPasswordForEmail(user.email);
                                                 toast({ title: "Email Sent", description: "Password reset link sent to your email." });
                                             } catch (error: any) {
                                                 console.error("Reset password error", error);
