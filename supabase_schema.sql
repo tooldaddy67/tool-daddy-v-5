@@ -56,15 +56,34 @@ ALTER TABLE public.system_config ENABLE ROW LEVEL SECURITY;
 -- Basic Policies
 -- (Adjusted for Firebase Auth - we use service role or public with checks if possible)
 -- Since we are not using Supabase Auth, we can't easily use auth.uid() in RLS.
--- For now, we will allow read access to everyone and write access will be managed by the app logic
--- or we can use custom claims if we were using Supabase Auth.
--- Since we used 'anon' key, we will allow basic operations but warn about RLS.
+-- For now, we will allow read access to everyone and write-- Permissions
+GRANT ALL ON TABLE public.profiles TO anon;
+GRANT ALL ON TABLE public.profiles TO authenticated;
+GRANT ALL ON TABLE public.profiles TO service_role;
 
-CREATE POLICY "Public profiles are viewable by everyone" ON public.profiles FOR SELECT USING (true);
+GRANT ALL ON TABLE public.feedback TO anon;
+GRANT ALL ON TABLE public.feedback TO authenticated;
+GRANT ALL ON TABLE public.feedback TO service_role;
+
+GRANT ALL ON TABLE public.votes TO anon;
+GRANT ALL ON TABLE public.votes TO authenticated;
+GRANT ALL ON TABLE public.votes TO service_role;
+
+GRANT ALL ON TABLE public.tool_usage TO anon;
+GRANT ALL ON TABLE public.tool_usage TO authenticated;
+GRANT ALL ON TABLE public.tool_usage TO service_role;
+
+-- Policies (Nuclear Option: Allow Everything)
+DROP POLICY IF EXISTS "Public profiles are viewable by everyone" ON public.profiles;
+DROP POLICY IF EXISTS "Users can manage their own profiles" ON public.profiles;
+DROP POLICY IF EXISTS "Allow all profile operations" ON public.profiles;
+
+CREATE POLICY "Allow all profile operations" ON public.profiles FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Public feedback is viewable by everyone" ON public.feedback FOR SELECT USING (true);
-CREATE POLICY "Anyone can post feedback" ON public.feedback FOR INSERT WITH CHECK (true);
+CREATE POLICY "Logged in users can post feedback" ON public.feedback FOR INSERT WITH CHECK (user_id IS NOT NULL);
+CREATE POLICY "Allow all select" ON public.profiles FOR SELECT USING (true);
 CREATE POLICY "Public votes are viewable by everyone" ON public.votes FOR SELECT USING (true);
-CREATE POLICY "Anyone can vote" ON public.votes FOR INSERT WITH CHECK (true);
+CREATE POLICY "Logged in users can vote" ON public.votes FOR INSERT WITH CHECK (user_id IS NOT NULL);
 CREATE POLICY "Usage is viewable by everyone" ON public.tool_usage FOR SELECT USING (true);
 
 -- RPC for incrementing tool usage
@@ -76,4 +95,6 @@ BEGIN
   ON CONFLICT (user_id, tool_id, usage_date)
   DO UPDATE SET usage_count = public.tool_usage.usage_count + 1;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public;

@@ -3,6 +3,7 @@
 import React, { DependencyList, createContext, useContext, ReactNode, useMemo, useState, useEffect } from 'react';
 import { FirebaseApp } from 'firebase/app';
 import { Auth, User, onAuthStateChanged, signInAnonymously } from 'firebase/auth';
+import { syncUserProfile } from '@/lib/profile-sync';
 
 interface FirebaseProviderProps {
   children: ReactNode;
@@ -76,6 +77,10 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
 
         if (firebaseUser) {
           setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null });
+          // Sync profile to Supabase
+          if (!firebaseUser.isAnonymous) {
+            syncUserProfile(firebaseUser);
+          }
         } else {
 
           try {

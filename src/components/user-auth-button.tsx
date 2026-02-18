@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useAdmin } from '@/hooks/use-admin';
 import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
@@ -52,9 +53,11 @@ export function UserAuthButton({ customTrigger }: UserAuthButtonProps) {
     const [otpSent, setOtpSent] = useState(false);
     const [otpCode, setOtpCode] = useState('');
 
+    const { isAdmin: adminStatus } = useAdmin();
+
     useEffect(() => {
-        setIsAdmin(false);
-    }, [user]);
+        setIsAdmin(adminStatus);
+    }, [adminStatus]);
 
     // Reset OTP state when dialog closes
     useEffect(() => {
@@ -269,6 +272,17 @@ export function UserAuthButton({ customTrigger }: UserAuthButtonProps) {
                             </div>
                         </DropdownMenuLabel>
                         <DropdownMenuSeparator />
+                        {isAdmin && (
+                            <>
+                                <DropdownMenuItem asChild>
+                                    <Link href="/admin/dashboard" className="cursor-pointer">
+                                        <ShieldCheck className="mr-2 h-4 w-4" />
+                                        <span>Admin Panel</span>
+                                    </Link>
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                            </>
+                        )}
                         <DropdownMenuItem onClick={handleSignOut} className="text-red-500 focus:text-red-500">
                             <LogOut className="mr-2 h-4 w-4" />
                             <span>Log out</span>
