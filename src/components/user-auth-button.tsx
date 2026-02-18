@@ -14,17 +14,14 @@ import {
     Dialog,
     DialogContent,
     DialogDescription,
-    DialogFooter,
     DialogHeader,
     DialogTitle,
-    DialogTrigger,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useUser, useAuth } from '@/firebase';
-import { signOut, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink, updateProfile } from 'firebase/auth';
-import { LogIn, LogOut, User as UserIcon, Loader2, Sparkles, UserPlus, CheckCircle2, ShieldCheck } from 'lucide-react';
+import { LogIn, LogOut, Loader2, Sparkles, UserPlus, CheckCircle2, ShieldCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useSettings } from '@/components/settings-provider';
@@ -35,12 +32,11 @@ interface UserAuthButtonProps {
 
 export function UserAuthButton({ customTrigger }: UserAuthButtonProps) {
     const { user, isUserLoading } = useUser();
-    const auth = useAuth();
+    const supabase = useAuth(); // This is now the Supabase client
     const { toast } = useToast();
     const { settings, updateSettings } = useSettings();
     const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false);
     const [magicLinkSent, setMagicLinkSent] = useState(false);
-    const [magicLinkEmail, setMagicLinkEmail] = useState('');
     const [isAdmin, setIsAdmin] = useState(false);
 
     // State for auth forms
@@ -49,170 +45,82 @@ export function UserAuthButton({ customTrigger }: UserAuthButtonProps) {
     const [isLoading, setIsLoading] = useState(false);
     const [authMode, setAuthMode] = useState<'login' | 'signup' | 'magic'>('login');
 
-    // OTP State
-    const [otpSent, setOtpSent] = useState(false);
-    const [otpCode, setOtpCode] = useState('');
-
     const { isAdmin: adminStatus } = useAdmin();
 
     useEffect(() => {
         setIsAdmin(adminStatus);
     }, [adminStatus]);
 
-    // Reset OTP state when dialog closes
-    useEffect(() => {
-        if (!isAuthDialogOpen) {
-            setOtpSent(false);
-            setOtpCode('');
-        }
-    }, [isAuthDialogOpen]);
-
-
-    useEffect(() => {
-        // Check for email link on load
-        if (auth && isSignInWithEmailLink(auth, window.location.href)) {
-            let email = window.localStorage.getItem('emailForSignIn');
-            if (!email) {
-                // If email is not saved, prompt user (could be opened on a different device)
-                email = window.prompt('Please provide your email for confirmation');
-            }
-            if (email) {
-                setIsLoading(true);
-                signInWithEmailLink(auth, email, window.location.href)
-                    .then((result) => {
-                        window.localStorage.removeItem('emailForSignIn');
-                        toast({ title: 'Successfully signed in!', description: 'Welcome to Tool Daddy!' });
-                        // Clear the URL parameters to avoid re-triggering
-                        window.history.replaceState({}, document.title, window.location.pathname);
-                    })
-                    .catch((error) => {
-                        toast({ title: 'Sign-in failed', description: error.message, variant: 'destructive' });
-                    })
-                    .finally(() => {
-                        setIsLoading(false);
-                    });
-            }
-        }
-    }, [auth]);
-
-    const handleSendOtp = async () => {
-        setIsLoading(true);
-        try {
-            const res = await fetch('/api/auth/otp/send', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email }),
-            });
-
-            const data = await res.json();
-
-            if (!res.ok) {
-                throw new Error(data.error || 'Failed to send OTP');
-            }
-
-            setOtpSent(true);
-            toast({ title: "OTP Sent", description: "Please check your email for the verification code." });
-        } catch (error: any) {
-            toast({
-                title: "Error Sending OTP",
-                description: error.message,
-                variant: 'destructive'
-            });
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const handleVerifyAndSignup = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setIsLoading(true);
-
-        try {
-            // Verify OTP
-            const res = await fetch('/api/auth/otp/verify', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, code: otpCode }),
-            });
-
-            const data = await res.json();
-
-            if (!res.ok) {
-                throw new Error(data.error || 'Invalid OTP');
-            }
-
-            // If OTP is valid, proceed to create user
-            if (!auth) throw new Error("Authentication service is not ready.");
-            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-            if (userCredential.user) {
-                await updateProfile(userCredential.user, { displayName: email.split('@')[0] });
-            }
-            toast({ title: "Account created successfully" });
-            setIsAuthDialogOpen(false);
-            // Reset state
-            setOtpSent(false);
-            setOtpCode('');
-            setEmail('');
-            setPassword('');
-
-        } catch (error: any) {
-            toast({
-                title: "Verification Failed",
-                description: error.message,
-                variant: 'destructive'
-            });
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-
+    // Handle email/password auth (login or signup)
     const handleAuth = async (e: React.FormEvent) => {
         e.preventDefault();
-
-        if (authMode === 'signup') {
-            if (!otpSent) {
-                await handleSendOtp();
-            } else {
-                await handleVerifyAndSignup(e);
-            }
-            return;
-        }
-
+        if (!supabase) return;
         setIsLoading(true);
+
         try {
             if (authMode === 'login') {
-                if (!auth) throw new Error("Authentication service is not ready.");
-                await signInWithEmailAndPassword(auth, email, password);
-                toast({ title: "Signed in successfully" });
+                const { data, error } = await supabase.auth.signInWithPassword({
+                    email,
+                    password,
+                });
+                if (error) throw error;
+                toast({ title: 'Successfully signed in!', description: 'Welcome to Tool Daddy!' });
                 setIsAuthDialogOpen(false);
+                setEmail('');
+                setPassword('');
+            } else if (authMode === 'signup') {
+                const { data, error } = await supabase.auth.signUp({
+                    email,
+                    password,
+                    options: {
+                        data: {
+                            full_name: email.split('@')[0],
+                            display_name: email.split('@')[0],
+                        },
+                    },
+                });
+                if (error) throw error;
+
+                if (data.user && !data.session) {
+                    // Email confirmation required
+                    toast({
+                        title: 'Check your email!',
+                        description: 'We sent a confirmation link. Click it to activate your account.',
+                    });
+                } else {
+                    toast({ title: 'Account created!', description: 'Welcome to Tool Daddy!' });
+                    setIsAuthDialogOpen(false);
+                }
+                setEmail('');
+                setPassword('');
             }
-            // Signup logic is handled above now
         } catch (error: any) {
             toast({
-                title: "Authentication failed",
-                description: error.message,
-                variant: 'destructive'
+                title: 'Authentication failed',
+                description: error.message || 'Something went wrong',
+                variant: 'destructive',
             });
         } finally {
             setIsLoading(false);
         }
     };
 
+    // Handle magic link (passwordless)
     const handleMagicLink = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!supabase) return;
         setIsLoading(true);
-        const actionCodeSettings = {
-            url: window.location.origin + window.location.pathname,
-            handleCodeInApp: true,
-        };
 
         try {
-            if (!auth) throw new Error("Authentication service is not ready.");
-            await sendSignInLinkToEmail(auth, email, actionCodeSettings);
-            window.localStorage.setItem('emailForSignIn', email);
+            const { error } = await supabase.auth.signInWithOtp({
+                email,
+                options: {
+                    emailRedirectTo: window.location.origin,
+                },
+            });
+            if (error) throw error;
             setMagicLinkSent(true);
-            toast({ title: 'Magic Link sent!', description: 'Check your inbox to sign in instantly.' });
+            toast({ title: 'Magic Link sent!', description: 'Check your inbox to sign in.' });
         } catch (error: any) {
             toast({ title: 'Error sending link', description: error.message, variant: 'destructive' });
         } finally {
@@ -220,13 +128,15 @@ export function UserAuthButton({ customTrigger }: UserAuthButtonProps) {
         }
     };
 
+    // Handle sign out
     const handleSignOut = async () => {
+        if (!supabase) return;
         try {
-            if (!auth) return;
-            await signOut(auth);
-            toast({ title: "Signed out", description: "See you next time!" });
+            const { error } = await supabase.auth.signOut();
+            if (error) throw error;
+            toast({ title: 'Signed out', description: 'See you next time!' });
         } catch (error: any) {
-            toast({ title: "Error signing out", description: error.message, variant: 'destructive' });
+            toast({ title: 'Error signing out', description: error.message, variant: 'destructive' });
         }
     };
 
@@ -243,7 +153,6 @@ export function UserAuthButton({ customTrigger }: UserAuthButtonProps) {
             {user && !user.isAnonymous ? (
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        {/* If custom trigger is provided, use it, otherwise use default button */}
                         {customTrigger ? (
                             <div role="button" className="cursor-pointer">{customTrigger}</div>
                         ) : (
@@ -304,84 +213,159 @@ export function UserAuthButton({ customTrigger }: UserAuthButtonProps) {
             )}
 
             <Dialog open={isAuthDialogOpen} onOpenChange={setIsAuthDialogOpen}>
-                <DialogContent className="w-[95vw] sm:w-full sm:max-w-[400px] rounded-xl sm:rounded-lg border-primary/20 bg-background/95 backdrop-blur-xl p-4 sm:p-6 overflow-y-auto max-h-[90vh]">
+                <DialogContent className="w-[95vw] sm:w-full sm:max-w-[425px] rounded-xl sm:rounded-lg border-primary/20 bg-background/95 backdrop-blur-xl p-4 sm:p-6 overflow-y-auto max-h-[90vh]">
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2 text-2xl font-bold font-headline">
                             <Sparkles className="h-6 w-6 text-primary" />
                             Tool Daddy Cloud
                         </DialogTitle>
                         <DialogDescription>
-                            Sign in or create an account with a passwordless magic link.
+                            Sign in or create an account to get started.
                         </DialogDescription>
                     </DialogHeader>
 
-                    <div className="mt-6">
-                        {magicLinkSent ? (
-                            <div className="flex flex-col items-center justify-center space-y-6 py-4 text-center animate-in fade-in zoom-in-95 duration-300">
-                                <div className="relative">
-                                    <div className="absolute inset-0 bg-primary/20 blur-2xl rounded-full" />
-                                    <div className="relative rounded-full bg-primary/10 p-4 border border-primary/20">
-                                        <CheckCircle2 className="h-10 w-10 text-primary" />
-                                    </div>
+                    <Tabs defaultValue="login" className="mt-4">
+                        <TabsList className="grid w-full grid-cols-3">
+                            <TabsTrigger value="login">Sign In</TabsTrigger>
+                            <TabsTrigger value="signup">Sign Up</TabsTrigger>
+                            <TabsTrigger value="magic">Magic Link</TabsTrigger>
+                        </TabsList>
+
+                        {/* Email/Password Login */}
+                        <TabsContent value="login" className="mt-4">
+                            <form onSubmit={handleAuth} className="space-y-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="login-email">Email</Label>
+                                    <Input
+                                        id="login-email"
+                                        type="email"
+                                        placeholder="name@example.com"
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        className="h-11 rounded-xl"
+                                        required
+                                        onFocus={() => setAuthMode('login')}
+                                    />
                                 </div>
                                 <div className="space-y-2">
-                                    <h3 className="font-bold text-xl">Check your email</h3>
-                                    <p className="text-sm text-muted-foreground max-w-[280px] mx-auto leading-relaxed">
-                                        We've sent a secure login link to <span className="font-semibold text-foreground underline decoration-primary/30">{email}</span>. Click it to sign in!
-                                    </p>
+                                    <Label htmlFor="login-password">Password</Label>
+                                    <Input
+                                        id="login-password"
+                                        type="password"
+                                        placeholder="••••••••"
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        className="h-11 rounded-xl"
+                                        required
+                                        onFocus={() => setAuthMode('login')}
+                                    />
                                 </div>
                                 <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="text-xs h-9 px-4 rounded-full border-primary/20 hover:bg-primary/5 hover:text-primary transition-all"
-                                    onClick={() => setMagicLinkSent(false)}
+                                    type="submit"
+                                    className="w-full h-11 font-semibold rounded-xl"
+                                    disabled={isLoading}
+                                    onClick={() => setAuthMode('login')}
                                 >
-                                    Use a different email
+                                    {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <LogIn className="mr-2 h-4 w-4" />}
+                                    Sign In
                                 </Button>
-                            </div>
-                        ) : (
-                            <form onSubmit={handleMagicLink} className="space-y-6">
-                                <div className="space-y-3">
-                                    <Label htmlFor="email-magic" className="text-sm font-medium ml-1">Email Address</Label>
-                                    <div className="relative group">
+                            </form>
+                        </TabsContent>
+
+                        {/* Email/Password Signup */}
+                        <TabsContent value="signup" className="mt-4">
+                            <form onSubmit={handleAuth} className="space-y-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="signup-email">Email</Label>
+                                    <Input
+                                        id="signup-email"
+                                        type="email"
+                                        placeholder="name@example.com"
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        className="h-11 rounded-xl"
+                                        required
+                                        onFocus={() => setAuthMode('signup')}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="signup-password">Password</Label>
+                                    <Input
+                                        id="signup-password"
+                                        type="password"
+                                        placeholder="Min 6 characters"
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        className="h-11 rounded-xl"
+                                        required
+                                        onFocus={() => setAuthMode('signup')}
+                                    />
+                                </div>
+                                <Button
+                                    type="submit"
+                                    className="w-full h-11 font-semibold rounded-xl"
+                                    disabled={isLoading}
+                                    onClick={() => setAuthMode('signup')}
+                                >
+                                    {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UserPlus className="mr-2 h-4 w-4" />}
+                                    Create Account
+                                </Button>
+                            </form>
+                        </TabsContent>
+
+                        {/* Magic Link */}
+                        <TabsContent value="magic" className="mt-4">
+                            {magicLinkSent ? (
+                                <div className="flex flex-col items-center justify-center space-y-4 py-4 text-center">
+                                    <div className="rounded-full bg-primary/10 p-4 border border-primary/20">
+                                        <CheckCircle2 className="h-8 w-8 text-primary" />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <h3 className="font-bold text-lg">Check your email</h3>
+                                        <p className="text-sm text-muted-foreground">
+                                            Login link sent to <span className="font-semibold text-foreground">{email}</span>
+                                        </p>
+                                    </div>
+                                    <Button variant="outline" size="sm" onClick={() => setMagicLinkSent(false)}>
+                                        Use a different email
+                                    </Button>
+                                </div>
+                            ) : (
+                                <form onSubmit={handleMagicLink} className="space-y-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="email-magic">Email Address</Label>
                                         <Input
                                             id="email-magic"
                                             type="email"
                                             placeholder="name@example.com"
                                             value={email}
                                             onChange={(e) => setEmail(e.target.value)}
-                                            className="h-12 border-border/40 bg-muted/30 focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all rounded-xl pl-4"
+                                            className="h-11 rounded-xl"
                                             required
                                         />
                                     </div>
-                                    <div className="bg-primary/5 rounded-xl p-4 text-xs text-muted-foreground border border-primary/10 leading-relaxed">
+                                    <div className="bg-primary/5 rounded-xl p-3 text-xs text-muted-foreground border border-primary/10">
                                         <p className="flex items-start gap-2">
                                             <Sparkles className="h-3.5 w-3.5 text-primary mt-0.5 shrink-0" />
-                                            We'll send you a secure link for a password-free experience.
-                                            New here? We'll create your account automatically.
+                                            Password-free sign in. New here? We'll create your account automatically.
                                         </p>
                                     </div>
-                                </div>
-                                <Button
-                                    type="submit"
-                                    className="w-full h-12 text-base font-semibold rounded-xl shadow-lg shadow-primary/10 hover:shadow-primary/20 transition-all"
-                                    disabled={isLoading}
-                                >
-                                    {isLoading ? (
-                                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                                    ) : (
-                                        <Sparkles className="mr-2 h-5 w-5" />
-                                    )}
-                                    Get Magic Link
-                                </Button>
+                                    <Button
+                                        type="submit"
+                                        className="w-full h-11 font-semibold rounded-xl"
+                                        disabled={isLoading}
+                                    >
+                                        {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+                                        Get Magic Link
+                                    </Button>
+                                </form>
+                            )}
+                        </TabsContent>
+                    </Tabs>
 
-                                <p className="text-[10px] text-center text-muted-foreground px-4">
-                                    By continuing, you agree to our terms of service and privacy policy.
-                                    Magic links expire in 10 minutes for your security.
-                                </p>
-                            </form>
-                        )}
-                    </div>
+                    <p className="text-[10px] text-center text-muted-foreground px-4 mt-2">
+                        By continuing, you agree to our terms of service and privacy policy.
+                    </p>
                 </DialogContent>
             </Dialog>
         </>

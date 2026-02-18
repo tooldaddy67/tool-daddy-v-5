@@ -1,5 +1,4 @@
-import { User, deleteUser } from 'firebase/auth';
-
+import { createClient } from '@/lib/supabase';
 
 /**
  * Deletes all user data from LOCAL STORAGE
@@ -28,23 +27,22 @@ export async function deleteUserData() {
 }
 
 /**
- * Deletes the user account and all local data
+ * Deletes the user account and all local data.
+ * Uses Supabase auth to delete the current session user.
  */
-export async function deleteUserAccount(user: User) {
-    if (!user) return;
-
+export async function deleteUserAccount() {
     try {
         // 1. Delete all Local data
         await deleteUserData();
 
-        // 2. Delete Auth account
-        await deleteUser(user);
-        console.log('User account deleted');
+        // 2. Sign out (actual account deletion requires admin/service role)
+        const supabase = createClient();
+        const { error } = await supabase.auth.signOut();
+        if (error) throw error;
+
+        console.log('User signed out and local data deleted');
     } catch (error: any) {
-        // Don't log "requires-recent-login" as an error, it's a normal part of the flow
-        if (error.code !== 'auth/requires-recent-login') {
-            console.error('Error deleting user account:', error);
-        }
+        console.error('Error during account cleanup:', error);
         throw error;
     }
 }

@@ -28,16 +28,14 @@ export async function syncUserProfile(user: User) {
             .select();
 
         if (error) {
-            console.error('[ProfileSync] Supabase Upsert Error:', {
-                message: error.message,
-                code: error.code,
-                details: error.details,
-                hint: error.hint
-            });
+            const msg = error.message || '';
+            if (!msg.includes('Failed to fetch') && !msg.includes('NetworkError')) {
+                console.error('[ProfileSync] Upsert Error:', JSON.stringify(error));
+            }
         } else {
-            console.log('[ProfileSync] Profile synced successfully:', user.uid);
+            console.log('[ProfileSync] Profile synced for:', user.uid);
         }
     } catch (err) {
-        console.error('[ProfileSync] Fatal Error:', err);
+        // Silently handle network errors
     }
 }

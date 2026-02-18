@@ -1,24 +1,20 @@
 "use client";
 import { useEffect, useState } from 'react';
-import { useFirebase } from '@/firebase/provider';
+import { useSupabaseAuth } from '@/lib/auth-provider';
 
 export function useAuthUserRole() {
-  const { auth, user } = useFirebase();
+  const { supabase, user } = useSupabaseAuth();
   const [role, setRole] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!auth) return;
-
-    const unsubscribe = auth.onAuthStateChanged(async (user) => {
-      if (user) {
-        const token = await user.getIdTokenResult();
-        setRole((token.claims as any).role || null);
-      } else {
-        setRole(null);
-      }
-    });
-    return () => unsubscribe();
-  }, [auth]);
+    // Supabase doesn't have custom claims like Firebase
+    // If you need roles, store them in the profiles table
+    if (user) {
+      setRole('user'); // Default role
+    } else {
+      setRole(null);
+    }
+  }, [user]);
 
   return role;
 }

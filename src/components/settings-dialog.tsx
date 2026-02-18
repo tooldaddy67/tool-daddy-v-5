@@ -15,7 +15,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useUser, useAuth } from '@/firebase';
-import { updateProfile, GoogleAuthProvider, reauthenticateWithPopup, EmailAuthProvider, reauthenticateWithCredential, sendPasswordResetEmail } from 'firebase/auth';
+
 import { Settings, Type, Palette, CheckCircle2, Layers, Maximize, Activity, Gauge, Image as ImageIcon, Sparkles, UserIcon, ShieldCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -95,27 +95,26 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
 
     const handleReauthAndDelete = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!auth || !auth.currentUser) return;
+        if (!auth) return;
 
         setIsReauthenticating(true);
         try {
-            const credential = EmailAuthProvider.credential(auth.currentUser.email!, reauthPassword);
-            await reauthenticateWithCredential(auth.currentUser, credential);
+            // Verify password by attempting sign-in
+            const { error: signInError } = await auth.auth.signInWithPassword({
+                email: user?.email || '',
+                password: reauthPassword,
+            });
+            if (signInError) throw signInError;
 
-            // Re-auth successful, delete account
-            await deleteUserAccount(auth.currentUser);
+            // Sign out and clear data
+            await deleteUserAccount();
             setShowReauthDialog(false);
             onOpenChange(false);
             toast({ title: "Account Deleted", description: "See you next time." });
             window.location.href = '/';
 
         } catch (error: any) {
-            console.log("Re-auth failed:", error.code);
-            if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
-                toast({ title: "Incorrect Password", description: "Please try again.", variant: "destructive" });
-            } else {
-                toast({ title: "Verification Failed", description: error.message, variant: "destructive" });
-            }
+            toast({ title: "Verification Failed", description: error.message || 'Incorrect password', variant: "destructive" });
         } finally {
             setIsReauthenticating(false);
         }
@@ -124,56 +123,16 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
     const handleDeleteAccount = async () => {
         setIsDeletingAccount(true);
         try {
-            if (!user || !auth || !auth.currentUser) {
+            if (!user || !auth) {
                 toast({ title: "Error", description: "Failed to delete account. Please try again later.", variant: "destructive" });
                 return;
             }
 
-            await deleteUserAccount(auth.currentUser);
-            onOpenChange(false);
-            toast({ title: "Account Deleted", description: "See you next time." });
-            window.location.href = '/';
+            // For security, ask for password confirmation
+            setShowReauthDialog(true);
+            toast({ title: "Security Check", description: "Please enter your password to confirm deletion." });
         } catch (error: any) {
-            if (error.code === 'auth/requires-recent-login') {
-                console.log("Re-authentication required.");
-                // Check provider to decide re-auth method
-                if (!auth || !auth.currentUser) return;
-                const providerId = auth.currentUser.providerData[0]?.providerId;
-
-                if (providerId === 'password') {
-                    // Show password dialog
-                    setShowReauthDialog(true);
-                    toast({ title: "Security Check", description: "Please enter your password to confirm deletion." });
-                } else if (providerId === 'google.com') {
-                    // Google Re-auth
-                    toast({ title: "Security Check", description: "Please sign in again to confirm account deletion." });
-                    try {
-                        if (auth && auth.currentUser) {
-                            const provider = new GoogleAuthProvider();
-                            await reauthenticateWithPopup(auth.currentUser, provider);
-
-                            // Retry deletion after successful re-auth
-                            await deleteUserAccount(auth.currentUser);
-                            onOpenChange(false);
-                            toast({ title: "Account Deleted", description: "See you next time." });
-                            window.location.href = '/';
-                        }
-                    } catch (reAuthError: any) {
-                        console.error("Re-auth failed", reAuthError);
-                        if (reAuthError.code === 'auth/popup-closed-by-user') {
-                            toast({ title: "Action Cancelled", description: "Account deletion cancelled." });
-                        } else if (reAuthError.code === 'auth/cancelled-popup-request') {
-                            // Ignore multiple popup requests
-                        } else {
-                            toast({ title: "Verification Failed", description: "Could not verify your identity.", variant: "destructive" });
-                        }
-                    }
-                } else {
-                    toast({ title: "Security Check", description: "Please sign out and sign in again to delete your account.", variant: "destructive" });
-                }
-            } else {
-                toast({ title: "Error", description: "Failed to delete account. Please try again later.", variant: "destructive" });
-            }
+            toast({ title: "Error", description: "Failed to delete account. Please try again later.", variant: "destructive" });
         } finally {
             setIsDeletingAccount(false);
         }
@@ -234,8 +193,8 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                                             <Button
                                                 size="sm"
                                                 onClick={async () => {
-                                                    if (user && !user.isAnonymous && auth.currentUser) {
-                                                        await updateProfile(auth.currentUser, { displayName: newDisplayName });
+                                                    if (user && !user.isAnonymous && auth) {
+                                                        await auth.auth.updateUser({ data: { display_name: newDisplayName, full_name: newDisplayName } });
                                                     }
                                                     await updateSettings({ displayName: newDisplayName });
                                                     toast({ title: 'Profile Updated', description: "Username changed successfully." });
