@@ -25,10 +25,21 @@ export function useQuota() {
 
         // Debug: Log config state (safe)
         const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-        console.log('[QuotaCheck] Checking quota for:', toolId, 'Client ready:', !!supabase, 'URL Set:', !!url);
+        console.log('[QuotaCheck] Checking quota for:', toolId, 'URL:', url);
 
         setLoading(true);
         try {
+            // Test if we can even fetch anything from the URL
+            try {
+                const response = await fetch(`${url}/rest/v1/`, {
+                    method: 'GET',
+                    headers: { 'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string }
+                });
+                console.log('[QuotaCheck] Health Check Status:', response.status);
+            } catch (fetchErr: any) {
+                console.error('[QuotaCheck] Health Check Failed (Network Error):', fetchErr.message);
+            }
+
             const date = new Date().toISOString().split('T')[0];
 
             // Get current usage
@@ -48,7 +59,6 @@ export function useQuota() {
 
                 // Extremely verbose logging
                 console.error('[QuotaCheck] Supabase Error:', error);
-                console.error('[QuotaCheck] Status:', status, statusText);
                 throw error;
             }
 

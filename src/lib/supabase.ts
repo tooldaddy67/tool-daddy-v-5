@@ -1,16 +1,26 @@
 import { createBrowserClient, createServerClient } from '@supabase/ssr';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-
 // Client-side supabase instance
-export const createClient = () => createBrowserClient(supabaseUrl, supabaseAnonKey);
+export const createClient = () => {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    if (!url || !key) {
+        console.error('[Supabase] Missing environment variables in browser:', { hasUrl: !!url, hasKey: !!key });
+        throw new Error('Missing Supabase configuration');
+    }
+
+    return createBrowserClient(url, key);
+};
 
 // Server-side supabase instance (for API routes/Server Actions)
 export const createServer = (cookieStore: any) => {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+
     return createServerClient(
-        supabaseUrl,
-        supabaseAnonKey,
+        url,
+        key,
         {
             cookies: {
                 getAll() {
