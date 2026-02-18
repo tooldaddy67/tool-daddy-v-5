@@ -41,6 +41,8 @@ const StyleSlider = ({ label, value, onChange, variant, helpText }: { label: str
   </div>
 )
 
+import { useQuota } from '@/hooks/use-quota';
+
 export default function AiTextHumanizer() {
   const { isAdOpen, setIsAdOpen, showAd, handleAdFinish, duration, title: adTitle } = useToolAd('heavy_ai');
   const [inputText, setInputText] = useState('');
@@ -50,16 +52,25 @@ export default function AiTextHumanizer() {
   const { toast } = useToast();
   const { addToHistory } = useHistory();
   const { user } = useFirebase();
+  const { checkQuota, incrementUsage, loading: isQuotaLoading } = useQuota();
 
   const [warmth, setWarmth] = useState(5);
   const [formality, setFormality] = useState(5);
   const [directness, setDirectness] = useState(5);
   const [conciseness, setConciseness] = useState(5);
 
-  const [rateLimitInfo, setRateLimitInfo] = useState<{ remaining: number | null, limit: number | null }>({ remaining: null, limit: 4 });
+  const [rateLimitInfo, setRateLimitInfo] = useState<{ remaining: number | null, limit: number | null }>({ remaining: null, limit: 10 });
   const [cooldownTime, setCooldownTime] = useState(0);
 
   const MAX_CHAR_LIMIT = 3000;
+
+  useEffect(() => {
+    const fetchQuota = async () => {
+      const quota = await checkQuota('ai-text-humanizer');
+      setRateLimitInfo({ remaining: quota.remaining, limit: 10 });
+    };
+    if (user) fetchQuota();
+  }, [user, checkQuota]);
 
   useEffect(() => {
     if (cooldownTime > 0) {
@@ -71,7 +82,7 @@ export default function AiTextHumanizer() {
   }, [cooldownTime]);
 
 
-  const handleHumanizeClick = () => {
+  const handleHumanizeClick = async () => {
     if (!inputText.trim()) {
       toast({
         title: 'Input Required',
@@ -94,6 +105,16 @@ export default function AiTextHumanizer() {
       toast({
         title: 'Rate Limit Active',
         description: `Please wait ${cooldownTime} more seconds before trying again.`,
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    const quota = await checkQuota('ai-text-humanizer');
+    if (!quota.allowed) {
+      toast({
+        title: 'Quota Exceeded',
+        description: 'You have reached your daily limit for this tool. Please try again tomorrow.',
         variant: 'destructive'
       });
       return;
@@ -161,7 +182,9 @@ export default function AiTextHumanizer() {
 
     if (result.data) {
       setHumanizedText(result.data.humanizedText);
-      setRateLimitInfo({ remaining: result.data.remaining, limit: result.data.limit });
+      await incrementUsage('ai-text-humanizer');
+      const quota = await checkQuota('ai-text-humanizer');
+      setRateLimitInfo({ remaining: quota.remaining, limit: 10 });
 
       addToHistory({
         tool: 'AI Text Humanizer',

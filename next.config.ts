@@ -61,32 +61,12 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  // Headers moved to middleware.ts
+  /* 
   async headers() {
-    return [
-      {
-        source: '/:path*',
-        headers: [
-          {
-            key: 'X-Content-Type-Options',
-            value: 'nosniff',
-          },
-
-          {
-            key: 'X-XSS-Protection',
-            value: '1; mode=block',
-          },
-          {
-            key: 'Cross-Origin-Opener-Policy',
-            value: 'same-origin',
-          },
-          {
-            key: 'Cross-Origin-Embedder-Policy',
-            value: 'unsafe-none', // Changed from credentialless to fix YouTube embed issues
-          },
-        ],
-      },
-    ];
+    return [];
   },
+  */
   // Custom webpack config commented out for Turbopack compatibility
   // webpack: (config, { isServer }) => {
   //   config.resolve.fallback = { fs: false, path: false, crypto: false };

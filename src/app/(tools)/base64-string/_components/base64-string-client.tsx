@@ -28,8 +28,10 @@ export default function Base64StringClient() {
                 const base64 = btoa(String.fromCharCode(...bytes));
                 setOutput(base64);
             } else {
+                // Clean the input of any whitespaces or newlines for Base64 decoding
+                const cleanInput = input.replace(/\s/g, '').replace(/^data:.*?;base64,/, '');
                 // Use atob with UTF-8 support via text decoder
-                const binary = atob(input);
+                const binary = atob(cleanInput);
                 const bytes = new Uint8Array(binary.length);
                 for (let i = 0; i < binary.length; i++) {
                     bytes[i] = binary.charCodeAt(i);

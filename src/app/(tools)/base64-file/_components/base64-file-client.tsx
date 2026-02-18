@@ -17,16 +17,17 @@ export default function Base64FileClient() {
     const { toast } = useToast();
     const [isCopied, setIsCopied] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const [decodedText, setDecodedText] = useState<string | null>(null);
 
     const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
-        // Security check: Limit file size to 5MB to prevent browser crash
-        if (file.size > 5 * 1024 * 1024) {
+        // Security check: Limit file size to 10MB
+        if (file.size > 10 * 1024 * 1024) {
             toast({
                 title: 'File Too Large',
-                description: 'Please select a file smaller than 5MB.',
+                description: 'Please select a file smaller than 10MB.',
                 variant: 'destructive'
             });
             return;
@@ -38,9 +39,23 @@ export default function Base64FileClient() {
         const reader = new FileReader();
         reader.onload = (event) => {
             const result = event.target?.result as string;
-            // Get base64 part only (remove data:image/png;base64, etc)
             const split = result.split(',');
-            setFileBase64(split.length > 1 ? split[1] : split[0]);
+            const base64Content = split.length > 1 ? split[1] : split[0];
+            setFileBase64(base64Content);
+
+            // For text preview
+            if (file.type.startsWith('text/') || file.name.endsWith('.json') || file.name.endsWith('.svg')) {
+                const decoder = new TextDecoder();
+                const binary = atob(base64Content);
+                const bytes = new Uint8Array(binary.length);
+                for (let i = 0; i < binary.length; i++) {
+                    bytes[i] = binary.charCodeAt(i);
+                }
+                setDecodedText(decoder.decode(bytes));
+            } else {
+                setDecodedText(null);
+            }
+
             toast({ title: 'File converted to Base64' });
         };
         reader.onerror = () => {
@@ -52,7 +67,9 @@ export default function Base64FileClient() {
     const downloadFile = () => {
         if (!fileBase64) return;
         try {
-            const binary = atob(fileBase64);
+            // Clean the base64 string of any whitespaces or newlines
+            const cleanBase64 = fileBase64.replace(/\s/g, '');
+            const binary = atob(cleanBase64);
             const bytes = new Uint8Array(binary.length);
             for (let i = 0; i < binary.length; i++) {
                 bytes[i] = binary.charCodeAt(i);
@@ -73,20 +90,45 @@ export default function Base64FileClient() {
 
     const copyToClipboard = () => {
         if (!fileBase64) return;
-        navigator.clipboard.writeText(fileBase64);
+        navigator.clipboard.writeText(fileBase64.replace(/\s/g, ''));
         setIsCopied(true);
         toast({ title: 'Base64 copied to clipboard' });
         setTimeout(() => setIsCopied(false), 2000);
+    };
+
+    const handleBase64InputChange = (val: string) => {
+        const clean = val.replace(/^data:.*?;base64,/, '').replace(/\s/g, '');
+        setFileBase64(clean);
+
+        // Try to generate a preview if it looks like text or image
+        if (mode === 'decode' && clean.length > 0) {
+            try {
+                const binary = atob(clean);
+                // Simple heuristic for text: check if it's mostly printable characters
+                // Or if user set fileType to text
+                if (fileType.startsWith('text/') || (fileType === '' && binary.length < 10000)) {
+                    const bytes = new Uint8Array(binary.length);
+                    for (let i = 0; i < binary.length; i++) {
+                        bytes[i] = binary.charCodeAt(i);
+                    }
+                    setDecodedText(new TextDecoder().decode(bytes));
+                }
+            } catch (e) {
+                setDecodedText(null);
+            }
+        }
     };
 
     const reset = () => {
         setFileBase64('');
         setFileName('');
         setFileType('');
+        setDecodedText(null);
         if (fileInputRef.current) fileInputRef.current.value = '';
     };
 
-    const isImage = fileType.startsWith('image/');
+    const isImage = fileType.startsWith('image/') || (mode === 'decode' && fileBase64 && (fileBase64.startsWith('iVBORw') || fileBase64.startsWith('/9j/')));
+    const isTextPreviewable = decodedText !== null;
 
     return (
         <div className="container mx-auto py-10 px-4 max-w-5xl">
@@ -105,14 +147,14 @@ export default function Base64FileClient() {
                             <CardTitle className="text-lg">Input Area</CardTitle>
                             <div className="flex gap-2">
                                 <Button
-                                    variant={mode === 'encode' ? 'primary' : 'outline'}
+                                    variant={mode === 'encode' ? 'default' : 'outline'}
                                     size="sm"
                                     onClick={() => { setMode('encode'); reset(); }}
                                 >
                                     File to Text
                                 </Button>
                                 <Button
-                                    variant={mode === 'decode' ? 'primary' : 'outline'}
+                                    variant={mode === 'decode' ? 'default' : 'outline'}
                                     size="sm"
                                     onClick={() => { setMode('decode'); reset(); }}
                                 >
@@ -128,7 +170,7 @@ export default function Base64FileClient() {
                                     onClick={() => fileInputRef.current?.click()}>
                                     <FileUp className="h-12 w-12 text-primary/40 mb-4" />
                                     <p className="text-sm font-bold">Click to Upload File</p>
-                                    <p className="text-xs text-muted-foreground mt-1">Maximum file size: 5MB</p>
+                                    <p className="text-xs text-muted-foreground mt-1">Maximum file size: 10MB</p>
                                     <input
                                         type="file"
                                         ref={fileInputRef}
@@ -141,7 +183,7 @@ export default function Base64FileClient() {
                                         <FileText className="h-5 w-5 text-primary" />
                                         <div className="flex-1 min-w-0">
                                             <p className="text-sm font-bold truncate">{fileName}</p>
-                                            <p className="text-[10px] text-muted-foreground uppercase">{fileType}</p>
+                                            <p className="text-[10px] text-muted-foreground uppercase">{fileType || 'binary'}</p>
                                         </div>
                                         <Button variant="ghost" size="sm" onClick={reset}>
                                             <Trash2 className="h-4 w-4 text-destructive" />
@@ -154,25 +196,25 @@ export default function Base64FileClient() {
                                 <Label className="text-xs font-bold uppercase opacity-50">Paste Base64 Data</Label>
                                 <Textarea
                                     placeholder="Paste Base64 string here..."
-                                    className="min-h-[200px] font-mono text-sm bg-background/50"
+                                    className="min-h-[200px] font-mono text-xs bg-background/50"
                                     value={fileBase64}
-                                    onChange={(e) => setFileBase64(e.target.value.replace(/^data:.*?;base64,/, ''))}
+                                    onChange={(e) => handleBase64InputChange(e.target.value)}
                                 />
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
                                         <Label className="text-xs font-bold uppercase opacity-50">Set File Name</Label>
                                         <input
                                             placeholder="filename.ext"
-                                            className="w-full h-10 px-3 rounded-md bg-background/50 border border-border text-sm"
+                                            className="w-full h-10 px-3 rounded-md bg-background/50 border border-border text-xs"
                                             value={fileName}
                                             onChange={(e) => setFileName(e.target.value)}
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label className="text-xs font-bold uppercase opacity-50">Set MIME Type</Label>
+                                        <Label className="text-xs font-bold uppercase opacity-50">Set MIME Type (Optional)</Label>
                                         <input
                                             placeholder="image/png, application/pdf"
-                                            className="w-full h-10 px-3 rounded-md bg-background/50 border border-border text-sm"
+                                            className="w-full h-10 px-3 rounded-md bg-background/50 border border-border text-xs"
                                             value={fileType}
                                             onChange={(e) => setFileType(e.target.value)}
                                         />
@@ -194,7 +236,7 @@ export default function Base64FileClient() {
                                 </Button>
                             )}
                             {fileBase64 && mode === 'decode' && (
-                                <Button variant="primary" size="sm" onClick={downloadFile}>
+                                <Button variant="default" size="sm" onClick={downloadFile}>
                                     <Download className="h-4 w-4 mr-2" />
                                     Download File
                                 </Button>
@@ -205,12 +247,22 @@ export default function Base64FileClient() {
                         {fileBase64 && isImage ? (
                             <div className="relative aspect-video w-full rounded-2xl overflow-hidden border-2 border-primary/20 bg-black/20 flex items-center justify-center">
                                 <img
-                                    src={`data:${fileType || 'image/png'};base64,${fileBase64}`}
+                                    src={`data:${fileType || (fileBase64.startsWith('iVBORw') ? 'image/png' : 'image/jpeg')};base64,${fileBase64}`}
                                     alt="Preview"
                                     className="max-h-full object-contain"
                                 />
                                 <div className="absolute top-4 right-4 p-2 bg-background/80 blur-backdrop rounded-lg border border-border text-[10px] font-bold uppercase">
                                     Image Preview
+                                </div>
+                            </div>
+                        ) : isTextPreviewable ? (
+                            <div className="aspect-video w-full rounded-2xl border-2 border-primary/20 bg-background/50 overflow-hidden flex flex-col">
+                                <div className="px-4 py-2 bg-primary/10 border-b border-primary/20 text-[10px] font-bold uppercase flex justify-between items-center">
+                                    <span>Text Preview</span>
+                                    <span className="opacity-50">{decodedText!.length} chars</span>
+                                </div>
+                                <div className="flex-1 p-4 font-mono text-[10px] overflow-auto whitespace-pre-wrap">
+                                    {decodedText}
                                 </div>
                             </div>
                         ) : fileBase64 ? (
@@ -240,3 +292,4 @@ export default function Base64FileClient() {
         </div>
     );
 }
+

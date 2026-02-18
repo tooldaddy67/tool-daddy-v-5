@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -27,6 +27,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { useToolAd } from '@/hooks/use-tool-ad';
+import { useQuota } from '@/hooks/use-quota';
 
 interface NowPlaying {
   title: string;
@@ -42,6 +43,16 @@ export default function AiPlaylistMaker() {
   const { user } = useFirebase();
   const [nowPlaying, setNowPlaying] = useState<NowPlaying | null>(null);
   const { isAdOpen, setIsAdOpen, showAd, handleAdFinish, duration, title: adTitle } = useToolAd('heavy_ai');
+  const { checkQuota, incrementUsage, loading: isQuotaLoading } = useQuota();
+  const [quotaRemaining, setQuotaRemaining] = useState<number | null>(null);
+
+  useEffect(() => {
+    const fetchQuota = async () => {
+      const q = await checkQuota('ai-playlist-maker');
+      setQuotaRemaining(q.remaining);
+    };
+    if (user) fetchQuota();
+  }, [user, checkQuota]);
 
   // Helper function to generate YouTube Music search URL for direct music videos
   const getYoutubeSearchUrl = (title: string, artist: string) => {
@@ -62,7 +73,7 @@ export default function AiPlaylistMaker() {
     return `https://music.youtube.com/search?q=${query}`;
   };
 
-  const handleGenerateClick = () => {
+  const handleGenerateClick = async () => {
     if (!userPrompt.trim()) {
       toast({
         title: 'Prompt Required',
@@ -71,6 +82,17 @@ export default function AiPlaylistMaker() {
       });
       return;
     }
+
+    const q = await checkQuota('ai-playlist-maker');
+    if (!q.allowed) {
+      toast({
+        title: 'Quota Exceeded',
+        description: 'You have reached your daily limit for this tool. Please try again tomorrow.',
+        variant: 'destructive'
+      });
+      return;
+    }
+
     showAd(performGeneration);
   };
 
@@ -93,6 +115,9 @@ export default function AiPlaylistMaker() {
 
     if (result.data) {
       setPlaylist(result.data);
+      await incrementUsage('ai-playlist-maker');
+      const q = await checkQuota('ai-playlist-maker');
+      setQuotaRemaining(q.remaining);
 
       addToHistory({
         tool: 'AI Playlist Maker',
@@ -112,6 +137,7 @@ export default function AiPlaylistMaker() {
 
     setIsLoading(false);
   };
+
 
   const examplePrompts = [
     "Rainy day coding session",

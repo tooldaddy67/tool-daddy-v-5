@@ -1,19 +1,44 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import AdModal from '@/components/ad-modal';
+import { useQuota } from '@/hooks/use-quota';
+import { useFirebase } from '@/firebase';
+import { useToast } from '@/hooks/use-toast';
 
 const EXTERNAL_URL = 'https://imgupscaler.ai/';
 
 export default function AiImageEnhancerClient() {
     const router = useRouter();
-    const [isAdModalOpen, setIsAdModalOpen] = useState(true);
+    const { toast } = useToast();
+    const { user } = useFirebase();
+    const { checkQuota, incrementUsage } = useQuota();
+    const [isAdModalOpen, setIsAdModalOpen] = useState(false);
 
-    const handleAdFinish = () => {
+    useEffect(() => {
+        const checkInitialQuota = async () => {
+            const q = await checkQuota('ai-image-enhancer');
+            if (q.allowed) {
+                setIsAdModalOpen(true);
+            } else {
+                toast({
+                    title: 'Quota Exceeded',
+                    description: 'You have reached your daily limit for this tool. Please try again tomorrow.',
+                    variant: 'destructive'
+                });
+                router.replace('/');
+            }
+        };
+        if (user) checkInitialQuota();
+        else setIsAdModalOpen(true); // Allow anon for now or redirect to login
+    }, [user, checkQuota, router, toast]);
+
+    const handleAdFinish = async () => {
         setIsAdModalOpen(false);
+        await incrementUsage('ai-image-enhancer');
         window.location.replace(EXTERNAL_URL);
     };
 

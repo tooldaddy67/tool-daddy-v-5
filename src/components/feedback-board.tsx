@@ -32,6 +32,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { createClient } from '@/lib/supabase';
+import { useAdmin } from '@/hooks/use-admin';
 
 interface FeedbackItem {
     id: string;
@@ -40,69 +42,190 @@ interface FeedbackItem {
     description: string;
     status: 'pending' | 'open' | 'in-progress' | 'resolved' | 'closed';
     upvotes: number;
-    upvotedBy: string[];
+    upvotedBy: string[]; // This will now come from a separate query or join
     userId: string;
     userName: string;
-    createdAt: any;
+    createdAt: string;
     adminReply?: string;
-    adminReplyAt?: any;
+    adminReplyAt?: string;
 }
 
 export function FeedbackBoard() {
     const { user } = useFirebase();
+    const { isAdmin } = useAdmin();
     const { toast } = useToast();
     const [activeTab, setActiveTab] = useState<'bug' | 'suggestion'>('bug');
     const [bugs, setBugs] = useState<FeedbackItem[]>([]);
     const [suggestions, setSuggestions] = useState<FeedbackItem[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [openSubmitDialog, setOpenSubmitDialog] = useState(false);
-    const [isAdmin, setIsAdmin] = useState(false);
     const [itemToDelete, setItemToDelete] = useState<string | null>(null);
     const [authorMap, setAuthorMap] = useState<Record<string, string>>({});
 
-    // State for mounted check to prevent hydration mismatch
     const [mounted, setMounted] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [replyingTo, setReplyingTo] = useState<string | null>(null);
     const [replyText, setReplyText] = useState('');
     const [isReplying, setIsReplying] = useState(false);
+    const supabase = createClient();
 
     useEffect(() => {
         setMounted(true);
+        fetchFeedback();
     }, []);
 
-    useEffect(() => {
-        setIsAdmin(false);
-    }, [user]);
+    const fetchFeedback = async () => {
+        try {
+            const { data, error } = await supabase
+                .from('feedback')
+                .select(`
+                    *,
+                    votes (user_id)
+                `)
+                .order('created_at', { ascending: false });
+
+            if (error) throw error;
+
+            const formatted: FeedbackItem[] = data.map((item: any) => ({
+                ...item,
+                upvotes: item.votes?.length || 0,
+                upvotedBy: item.votes?.map((v: any) => v.user_id) || [],
+                type: item.category === 'bug' ? 'bug' : 'suggestion', // Mapping category to type
+                createdAt: item.created_at
+            }));
+
+            setBugs(formatted.filter(f => f.type === 'bug'));
+            setSuggestions(formatted.filter(f => f.type === 'suggestion'));
+        } catch (err: any) {
+            console.error('Error fetching feedback:', err);
+            setError('Failed to load feedback board.');
+        }
+    };
 
     // Form State
     const [newItemType, setNewItemType] = useState<'bug' | 'suggestion'>('bug');
     const [newItemTitle, setNewItemTitle] = useState('');
     const [newItemDesc, setNewItemDesc] = useState('');
 
-    useEffect(() => {
-        // Database removed - showing empty state
-        setBugs([]);
-        setSuggestions([]);
-    }, []);
-
-    if (!mounted) return null; // Prevent hydration mismatch
+    if (!mounted) return null;
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        toast({ title: "Feature Disabled", description: "Feedback is currently unavailable during system rebuild.", variant: "destructive" });
+        if (!user) {
+            toast({ title: "Login Required", description: "You must be logged in to submit feedback.", variant: "destructive" });
+            return;
+        }
+
+        setIsSubmitting(true);
+        try {
+            const { error } = await supabase
+                .from('feedback')
+                .insert({
+                    user_id: user.uid,
+                    title: newItemTitle,
+                    description: newItemDesc,
+                    category: newItemType,
+                    status: 'pending'
+                });
+
+            if (error) throw error;
+
+            toast({ title: "Success", description: "Feedback submitted successfully!" });
+            setOpenSubmitDialog(false);
+            setNewItemTitle('');
+            setNewItemDesc('');
+            fetchFeedback();
+        } catch (err: any) {
+            toast({ title: "Submission Failed", description: err.message, variant: "destructive" });
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     const handleUpvote = async (item: FeedbackItem) => {
-        toast({ title: "Feature Disabled", description: "Voting is currently unavailable.", variant: "destructive" });
+        if (!user) {
+            toast({ title: "Login Required", description: "You must be logged in to vote.", variant: "destructive" });
+            return;
+        }
+
+        const alreadyUpvoted = item.upvotedBy.includes(user.uid);
+
+        try {
+            if (alreadyUpvoted) {
+                // Remove vote
+                await supabase
+                    .from('votes')
+                    .delete()
+                    .eq('user_id', user.uid)
+                    .eq('feedback_id', item.id);
+            } else {
+                // Add vote
+                await supabase
+                    .from('votes')
+                    .insert({
+                        user_id: user.uid,
+                        feedback_id: item.id
+                    });
+            }
+            fetchFeedback();
+        } catch (err: any) {
+            toast({ title: "Error", description: "Failed to process vote.", variant: "destructive" });
+        }
     };
 
     const handleDelete = async (itemId: string) => {
-        toast({ title: "Feature Disabled", variant: "destructive" });
+        try {
+            const { error } = await supabase
+                .from('feedback')
+                .delete()
+                .eq('id', itemId);
+
+            if (error) throw error;
+            toast({ title: "Deleted", description: "Feedback item removed." });
+            setItemToDelete(null);
+            fetchFeedback();
+        } catch (err: any) {
+            toast({ title: "Delete Failed", description: err.message, variant: "destructive" });
+        }
     };
 
-    const handleSaveReply = async (itemId: string) => { };
-    const handleStatusChange = async (itemId: string, newStatus: string) => { };
+    const handleSaveReply = async (itemId: string) => {
+        setIsReplying(true);
+        try {
+            const { error } = await supabase
+                .from('feedback')
+                .update({
+                    admin_reply: replyText,
+                    admin_reply_at: new Date().toISOString()
+                })
+                .eq('id', itemId);
+
+            if (error) throw error;
+            toast({ title: "Reply Saved" });
+            setReplyingTo(null);
+            setReplyText('');
+            fetchFeedback();
+        } catch (err: any) {
+            toast({ title: "Failed to save reply", description: err.message, variant: "destructive" });
+        } finally {
+            setIsReplying(false);
+        }
+    };
+
+    const handleStatusChange = async (itemId: string, newStatus: string) => {
+        try {
+            const { error } = await supabase
+                .from('feedback')
+                .update({ status: newStatus })
+                .eq('id', itemId);
+
+            if (error) throw error;
+            toast({ title: "Status Updated", description: `Item is now ${newStatus}` });
+            fetchFeedback();
+        } catch (err: any) {
+            toast({ title: "Update Failed", description: err.message, variant: "destructive" });
+        }
+    };
 
     const StatusBadge = ({ status, itemId }: { status: string, itemId?: string }) => {
         const styles = {
@@ -190,7 +313,7 @@ export function FeedbackBoard() {
                                             <div className="flex flex-wrap items-center gap-2">
                                                 <StatusBadge status={item.status} itemId={item.id} />
                                                 <span className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground/60">
-                                                    {item.createdAt?.seconds ? new Date(item.createdAt.seconds * 1000).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : 'Just now'}
+                                                    {item.createdAt ? new Date(item.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : 'Just now'}
                                                 </span>
                                                 <span className="text-[10px] uppercase font-bold tracking-widest text-primary/60">
                                                     BY {item.userName || authorMap[item.userId] || '...'}

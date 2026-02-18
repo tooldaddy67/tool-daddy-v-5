@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { checkRateLimitEdge } from '@/lib/rate-limiter-edge';
+import { checkRateLimit, getRateLimitIdentifier } from '@/lib/rate-limiter';
 
 // Sensitive routes that require stricter rate limiting
 const SENSITIVE_ROUTES = [
@@ -9,10 +10,24 @@ const SENSITIVE_ROUTES = [
 	'/api/otp',
 ];
 
+// Security Headers for non-API routes
+const securityHeaders = {
+	'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://apis.google.com https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https: blob:; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://us-central1-tool-dady.cloudfunctions.net;",
+	'Strict-Transport-Security': 'max-age=63072000; includeSubDomains; preload',
+	'X-Frame-Options': 'DENY',
+	'X-Content-Type-Options': 'nosniff',
+	'X-XSS-Protection': '1; mode=block',
+	'Referrer-Policy': 'strict-origin-when-cross-origin',
+	'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), interest-cohort=()',
+	'X-DNS-Prefetch-Control': 'on',
+	'Cross-Origin-Opener-Policy': 'same-origin',
+	'Cross-Origin-Embedder-Policy': 'unsafe-none',
+};
+
 export async function proxy(request: NextRequest) {
 	const { pathname } = request.nextUrl;
 
-	// Only apply to API routes
+	// 1. Handle API routes
 	if (pathname.startsWith('/api')) {
 		const ip = request.headers.get('x-forwarded-for')?.split(',')[0].trim() || 'unknown';
 
@@ -36,18 +51,42 @@ export async function proxy(request: NextRequest) {
 		}
 	}
 
-	// Add security headers
+	// 2. Handle non-API routes (Rate Limiting & Security Headers)
 	const response = NextResponse.next();
 
-	response.headers.set('X-Content-Type-Options', 'nosniff');
-	response.headers.set('X-Frame-Options', 'DENY');
-	response.headers.set('X-XSS-Protection', '1; mode=block');
-	response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
-	response.headers.set('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.google.com https://*.gstatic.com https://*.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; frame-src 'self' https://*.google.com; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.google-analytics.com;");
+	if (!pathname.startsWith('/api')) {
+		// Security Headers for general pages
+		Object.entries(securityHeaders).forEach(([key, value]) => {
+			response.headers.set(key, value);
+		});
+
+		// Rate Limiting for general pages (Skip static assets)
+		if (!pathname.startsWith('/_next') && !pathname.includes('.')) {
+			const identifier = await getRateLimitIdentifier();
+			const isAllowed = checkRateLimit(identifier, 100, 60 * 1000);
+			if (!isAllowed) {
+				return new NextResponse('Too Many Requests', { status: 429 });
+			}
+		}
+	} else {
+		// Basic security headers for API
+		response.headers.set('X-Content-Type-Options', 'nosniff');
+		response.headers.set('X-Frame-Options', 'DENY');
+		response.headers.set('X-XSS-Protection', '1; mode=block');
+		response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+	}
 
 	return response;
 }
 
 export const config = {
-	matcher: '/api/:path*',
+	matcher: [
+		/*
+		 * Match all request paths except for the ones starting with:
+		 * - _next/static (static files)
+		 * - _next/image (image optimization files)
+		 * - favicon.ico (favicon file)
+		 */
+		'/((?!_next/static|_next/image|favicon.ico).*)',
+	],
 };
