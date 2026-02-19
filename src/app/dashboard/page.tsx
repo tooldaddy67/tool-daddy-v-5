@@ -3,18 +3,18 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useFirebase } from '@/firebase';
+import { useFirebase, useAuth } from '@/firebase';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardDescription, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Loader2, User, Clock, Settings, LayoutDashboard, Search } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { updateProfile } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 
 export default function DashboardPage() {
     const { user, isUserLoading } = useFirebase();
+    const supabase = useAuth();
     const router = useRouter();
     const [history, setHistory] = useState<any[]>([]);
     const [isLoadingHistory, setIsLoadingHistory] = useState(false);
@@ -48,9 +48,9 @@ export default function DashboardPage() {
 
     // Update Profile Name
     const handleUpdateName = async () => {
-        if (!user || !newName.trim()) return;
+        if (!user || !newName.trim() || !supabase) return;
         try {
-            await updateProfile(user, { displayName: newName });
+            await supabase.auth.updateUser({ data: { display_name: newName, full_name: newName } });
             toast({ title: 'Profile Updated', description: 'Your display name has been changed.' });
             setNewName('');
         } catch (error) {
@@ -82,7 +82,7 @@ export default function DashboardPage() {
                     <p className="text-muted-foreground">{user.email}</p>
                     <div className="flex items-center justify-center md:justify-start gap-2 text-sm text-muted-foreground">
                         <Clock className="h-4 w-4" />
-                        <span>Member since {user.metadata.creationTime ? new Date(user.metadata.creationTime).toLocaleDateString() : 'recently'}</span>
+                        <span>Welcome to your dashboard</span>
                     </div>
                 </div>
             </div>
