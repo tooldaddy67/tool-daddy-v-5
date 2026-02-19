@@ -1,7 +1,7 @@
-// Re-export everything from the new Supabase auth provider
+// Re-export everything from the auth provider
 // This keeps all existing imports (import { useFirebase } from '@/firebase') working
 export {
-    SupabaseAuthProvider,
+
     FirebaseClientProvider,
     useFirebase,
     useUser,

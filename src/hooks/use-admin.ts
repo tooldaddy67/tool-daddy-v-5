@@ -1,43 +1,34 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
-import { createClient } from '@/lib/supabase';
-import { useUser } from '@/firebase';
+import { useState, useEffect } from 'react';
+import { useFirebase } from '@/firebase';
+import { doc, getDoc } from 'firebase/firestore';
 
 export function useAdmin() {
-    const { user } = useUser();
+    const { user, db } = useFirebase();
     const [isAdmin, setIsAdmin] = useState(false);
     const [loading, setLoading] = useState(true);
 
-    const supabase = useMemo(() => {
-        try { return createClient(); } catch { return null; }
-    }, []);
-
     useEffect(() => {
         const checkAdmin = async () => {
-            if (!user || !supabase) {
+            if (!user || !db) {
                 setIsAdmin(false);
                 setLoading(false);
                 return;
             }
 
             try {
-                const { data, error } = await supabase
-                    .from('profiles')
-                    .select('is_admin')
-                    .eq('id', user.uid)
-                    .maybeSingle();
+                const docRef = doc(db, 'profiles', user.uid);
+                const docSnap = await getDoc(docRef);
 
-                if (error) {
-                    const msg = error.message || '';
-                    if (!msg.includes('Failed to fetch') && !msg.includes('NetworkError')) {
-                        console.error('[useAdmin] DB Error:', JSON.stringify(error));
-                    }
-                    setIsAdmin(false);
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    setIsAdmin(data?.isAdmin === true || data?.is_admin === true); // support both for migration ease
                 } else {
-                    setIsAdmin(data?.is_admin === true);
+                    setIsAdmin(false);
                 }
             } catch (err) {
+                console.error('[useAdmin] Error checking admin status:', err);
                 setIsAdmin(false);
             } finally {
                 setLoading(false);
@@ -45,7 +36,7 @@ export function useAdmin() {
         };
 
         checkAdmin();
-    }, [user, supabase]);
+    }, [user, db]);
 
     return { isAdmin, loading };
 }

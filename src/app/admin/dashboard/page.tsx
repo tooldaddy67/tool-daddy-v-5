@@ -3,10 +3,12 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { LayoutDashboard, Users, MessageSquare, Zap, TrendingUp, ShieldCheck } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { createClient } from '@/lib/supabase';
+import { useFirebase } from '@/firebase';
+import { collection, query, where, getCountFromServer, getAggregateFromServer, sum } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function AdminDashboardPage() {
+    const { db } = useFirebase();
     const [stats, setStats] = useState({
         totalUsers: 0,
         totalFeedback: 0,
@@ -14,33 +16,33 @@ export default function AdminDashboardPage() {
         pendingFeedback: 0
     });
     const [loading, setLoading] = useState(true);
-    const supabase = createClient();
 
     useEffect(() => {
         const fetchStats = async () => {
+            if (!db) return;
+
             try {
                 // Fetch profiles count
-                const { count: userCount } = await supabase
-                    .from('profiles')
-                    .select('*', { count: 'exact', head: true });
+                const profilesColl = collection(db, 'profiles');
+                const profilesSnapshot = await getCountFromServer(profilesColl);
+                const userCount = profilesSnapshot.data().count;
 
                 // Fetch feedback count
-                const { count: feedbackCount } = await supabase
-                    .from('feedback')
-                    .select('*', { count: 'exact', head: true });
+                const feedbackColl = collection(db, 'feedback');
+                const feedbackSnapshot = await getCountFromServer(feedbackColl);
+                const feedbackCount = feedbackSnapshot.data().count;
 
                 // Fetch pending feedback count
-                const { count: pendingCount } = await supabase
-                    .from('feedback')
-                    .select('*', { count: 'exact', head: true })
-                    .eq('status', 'pending');
+                const pendingQuery = query(feedbackColl, where('status', '==', 'pending'));
+                const pendingSnapshot = await getCountFromServer(pendingQuery);
+                const pendingCount = pendingSnapshot.data().count;
 
-                // Fetch total actions (tool usage)
-                const { data: toolUsage } = await supabase
-                    .from('tool_usage')
-                    .select('usage_count');
-
-                const totalActions = toolUsage?.reduce((acc, curr) => acc + curr.usage_count, 0) || 0;
+                // Fetch total actions (tool usage) - Sum of 'count' field
+                const toolUsageColl = collection(db, 'tool_usage');
+                const toolUsageSnapshot = await getAggregateFromServer(toolUsageColl, {
+                    totalActions: sum('count')
+                });
+                const totalActions = toolUsageSnapshot.data().totalActions || 0;
 
                 setStats({
                     totalUsers: userCount || 0,
@@ -56,7 +58,7 @@ export default function AdminDashboardPage() {
         };
 
         fetchStats();
-    }, [supabase]);
+    }, [db]);
 
     const statCards = [
         {
@@ -134,7 +136,7 @@ export default function AdminDashboardPage() {
                 <Card className="col-span-3 border-border/40 bg-card/40 backdrop-blur-sm">
                     <CardHeader>
                         <CardTitle>System Health</CardTitle>
-                        <CardDescription>Supabase & Provider Status</CardDescription>
+                        <CardDescription>Firebase Status</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-6">
                         <div className="space-y-2">

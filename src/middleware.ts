@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { checkRateLimitEdge } from '@/lib/rate-limiter-edge';
-import { checkRateLimit, getRateLimitIdentifier } from '@/lib/rate-limiter';
 
 // Sensitive routes that require stricter rate limiting
 const SENSITIVE_ROUTES = [
@@ -20,11 +19,11 @@ const securityHeaders = {
 	'Referrer-Policy': 'strict-origin-when-cross-origin',
 	'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), interest-cohort=()',
 	'X-DNS-Prefetch-Control': 'on',
-	'Cross-Origin-Opener-Policy': 'same-origin',
+	'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
 	'Cross-Origin-Embedder-Policy': 'unsafe-none',
 };
 
-export async function proxy(request: NextRequest) {
+export async function middleware(request: NextRequest) {
 	const { pathname } = request.nextUrl;
 
 	// 1. Handle API routes
@@ -62,8 +61,11 @@ export async function proxy(request: NextRequest) {
 
 		// Rate Limiting for general pages (Skip static assets)
 		if (!pathname.startsWith('/_next') && !pathname.includes('.')) {
-			const identifier = await getRateLimitIdentifier();
-			const isAllowed = checkRateLimit(identifier, 100, 60 * 1000);
+			const ip = (request as any).ip || request.headers.get('x-forwarded-for')?.split(',')[0].trim() || '127.0.0.1';
+			const userAgent = request.headers.get('user-agent') || 'unknown';
+			const identifier = btoa(`${ip}-${userAgent}`).replace(/[/+=]/g, '_');
+
+			const isAllowed = checkRateLimitEdge(identifier, 100, 60 * 1000);
 			if (!isAllowed) {
 				return new NextResponse('Too Many Requests', { status: 429 });
 			}

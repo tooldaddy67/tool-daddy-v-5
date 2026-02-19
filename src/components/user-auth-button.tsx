@@ -19,9 +19,14 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useUser, useAuth } from '@/firebase';
-import { LogIn, LogOut, Loader2, Sparkles, UserPlus, CheckCircle2, ShieldCheck } from 'lucide-react';
+import {
+    sendSignInLinkToEmail,
+    signOut,
+    GoogleAuthProvider,
+    signInWithPopup
+} from 'firebase/auth';
+import { LogIn, LogOut, Loader2, Sparkles, CheckCircle2, ShieldCheck, Mail } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useSettings } from '@/components/settings-provider';
@@ -32,18 +37,16 @@ interface UserAuthButtonProps {
 
 export function UserAuthButton({ customTrigger }: UserAuthButtonProps) {
     const { user, isUserLoading } = useUser();
-    const supabase = useAuth(); // This is now the Supabase client
+    const auth = useAuth();
     const { toast } = useToast();
-    const { settings, updateSettings } = useSettings();
+    const { settings } = useSettings();
     const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false);
     const [magicLinkSent, setMagicLinkSent] = useState(false);
     const [isAdmin, setIsAdmin] = useState(false);
 
     // State for auth forms
     const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
-    const [authMode, setAuthMode] = useState<'login' | 'signup' | 'magic'>('login');
 
     const { isAdmin: adminStatus } = useAdmin();
 
@@ -51,53 +54,35 @@ export function UserAuthButton({ customTrigger }: UserAuthButtonProps) {
         setIsAdmin(adminStatus);
     }, [adminStatus]);
 
-    // Handle email/password auth (login or signup)
-    const handleAuth = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!supabase) return;
+    // Handle Google Sign In
+    const handleGoogleAuth = async () => {
+        if (!auth) return;
         setIsLoading(true);
-
         try {
-            if (authMode === 'login') {
-                const { data, error } = await supabase.auth.signInWithPassword({
-                    email,
-                    password,
-                });
-                if (error) throw error;
-                toast({ title: 'Successfully signed in!', description: 'Welcome to Tool Daddy!' });
-                setIsAuthDialogOpen(false);
-                setEmail('');
-                setPassword('');
-            } else if (authMode === 'signup') {
-                const { data, error } = await supabase.auth.signUp({
-                    email,
-                    password,
-                    options: {
-                        data: {
-                            full_name: email.split('@')[0],
-                            display_name: email.split('@')[0],
-                        },
-                    },
-                });
-                if (error) throw error;
+            const provider = new GoogleAuthProvider();
+            provider.addScope('profile');
+            provider.addScope('email');
 
-                if (data.user && !data.session) {
-                    // Email confirmation required
-                    toast({
-                        title: 'Check your email!',
-                        description: 'We sent a confirmation link. Click it to activate your account.',
-                    });
-                } else {
-                    toast({ title: 'Account created!', description: 'Welcome to Tool Daddy!' });
-                    setIsAuthDialogOpen(false);
-                }
-                setEmail('');
-                setPassword('');
-            }
+            // Preferred method for desktop: Popup
+            await signInWithPopup(auth, provider);
+
+            toast({ title: 'Successfully signed in!', description: 'Welcome to Tool Daddy!' });
+            setIsAuthDialogOpen(false);
         } catch (error: any) {
+            console.error("Google Sign-In Error:", error);
+
+            let errorMessage = 'Could not sign in with Google. Please try again.';
+            if (error.code === 'auth/popup-closed-by-user') {
+                errorMessage = 'Sign-in cancelled. Please do not close the popup until you are signed in.';
+            } else if (error.code === 'auth/popup-blocked') {
+                errorMessage = 'Popup blocked. Please allow popups for this site.';
+            } else if (error.code === 'auth/cancelled-popup-request') {
+                errorMessage = 'Only one sign-in attempt allowed at a time.';
+            }
+
             toast({
-                title: 'Authentication failed',
-                description: error.message || 'Something went wrong',
+                title: 'Sign in failed',
+                description: errorMessage,
                 variant: 'destructive',
             });
         } finally {
@@ -108,20 +93,23 @@ export function UserAuthButton({ customTrigger }: UserAuthButtonProps) {
     // Handle magic link (passwordless)
     const handleMagicLink = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!supabase) return;
+        if (!auth) return;
         setIsLoading(true);
 
         try {
-            const { error } = await supabase.auth.signInWithOtp({
-                email,
-                options: {
-                    emailRedirectTo: window.location.origin,
-                },
-            });
-            if (error) throw error;
+            const actionCodeSettings = {
+                url: window.location.origin,
+                handleCodeInApp: true,
+            };
+            await sendSignInLinkToEmail(auth, email, actionCodeSettings);
+
+            // Save email for email link sign-in
+            window.localStorage.setItem('emailForSignIn', email);
+
             setMagicLinkSent(true);
             toast({ title: 'Magic Link sent!', description: 'Check your inbox to sign in.' });
         } catch (error: any) {
+            console.error(error);
             toast({ title: 'Error sending link', description: error.message, variant: 'destructive' });
         } finally {
             setIsLoading(false);
@@ -130,10 +118,9 @@ export function UserAuthButton({ customTrigger }: UserAuthButtonProps) {
 
     // Handle sign out
     const handleSignOut = async () => {
-        if (!supabase) return;
+        if (!auth) return;
         try {
-            const { error } = await supabase.auth.signOut();
-            if (error) throw error;
+            await signOut(auth);
             toast({ title: 'Signed out', description: 'See you next time!' });
         } catch (error: any) {
             toast({ title: 'Error signing out', description: error.message, variant: 'destructive' });
@@ -213,159 +200,102 @@ export function UserAuthButton({ customTrigger }: UserAuthButtonProps) {
             )}
 
             <Dialog open={isAuthDialogOpen} onOpenChange={setIsAuthDialogOpen}>
-                <DialogContent className="w-[95vw] sm:w-full sm:max-w-[425px] rounded-xl sm:rounded-lg border-primary/20 bg-background/95 backdrop-blur-xl p-4 sm:p-6 overflow-y-auto max-h-[90vh]">
+                <DialogContent className="w-[95vw] sm:w-full sm:max-w-[400px] rounded-xl sm:rounded-lg border-primary/20 bg-background/95 backdrop-blur-xl p-4 sm:p-6 overflow-y-auto max-h-[90vh]">
                     <DialogHeader>
-                        <DialogTitle className="flex items-center gap-2 text-2xl font-bold font-headline">
-                            <Sparkles className="h-6 w-6 text-primary" />
-                            Tool Daddy Cloud
+                        <DialogTitle className="text-center text-2xl font-bold font-headline mb-2">
+                            Welcome Back
                         </DialogTitle>
-                        <DialogDescription>
-                            Sign in or create an account to get started.
+                        <DialogDescription className="text-center">
+                            Sign in to sync your tools and settings.
                         </DialogDescription>
                     </DialogHeader>
 
-                    <Tabs defaultValue="login" className="mt-4">
-                        <TabsList className="grid w-full grid-cols-3">
-                            <TabsTrigger value="login">Sign In</TabsTrigger>
-                            <TabsTrigger value="signup">Sign Up</TabsTrigger>
-                            <TabsTrigger value="magic">Magic Link</TabsTrigger>
-                        </TabsList>
+                    <div className="mt-6 space-y-4">
+                        {/* Google Sign In */}
+                        <Button
+                            variant="outline"
+                            className="w-full h-12 rounded-xl text-base font-medium hover:bg-muted/50 transition-colors relative"
+                            onClick={handleGoogleAuth}
+                            disabled={isLoading}
+                        >
+                            <svg className="mr-2 h-5 w-5" viewBox="0 0 24 24">
+                                <path
+                                    d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                                    fill="#4285F4"
+                                />
+                                <path
+                                    d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                                    fill="#34A853"
+                                />
+                                <path
+                                    d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.84z"
+                                    fill="#FBBC05"
+                                />
+                                <path
+                                    d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                                    fill="#EA4335"
+                                />
+                            </svg>
+                            Continue with Google
+                        </Button>
 
-                        {/* Email/Password Login */}
-                        <TabsContent value="login" className="mt-4">
-                            <form onSubmit={handleAuth} className="space-y-4">
+                        <div className="relative">
+                            <div className="absolute inset-0 flex items-center">
+                                <span className="w-full border-t border-muted" />
+                            </div>
+                            <div className="relative flex justify-center text-xs uppercase">
+                                <span className="bg-background px-2 text-muted-foreground">
+                                    Or continue with email
+                                </span>
+                            </div>
+                        </div>
+
+                        {/* Magic Link Form */}
+                        {magicLinkSent ? (
+                            <div className="flex flex-col items-center justify-center space-y-4 py-4 text-center animate-in fade-in slide-in-from-bottom-4">
+                                <div className="rounded-full bg-primary/10 p-4 border border-primary/20">
+                                    <CheckCircle2 className="h-8 w-8 text-primary" />
+                                </div>
+                                <div className="space-y-1">
+                                    <h3 className="font-bold text-lg">Check your email</h3>
+                                    <p className="text-sm text-muted-foreground">
+                                        We sent a magic link to <span className="font-semibold text-foreground">{email}</span>
+                                    </p>
+                                </div>
+                                <Button variant="outline" size="sm" onClick={() => setMagicLinkSent(false)}>
+                                    Use a different email
+                                </Button>
+                            </div>
+                        ) : (
+                            <form onSubmit={handleMagicLink} className="space-y-4">
                                 <div className="space-y-2">
-                                    <Label htmlFor="login-email">Email</Label>
+                                    <Label htmlFor="email-magic" className="sr-only">Email Address</Label>
                                     <Input
-                                        id="login-email"
+                                        id="email-magic"
                                         type="email"
                                         placeholder="name@example.com"
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
-                                        className="h-11 rounded-xl"
+                                        className="h-12 rounded-xl"
                                         required
-                                        onFocus={() => setAuthMode('login')}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="login-password">Password</Label>
-                                    <Input
-                                        id="login-password"
-                                        type="password"
-                                        placeholder="••••••••"
-                                        value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
-                                        className="h-11 rounded-xl"
-                                        required
-                                        onFocus={() => setAuthMode('login')}
-                                    />
-                                </div>
-                                <Button
-                                    type="submit"
-                                    className="w-full h-11 font-semibold rounded-xl"
-                                    disabled={isLoading}
-                                    onClick={() => setAuthMode('login')}
-                                >
-                                    {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <LogIn className="mr-2 h-4 w-4" />}
-                                    Sign In
-                                </Button>
-                            </form>
-                        </TabsContent>
-
-                        {/* Email/Password Signup */}
-                        <TabsContent value="signup" className="mt-4">
-                            <form onSubmit={handleAuth} className="space-y-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="signup-email">Email</Label>
-                                    <Input
-                                        id="signup-email"
-                                        type="email"
-                                        placeholder="name@example.com"
-                                        value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
-                                        className="h-11 rounded-xl"
-                                        required
-                                        onFocus={() => setAuthMode('signup')}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="signup-password">Password</Label>
-                                    <Input
-                                        id="signup-password"
-                                        type="password"
-                                        placeholder="Min 6 characters"
-                                        value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
-                                        className="h-11 rounded-xl"
-                                        required
-                                        onFocus={() => setAuthMode('signup')}
-                                    />
-                                </div>
-                                <Button
-                                    type="submit"
-                                    className="w-full h-11 font-semibold rounded-xl"
-                                    disabled={isLoading}
-                                    onClick={() => setAuthMode('signup')}
-                                >
-                                    {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UserPlus className="mr-2 h-4 w-4" />}
-                                    Create Account
-                                </Button>
-                            </form>
-                        </TabsContent>
-
-                        {/* Magic Link */}
-                        <TabsContent value="magic" className="mt-4">
-                            {magicLinkSent ? (
-                                <div className="flex flex-col items-center justify-center space-y-4 py-4 text-center">
-                                    <div className="rounded-full bg-primary/10 p-4 border border-primary/20">
-                                        <CheckCircle2 className="h-8 w-8 text-primary" />
-                                    </div>
-                                    <div className="space-y-1">
-                                        <h3 className="font-bold text-lg">Check your email</h3>
-                                        <p className="text-sm text-muted-foreground">
-                                            Login link sent to <span className="font-semibold text-foreground">{email}</span>
-                                        </p>
-                                    </div>
-                                    <Button variant="outline" size="sm" onClick={() => setMagicLinkSent(false)}>
-                                        Use a different email
-                                    </Button>
-                                </div>
-                            ) : (
-                                <form onSubmit={handleMagicLink} className="space-y-4">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="email-magic">Email Address</Label>
-                                        <Input
-                                            id="email-magic"
-                                            type="email"
-                                            placeholder="name@example.com"
-                                            value={email}
-                                            onChange={(e) => setEmail(e.target.value)}
-                                            className="h-11 rounded-xl"
-                                            required
-                                        />
-                                    </div>
-                                    <div className="bg-primary/5 rounded-xl p-3 text-xs text-muted-foreground border border-primary/10">
-                                        <p className="flex items-start gap-2">
-                                            <Sparkles className="h-3.5 w-3.5 text-primary mt-0.5 shrink-0" />
-                                            Password-free sign in. New here? We'll create your account automatically.
-                                        </p>
-                                    </div>
-                                    <Button
-                                        type="submit"
-                                        className="w-full h-11 font-semibold rounded-xl"
                                         disabled={isLoading}
-                                    >
-                                        {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-                                        Get Magic Link
-                                    </Button>
-                                </form>
-                            )}
-                        </TabsContent>
-                    </Tabs>
+                                    />
+                                </div>
+                                <Button
+                                    type="submit"
+                                    className="w-full h-12 font-semibold rounded-xl"
+                                    disabled={isLoading}
+                                >
+                                    {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Mail className="mr-2 h-4 w-4" />}
+                                    Send Magic Link
+                                </Button>
+                            </form>
+                        )}
 
-                    <p className="text-[10px] text-center text-muted-foreground px-4 mt-2">
-                        By continuing, you agree to our terms of service and privacy policy.
-                    </p>
+                        <p className="text-[10px] text-center text-muted-foreground pt-4">
+                            By continuing, you agree to our Terms of Service and Privacy Policy.
+                        </p>
+                    </div>
                 </DialogContent>
             </Dialog>
         </>

@@ -1,7 +1,8 @@
-// This file now re-exports from the Supabase auth provider for backward compatibility
-// Files that import from '@/firebase/provider' will get the new Supabase-based hooks
+// This file re-exports from the auth provider
+// Files that import from '@/firebase/provider' will get the Firebase-based hooks
 export {
-  SupabaseAuthProvider as FirebaseProvider,
+
+  FirebaseClientProvider as FirebaseProvider,
   FirebaseClientProvider,
   useFirebase,
   useUser,

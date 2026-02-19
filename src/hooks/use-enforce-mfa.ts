@@ -4,13 +4,11 @@ import { useAuthUserRole } from './use-auth-role';
 
 /**
  * React hook placeholder for MFA enforcement.
- * Supabase MFA is handled via the Supabase dashboard/config, not in-app.
- * This hook is kept for backward compatibility.
+ * MFA should be handled via Firebase Auth settings or custom implementation.
  */
 export function useEnforceMfaForUnstablegng() {
   const userRole = useAuthUserRole();
   useEffect(() => {
-    // Supabase handles MFA at the project level, not via client SDK
-    // No-op for now
+    // MFA handling placeholder
   }, [userRole]);
 }

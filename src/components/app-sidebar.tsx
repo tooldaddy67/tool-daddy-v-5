@@ -68,22 +68,22 @@ export default function AppSidebar() {
   })).filter(category => category.tools.length > 0), [debouncedSearchQuery]);
 
 
-  const { user } = useFirebase();
+  const { user, firebaseUser } = useFirebase();
   const { settings } = useSettings();
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
-    if (!user) { setIsAdmin(false); return; }
-    user.getIdTokenResult().then((result) => {
+    if (!firebaseUser) { setIsAdmin(false); return; }
+    firebaseUser.getIdTokenResult().then((result) => {
       if (result.claims.admin === true) {
         setIsAdmin(true);
-      } else if (BOOTSTRAP_ADMIN_EMAILS.includes(user.email || '')) {
+      } else if (BOOTSTRAP_ADMIN_EMAILS.includes(firebaseUser.email || '')) {
         setIsAdmin(true);
       } else {
         setIsAdmin(false);
       }
     }).catch(() => setIsAdmin(false));
-  }, [user]);
+  }, [firebaseUser]);
 
   const isCollapsed = state === 'collapsed';
 

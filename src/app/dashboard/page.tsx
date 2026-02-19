@@ -4,6 +4,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFirebase, useAuth } from '@/firebase';
+import { updateProfile } from 'firebase/auth';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardDescription, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Loader2, User, Clock, Settings, LayoutDashboard, Search } from 'lucide-react';
@@ -13,8 +14,8 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 
 export default function DashboardPage() {
+    const auth = useAuth();
     const { user, isUserLoading } = useFirebase();
-    const supabase = useAuth();
     const router = useRouter();
     const [history, setHistory] = useState<any[]>([]);
     const [isLoadingHistory, setIsLoadingHistory] = useState(false);
@@ -27,30 +28,10 @@ export default function DashboardPage() {
             router.push('/');
         }
     }, [user, isUserLoading, router]);
-
-    // History fetching disabled (System rebuild in progress)
-    useEffect(() => {
-        // We could load from local storage here if we wanted to match the new useHistory behavior
-        const localData = localStorage.getItem('tool-daddy-history');
-        if (localData) {
-            try {
-                const parsed = JSON.parse(localData);
-                setHistory(parsed.map((item: any) => ({
-                    ...item,
-                    timestamp: new Date(item.timestamp)
-                })));
-            } catch (e) {
-                console.error("Failed to parse local history", e);
-            }
-        }
-        setIsLoadingHistory(false);
-    }, [user]);
-
-    // Update Profile Name
     const handleUpdateName = async () => {
-        if (!user || !newName.trim() || !supabase) return;
+        if (!auth?.currentUser || !newName.trim()) return;
         try {
-            await supabase.auth.updateUser({ data: { display_name: newName, full_name: newName } });
+            await updateProfile(auth.currentUser, { displayName: newName });
             toast({ title: 'Profile Updated', description: 'Your display name has been changed.' });
             setNewName('');
         } catch (error) {

@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { createClient } from '@/lib/supabase';
+import { useFirebase } from '@/firebase';
+import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -10,19 +11,26 @@ import { Zap, AlertCircle } from 'lucide-react';
 export default function AdminToolsPage() {
     const [usage, setUsage] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-    const supabase = createClient();
+    const { db } = useFirebase();
 
     useEffect(() => {
         const fetchUsage = async () => {
+            if (!db) return;
             try {
-                const { data, error } = await supabase
-                    .from('tool_usage')
-                    .select('*')
-                    .order('usage_count', { ascending: false })
-                    .limit(50);
+                const q = query(
+                    collection(db, 'tool_usage'),
+                    orderBy('count', 'desc'),
+                    // logic in usageQuota used 'count' increment.
+                    limit(50)
+                );
 
-                if (error) throw error;
-                setUsage(data || []);
+                const querySnapshot = await getDocs(q);
+                const data = querySnapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+
+                setUsage(data);
             } catch (error) {
                 console.error('Error fetching tool usage:', error);
             } finally {
@@ -31,7 +39,7 @@ export default function AdminToolsPage() {
         };
 
         fetchUsage();
-    }, [supabase]);
+    }, [db]);
 
     return (
         <div className="space-y-6">
@@ -73,12 +81,12 @@ export default function AdminToolsPage() {
                             <TableBody>
                                 {usage.map((item) => (
                                     <TableRow key={item.id} className="hover:bg-primary/5 transition-colors">
-                                        <TableCell className="font-mono text-xs">{item.tool_id}</TableCell>
+                                        <TableCell className="font-mono text-xs">{item.toolId}</TableCell>
                                         <TableCell className="font-mono text-[10px] text-muted-foreground truncate max-w-[100px]">
-                                            {item.user_id}
+                                            {item.userId}
                                         </TableCell>
-                                        <TableCell>{item.usage_date}</TableCell>
-                                        <TableCell className="text-right font-bold text-primary">{item.usage_count}</TableCell>
+                                        <TableCell>{item.date}</TableCell>
+                                        <TableCell className="text-right font-bold text-primary">{item.count}</TableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>

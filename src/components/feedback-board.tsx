@@ -32,8 +32,20 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { createClient } from '@/lib/supabase';
 import { useAdmin } from '@/hooks/use-admin';
+import {
+    collection,
+    query,
+    orderBy,
+    getDocs,
+    addDoc,
+    updateDoc,
+    deleteDoc,
+    doc,
+    arrayUnion,
+    arrayRemove,
+    serverTimestamp
+} from 'firebase/firestore';
 
 interface FeedbackItem {
     id: string;
@@ -42,16 +54,16 @@ interface FeedbackItem {
     description: string;
     status: 'pending' | 'open' | 'in-progress' | 'resolved' | 'closed';
     upvotes: number;
-    upvotedBy: string[]; // This will now come from a separate query or join
+    upvotedBy: string[];
     userId: string;
     userName: string;
-    createdAt: string;
+    createdAt: any; // Firestore Timestamp or Date
     adminReply?: string;
     adminReplyAt?: string;
 }
 
 export function FeedbackBoard() {
-    const { user } = useFirebase();
+    const { user, db } = useFirebase();
     const { isAdmin } = useAdmin();
     const { toast } = useToast();
     const [activeTab, setActiveTab] = useState<'bug' | 'suggestion'>('bug');
@@ -67,35 +79,35 @@ export function FeedbackBoard() {
     const [replyingTo, setReplyingTo] = useState<string | null>(null);
     const [replyText, setReplyText] = useState('');
     const [isReplying, setIsReplying] = useState(false);
-    const supabase = createClient();
 
     useEffect(() => {
         setMounted(true);
         fetchFeedback();
-    }, []);
+    }, [db]); // Fetch when db is ready
 
     const fetchFeedback = async () => {
+        if (!db) return;
         try {
-            const { data, error } = await supabase
-                .from('feedback')
-                .select(`
-                    *,
-                    votes (user_id)
-                `)
-                .order('created_at', { ascending: false });
+            const q = query(
+                collection(db, 'feedback'),
+                orderBy('createdAt', 'desc')
+            );
 
-            if (error) throw error;
+            const querySnapshot = await getDocs(q);
+            const items: FeedbackItem[] = querySnapshot.docs.map(doc => {
+                const data = doc.data();
+                return {
+                    id: doc.id,
+                    ...data,
+                    type: data.category === 'bug' ? 'bug' : 'suggestion',
+                    upvotes: data.upvotedBy?.length || 0,
+                    upvotedBy: data.upvotedBy || [],
+                    createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(data.createdAt)
+                } as FeedbackItem;
+            });
 
-            const formatted: FeedbackItem[] = data.map((item: any) => ({
-                ...item,
-                upvotes: item.votes?.length || 0,
-                upvotedBy: item.votes?.map((v: any) => v.user_id) || [],
-                type: item.category === 'bug' ? 'bug' : 'suggestion', // Mapping category to type
-                createdAt: item.created_at
-            }));
-
-            setBugs(formatted.filter(f => f.type === 'bug'));
-            setSuggestions(formatted.filter(f => f.type === 'suggestion'));
+            setBugs(items.filter(f => f.type === 'bug'));
+            setSuggestions(items.filter(f => f.type === 'suggestion'));
         } catch (err: any) {
             console.error('Error fetching feedback:', err);
             setError('Failed to load feedback board.');
@@ -111,24 +123,23 @@ export function FeedbackBoard() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!user) {
+        if (!user || !db) {
             toast({ title: "Login Required", description: "You must be logged in to submit feedback.", variant: "destructive" });
             return;
         }
 
         setIsSubmitting(true);
         try {
-            const { error } = await supabase
-                .from('feedback')
-                .insert({
-                    user_id: user.uid,
-                    title: newItemTitle,
-                    description: newItemDesc,
-                    category: newItemType,
-                    status: 'pending'
-                });
-
-            if (error) throw error;
+            await addDoc(collection(db, 'feedback'), {
+                userId: user.uid,
+                userName: user.displayName || 'Anonymous',
+                title: newItemTitle,
+                description: newItemDesc,
+                category: newItemType,
+                status: 'pending',
+                upvotedBy: [],
+                createdAt: serverTimestamp()
+            });
 
             toast({ title: "Success", description: "Feedback submitted successfully!" });
             setOpenSubmitDialog(false);
@@ -143,29 +154,25 @@ export function FeedbackBoard() {
     };
 
     const handleUpvote = async (item: FeedbackItem) => {
-        if (!user) {
+        if (!user || !db) {
             toast({ title: "Login Required", description: "You must be logged in to vote.", variant: "destructive" });
             return;
         }
 
         const alreadyUpvoted = item.upvotedBy.includes(user.uid);
+        const itemRef = doc(db, 'feedback', item.id);
 
         try {
             if (alreadyUpvoted) {
                 // Remove vote
-                await supabase
-                    .from('votes')
-                    .delete()
-                    .eq('user_id', user.uid)
-                    .eq('feedback_id', item.id);
+                await updateDoc(itemRef, {
+                    upvotedBy: arrayRemove(user.uid)
+                });
             } else {
                 // Add vote
-                await supabase
-                    .from('votes')
-                    .insert({
-                        user_id: user.uid,
-                        feedback_id: item.id
-                    });
+                await updateDoc(itemRef, {
+                    upvotedBy: arrayUnion(user.uid)
+                });
             }
             fetchFeedback();
         } catch (err: any) {
@@ -174,13 +181,9 @@ export function FeedbackBoard() {
     };
 
     const handleDelete = async (itemId: string) => {
+        if (!db) return;
         try {
-            const { error } = await supabase
-                .from('feedback')
-                .delete()
-                .eq('id', itemId);
-
-            if (error) throw error;
+            await deleteDoc(doc(db, 'feedback', itemId));
             toast({ title: "Deleted", description: "Feedback item removed." });
             setItemToDelete(null);
             fetchFeedback();
@@ -190,17 +193,14 @@ export function FeedbackBoard() {
     };
 
     const handleSaveReply = async (itemId: string) => {
+        if (!db) return;
         setIsReplying(true);
         try {
-            const { error } = await supabase
-                .from('feedback')
-                .update({
-                    admin_reply: replyText,
-                    admin_reply_at: new Date().toISOString()
-                })
-                .eq('id', itemId);
+            await updateDoc(doc(db, 'feedback', itemId), {
+                adminReply: replyText,
+                adminReplyAt: new Date().toISOString()
+            });
 
-            if (error) throw error;
             toast({ title: "Reply Saved" });
             setReplyingTo(null);
             setReplyText('');
@@ -213,13 +213,12 @@ export function FeedbackBoard() {
     };
 
     const handleStatusChange = async (itemId: string, newStatus: string) => {
+        if (!db) return;
         try {
-            const { error } = await supabase
-                .from('feedback')
-                .update({ status: newStatus })
-                .eq('id', itemId);
+            await updateDoc(doc(db, 'feedback', itemId), {
+                status: newStatus
+            });
 
-            if (error) throw error;
             toast({ title: "Status Updated", description: `Item is now ${newStatus}` });
             fetchFeedback();
         } catch (err: any) {
@@ -313,7 +312,7 @@ export function FeedbackBoard() {
                                             <div className="flex flex-wrap items-center gap-2">
                                                 <StatusBadge status={item.status} itemId={item.id} />
                                                 <span className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground/60">
-                                                    {item.createdAt ? new Date(item.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : 'Just now'}
+                                                    {item.createdAt instanceof Date ? item.createdAt.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : 'Just now'}
                                                 </span>
                                                 <span className="text-[10px] uppercase font-bold tracking-widest text-primary/60">
                                                     BY {item.userName || authorMap[item.userId] || '...'}
@@ -430,139 +429,6 @@ export function FeedbackBoard() {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
-        </div>
-    );
-
-    return (
-        <div className="min-h-screen bg-background relative overflow-hidden">
-            {/* Background Gradients - Adjusted for Deep Black Theme */}
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-[1000px] h-[500px] bg-primary/5 blur-[120px] rounded-full pointer-events-none" />
-
-            <div className="container max-w-5xl py-24 relative z-10 px-4 md:px-0">
-                {error && (
-                    <div className="bg-destructive/10 text-destructive border border-destructive/20 p-4 rounded-lg mb-8 flex items-center justify-center gap-3 max-w-lg mx-auto">
-                        <Flag className="w-5 h-5" />
-                        <span className="font-semibold">{error}</span>
-                    </div>
-                )}
-
-                {/* Centered Header Section */}
-                <div className="flex flex-col items-center text-center gap-6 mb-16">
-                    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-medium border border-primary/20">
-                        <Sparkles className="w-4 h-4" />
-                        <span>Public Beta</span>
-                    </div>
-
-                    <div className="space-y-4 max-w-2xl">
-                        <h1 className="text-4xl md:text-6xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-br from-foreground to-foreground/50">
-                            Community Feedback
-                        </h1>
-                        <p className="text-muted-foreground text-lg md:text-xl leading-relaxed">
-                            Help us build the ultimate tool suite. Report bugs, track progress, and vote on the features you want to see next.
-                        </p>
-                    </div>
-
-                    <Dialog open={openSubmitDialog} onOpenChange={setOpenSubmitDialog}>
-                        <DialogTrigger asChild>
-                            <Button size="lg" className="h-12 px-8 shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all text-base font-semibold rounded-full">
-                                <MessageSquarePlus className="mr-2 h-5 w-5" />
-                                Submit Feedback
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent className="sm:max-w-[500px] bg-card/95 backdrop-blur-xl border-border/50">
-                            <DialogHeader>
-                                <DialogTitle className="text-2xl">Submit Feedback</DialogTitle>
-                                <DialogDescription>
-                                    Share your thoughts safely. Your voice shapes our roadmap.
-                                </DialogDescription>
-                            </DialogHeader>
-                            <form onSubmit={handleSubmit} className="space-y-6 pt-4">
-                                <div className="space-y-2">
-                                    <Label className="text-sm font-medium">Feedback Type</Label>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div
-                                            className={`cursor-pointer rounded-xl border-2 p-4 flex flex-col items-center gap-2 transition-all ${newItemType === 'bug' ? 'border-primary bg-primary/5' : 'border-muted hover:border-primary/50'}`}
-                                            onClick={() => setNewItemType('bug')}
-                                        >
-                                            <Bug className={`w-6 h-6 ${newItemType === 'bug' ? 'text-primary' : 'text-muted-foreground'}`} />
-                                            <span className={`text-sm font-medium ${newItemType === 'bug' ? 'text-primary' : 'text-muted-foreground'}`}>Bug Report</span>
-                                        </div>
-                                        <div
-                                            className={`cursor-pointer rounded-xl border-2 p-4 flex flex-col items-center gap-2 transition-all ${newItemType === 'suggestion' ? 'border-primary bg-primary/5' : 'border-muted hover:border-primary/50'}`}
-                                            onClick={() => setNewItemType('suggestion')}
-                                        >
-                                            <Lightbulb className={`w-6 h-6 ${newItemType === 'suggestion' ? 'text-primary' : 'text-muted-foreground'}`} />
-                                            <span className={`text-sm font-medium ${newItemType === 'suggestion' ? 'text-primary' : 'text-muted-foreground'}`}>Suggestion</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="title">Title</Label>
-                                    <Input
-                                        id="title"
-                                        placeholder="Brief summary of the issue or idea"
-                                        value={newItemTitle}
-                                        onChange={(e) => setNewItemTitle(e.target.value)}
-                                        required
-                                        className="bg-background/50 focus:bg-background transition-colors"
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="description">Description</Label>
-                                    <Textarea
-                                        id="description"
-                                        placeholder="Explain in detail... Steps to reproduce, expected behavior, etc."
-                                        value={newItemDesc}
-                                        onChange={(e) => setNewItemDesc(e.target.value)}
-                                        required
-                                        className="min-h-[150px] bg-background/50 focus:bg-background transition-colors resize-none"
-                                    />
-                                </div>
-                                <DialogFooter>
-                                    <Button type="submit" disabled={isSubmitting} className="w-full">
-                                        {isSubmitting ? 'Submitting...' : 'Submit Feedback'}
-                                    </Button>
-                                </DialogFooter>
-                            </form>
-                        </DialogContent>
-                    </Dialog>
-                </div>
-
-                <div className="max-w-3xl mx-auto">
-                    <Tabs defaultValue="bug" onValueChange={(v: any) => setActiveTab(v)} className="w-full">
-                        <TabsList className="w-full p-1 bg-muted/20 backdrop-blur-md rounded-full border border-border/40 mb-10">
-                            <TabsTrigger
-                                value="bug"
-                                className="w-1/2 rounded-full py-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none transition-all text-base"
-                            >
-                                <div className="flex items-center gap-2">
-                                    <Bug className="w-4 h-4" />
-                                    <span>Bug Reports</span>
-                                    <Badge variant="secondary" className="ml-1 text-xs h-5 px-1.5 min-w-[1.25rem] bg-background/50">{bugs.length}</Badge>
-                                </div>
-                            </TabsTrigger>
-                            <TabsTrigger
-                                value="suggestion"
-                                className="w-1/2 rounded-full py-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none transition-all text-base"
-                            >
-                                <div className="flex items-center gap-2">
-                                    <Rocket className="w-4 h-4" />
-                                    <span>Feature Requests</span>
-                                    <Badge variant="secondary" className="ml-1 text-xs h-5 px-1.5 min-w-[1.25rem] bg-background/50">{suggestions.length}</Badge>
-                                </div>
-                            </TabsTrigger>
-                        </TabsList>
-
-                        <TabsContent value="bug" className="mt-0">
-                            {renderList(bugs)}
-                        </TabsContent>
-
-                        <TabsContent value="suggestion" className="mt-0">
-                            {renderList(suggestions)}
-                        </TabsContent>
-                    </Tabs>
-                </div>
-            </div>
         </div>
     );
 }

@@ -1,4 +1,6 @@
-import { createClient } from '@/lib/supabase';
+import { getAuth, signOut } from 'firebase/auth';
+import { getApp, getApps, initializeApp } from 'firebase/app';
+import { firebaseConfig } from '@/firebase/config';
 
 /**
  * Deletes all user data from LOCAL STORAGE
@@ -28,17 +30,17 @@ export async function deleteUserData() {
 
 /**
  * Deletes the user account and all local data.
- * Uses Supabase auth to delete the current session user.
+ * Uses Firebase auth to sign out the current session user.
  */
 export async function deleteUserAccount() {
     try {
         // 1. Delete all Local data
         await deleteUserData();
 
-        // 2. Sign out (actual account deletion requires admin/service role)
-        const supabase = createClient();
-        const { error } = await supabase.auth.signOut();
-        if (error) throw error;
+        // 2. Sign out
+        const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        await signOut(auth);
 
         console.log('User signed out and local data deleted');
     } catch (error: any) {
