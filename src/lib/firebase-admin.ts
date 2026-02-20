@@ -140,5 +140,6 @@ export function getInitializeApp() {
 }
 
 export const getAdminAuth = () => admin.auth(getInitializeApp());
+export const getAdminFirestore = () => admin.firestore(getInitializeApp());
 
 export default admin;

@@ -19,14 +19,16 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useUser, useAuth } from '@/firebase';
+import { useUser, useAuth, useFirebase } from '@/firebase';
 import {
     sendSignInLinkToEmail,
     signOut,
     GoogleAuthProvider,
     signInWithPopup
 } from 'firebase/auth';
-import { LogIn, LogOut, Loader2, Sparkles, CheckCircle2, ShieldCheck, Mail } from 'lucide-react';
+import { doc, setDoc } from 'firebase/firestore';
+import { verifyAdminPassword } from '@/app/actions/admin';
+import { LogIn, LogOut, Loader2, Sparkles, CheckCircle2, ShieldCheck, Mail, Lock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useSettings } from '@/components/settings-provider';
@@ -42,17 +44,18 @@ export function UserAuthButton({ customTrigger }: UserAuthButtonProps) {
     const { settings } = useSettings();
     const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false);
     const [magicLinkSent, setMagicLinkSent] = useState(false);
-    const [isAdmin, setIsAdmin] = useState(false);
+
+
+    // Admin Application State
+    const [isAdminApplyOpen, setIsAdminApplyOpen] = useState(false);
+    const [adminPassword, setAdminPassword] = useState('');
+    const [isAdminApplying, setIsAdminApplying] = useState(false);
 
     // State for auth forms
     const [email, setEmail] = useState('');
     const [isLoading, setIsLoading] = useState(false);
 
-    const { isAdmin: adminStatus } = useAdmin();
-
-    useEffect(() => {
-        setIsAdmin(adminStatus);
-    }, [adminStatus]);
+    const { isAdmin } = useAdmin();
 
     // Handle Google Sign In
     const handleGoogleAuth = async () => {
@@ -127,6 +130,42 @@ export function UserAuthButton({ customTrigger }: UserAuthButtonProps) {
         }
     };
 
+    const { db } = useFirebase();
+
+    const handleApplyAdmin = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!user || !db) return;
+
+        setIsAdminApplying(true);
+        try {
+            const { isValid } = await verifyAdminPassword(adminPassword, user?.uid);
+
+            if (isValid) {
+                toast({
+                    title: 'Access Granted',
+                    description: 'You are now an administrator.',
+                    variant: 'default'
+                });
+
+                setIsAdminApplyOpen(false);
+                setAdminPassword('');
+
+                // No reload needed, onSnapshot updates UI automatically
+            } else {
+                toast({
+                    title: 'Access Denied',
+                    description: 'Incorrect password.',
+                    variant: 'destructive'
+                });
+            }
+        } catch (error: any) {
+            console.error(error);
+            toast({ title: 'Error', description: 'Failed to verify password.', variant: 'destructive' });
+        } finally {
+            setIsAdminApplying(false);
+        }
+    };
+
     if (isUserLoading) {
         return (
             <Button variant="ghost" size="icon" className="w-10 h-10 rounded-full">
@@ -145,14 +184,14 @@ export function UserAuthButton({ customTrigger }: UserAuthButtonProps) {
                         ) : (
                             <Button variant="ghost" className="relative h-10 w-auto rounded-full flex items-center gap-2 pl-2 pr-4 hover:bg-muted/50 transition-colors">
                                 <Avatar className="h-8 w-8 border border-primary/20">
-                                    <AvatarImage src={user.photoURL || ''} alt={user.displayName || 'User'} />
+                                    <AvatarImage src={user.photoURL || ''} alt={user.displayName || settings.displayName || 'User'} />
                                     <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">
-                                        {(user.displayName || user.email || 'U').charAt(0).toUpperCase()}
+                                        {(user.displayName || settings.displayName || user.email || 'U').charAt(0).toUpperCase()}
                                     </AvatarFallback>
                                 </Avatar>
                                 <div className="flex flex-col items-start text-sm auth-text">
                                     <span className="font-semibold text-foreground/80 max-w-[100px] truncate">
-                                        {user.displayName || 'User'}
+                                        {user.displayName || settings.displayName || user.email?.split('@')[0] || 'User'}
                                     </span>
                                 </div>
                             </Button>
@@ -161,7 +200,7 @@ export function UserAuthButton({ customTrigger }: UserAuthButtonProps) {
                     <DropdownMenuContent className="w-56" align="end" forceMount>
                         <DropdownMenuLabel className="font-normal">
                             <div className="flex flex-col space-y-1">
-                                <p className="text-sm font-medium leading-none">{user.displayName || 'User'}</p>
+                                <p className="text-sm font-medium leading-none">{user.displayName || settings.displayName || user.email?.split('@')[0] || 'User'}</p>
                                 <p className="text-xs leading-none text-muted-foreground">
                                     {user.email}
                                 </p>
@@ -175,6 +214,15 @@ export function UserAuthButton({ customTrigger }: UserAuthButtonProps) {
                                         <ShieldCheck className="mr-2 h-4 w-4" />
                                         <span>Admin Panel</span>
                                     </Link>
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                            </>
+                        )}
+                        {!isAdmin && (
+                            <>
+                                <DropdownMenuItem onSelect={(e) => { e.preventDefault(); setIsAdminApplyOpen(true); }} className="cursor-pointer">
+                                    <Lock className="mr-2 h-4 w-4" />
+                                    <span>Apply for Admin</span>
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                             </>
@@ -296,6 +344,41 @@ export function UserAuthButton({ customTrigger }: UserAuthButtonProps) {
                             By continuing, you agree to our Terms of Service and Privacy Policy.
                         </p>
                     </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* Admin Application Dialog */}
+            <Dialog open={isAdminApplyOpen} onOpenChange={setIsAdminApplyOpen}>
+                <DialogContent className="sm:max-w-[400px]">
+                    <DialogHeader>
+                        <DialogTitle>Admin Access</DialogTitle>
+                        <DialogDescription>
+                            Enter the secure passcode to gain administrative privileges.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <form onSubmit={handleApplyAdmin} className="space-y-4 pt-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="admin-pass">Passcode</Label>
+                            <Input
+                                id="admin-pass"
+                                type="password"
+                                placeholder="••••••••••••"
+                                value={adminPassword}
+                                onChange={(e) => setAdminPassword(e.target.value)}
+                                required
+                            />
+                        </div>
+                        <Button type="submit" className="w-full" disabled={isAdminApplying}>
+                            {isAdminApplying ? (
+                                <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Verifying...
+                                </>
+                            ) : (
+                                'Verify & Grant Access'
+                            )}
+                        </Button>
+                    </form>
                 </DialogContent>
             </Dialog>
         </>

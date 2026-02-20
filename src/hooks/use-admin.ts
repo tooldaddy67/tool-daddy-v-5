@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useFirebase } from '@/firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, onSnapshot } from 'firebase/firestore';
 
 export function useAdmin() {
     const { user, db } = useFirebase();
@@ -10,32 +10,30 @@ export function useAdmin() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const checkAdmin = async () => {
-            if (!user || !db) {
+        if (!user || !db) {
+            setIsAdmin(false);
+            setLoading(false);
+            return;
+        }
+
+        const docRef = doc(db, 'profiles', user.uid);
+
+        const unsubscribe = onSnapshot(docRef, (docSnap) => {
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                // console.log('[useAdmin] Profile update:', data);
+                setIsAdmin(data?.isAdmin === true || data?.is_admin === true);
+            } else {
                 setIsAdmin(false);
-                setLoading(false);
-                return;
             }
+            setLoading(false);
+        }, (err) => {
+            console.error('[useAdmin] Error listening to admin status:', err);
+            setIsAdmin(false);
+            setLoading(false);
+        });
 
-            try {
-                const docRef = doc(db, 'profiles', user.uid);
-                const docSnap = await getDoc(docRef);
-
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    setIsAdmin(data?.isAdmin === true || data?.is_admin === true); // support both for migration ease
-                } else {
-                    setIsAdmin(false);
-                }
-            } catch (err) {
-                console.error('[useAdmin] Error checking admin status:', err);
-                setIsAdmin(false);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        checkAdmin();
+        return () => unsubscribe();
     }, [user, db]);
 
     return { isAdmin, loading };

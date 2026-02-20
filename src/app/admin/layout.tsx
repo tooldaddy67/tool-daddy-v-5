@@ -7,36 +7,66 @@ import { Loader2, ShieldAlert } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { usePathname } from 'next/navigation';
+import { Button } from '@/components/ui/button';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
     const { isAdmin, loading } = useAdmin();
     const router = useRouter();
     const pathname = usePathname();
 
-    useEffect(() => {
-        if (!loading && !isAdmin) {
-            router.push('/');
-        }
-    }, [isAdmin, loading, router]);
+    // useEffect(() => {
+    //     if (!loading && !isAdmin) {
+    //         router.push('/');
+    //     }
+    // }, [isAdmin, loading, router]);
 
     if (loading) {
         return (
-            <div className="flex h-[80vh] w-full items-center justify-center">
-                <Loader2 className="h-10 w-10 animate-spin text-primary" />
+            <div className="flex h-screen w-full items-center justify-center gap-2">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                <span className="text-muted-foreground font-medium">Verifying access...</span>
             </div>
         );
     }
 
     if (!isAdmin) {
         return (
-            <div className="flex h-[80vh] w-full flex-col items-center justify-center space-y-4">
-                <ShieldAlert className="h-16 w-16 text-destructive" />
-                <h1 className="text-2xl font-bold">Access Denied</h1>
-                <p className="text-muted-foreground">You do not have permission to view this page.</p>
-                <Link href="/" className="text-primary hover:underline">Return Home</Link>
+            <div className="flex h-screen w-full flex-col items-center justify-center gap-4 p-4 text-center animate-in fade-in zoom-in-95 duration-300">
+                <div className="bg-destructive/10 p-4 rounded-full">
+                    <ShieldAlert className="h-12 w-12 text-destructive" />
+                </div>
+                <div className="space-y-2">
+                    <h1 className="text-2xl font-bold tracking-tight">Access Restricted</h1>
+                    <p className="text-muted-foreground max-w-[400px]">
+                        This area is protected. You either don't have permission or your session needs a refresh.
+                    </p>
+                </div>
+                <div className="flex gap-3">
+                    <Button variant="outline" onClick={() => router.push('/')}>
+                        Return Home
+                    </Button>
+                    <Button onClick={() => window.location.reload()}>
+                        Retry Verification
+                    </Button>
+                </div>
+                <div className="mt-8 p-4 bg-muted/50 rounded-lg text-xs font-mono text-left w-full max-w-md overflow-auto border border-border/50">
+                    <p className="font-bold mb-2 opacity-50 uppercase tracking-widest">Debug Diagnostic</p>
+                    <div className="grid grid-cols-[100px_1fr] gap-1">
+                        <span className="opacity-70">Status:</span>
+                        <span className="text-destructive font-bold">Denied</span>
+                        <span className="opacity-70">Loading:</span>
+                        <span>{String(loading)}</span>
+                        <span className="opacity-70">Is Admin:</span>
+                        <span>{String(isAdmin)}</span>
+                        <span className="opacity-70">Current Path:</span>
+                        <span>{pathname}</span>
+                    </div>
+                </div>
             </div>
         );
     }
+
+
 
     const navItems = [
         { name: 'Overview', href: '/admin/dashboard' },

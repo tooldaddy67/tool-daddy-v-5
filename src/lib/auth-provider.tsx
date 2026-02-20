@@ -29,6 +29,7 @@ interface AuthContextState {
     auth: Auth | null;
     db: Firestore | null;
     analytics: Analytics | null;
+    refreshUser: () => Promise<void>;
 }
 
 export interface FirebaseServicesAndUser {
@@ -39,6 +40,7 @@ export interface FirebaseServicesAndUser {
     isUserLoading: boolean;
     userError: Error | null;
     db: Firestore | null;
+    refreshUser: () => Promise<void>;
 }
 
 export interface UserHookResult {
@@ -46,6 +48,7 @@ export interface UserHookResult {
     firebaseUser: User | null;
     isUserLoading: boolean;
     userError: Error | null;
+    refreshUser: () => Promise<void>;
 }
 
 // ------------------------------------------------------------------
@@ -121,6 +124,15 @@ export function FirebaseAuthProvider({ children }: { children: ReactNode }) {
         return () => unsubscribe();
     }, [auth]);
 
+    const refreshUser = async () => {
+        if (auth && auth.currentUser) {
+            await auth.currentUser.reload();
+            const freshUser = auth.currentUser;
+            setFirebaseUser(freshUser);
+            setUser(mapUser(freshUser));
+        }
+    };
+
     // Handle Magic Link Sign-In
     useEffect(() => {
         if (!auth || typeof window === 'undefined') return;
@@ -150,7 +162,7 @@ export function FirebaseAuthProvider({ children }: { children: ReactNode }) {
     }, [auth]);
 
     const value = useMemo<AuthContextState>(
-        () => ({ user, firebaseUser, isUserLoading, userError, app, auth, db, analytics }),
+        () => ({ user, firebaseUser, isUserLoading, userError, app, auth, db, analytics, refreshUser }),
         [user, firebaseUser, isUserLoading, userError, app, auth, db, analytics]
     );
 
@@ -168,13 +180,13 @@ export function useFirebaseAuthContext() {
 }
 
 export const useFirebase = (): FirebaseServicesAndUser => {
-    const { app, auth, user, firebaseUser, isUserLoading, userError, db } = useFirebaseAuthContext();
-    return { firebaseApp: app, auth, user, firebaseUser, isUserLoading, userError, db };
+    const { app, auth, user, firebaseUser, isUserLoading, userError, db, refreshUser } = useFirebaseAuthContext();
+    return { firebaseApp: app, auth, user, firebaseUser, isUserLoading, userError, db, refreshUser };
 };
 
 export const useUser = (): UserHookResult => {
-    const { user, firebaseUser, isUserLoading, userError } = useFirebaseAuthContext();
-    return { user, firebaseUser, isUserLoading, userError };
+    const { user, firebaseUser, isUserLoading, userError, refreshUser } = useFirebaseAuthContext();
+    return { user, firebaseUser, isUserLoading, userError, refreshUser };
 };
 
 export const useAuth = () => {

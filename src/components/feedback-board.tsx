@@ -6,10 +6,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowBigUp, Flag, Lightbulb, MessageSquarePlus, Sparkles, Trophy, Rocket, Bug, Trash2, Reply, Check, Loader2 } from 'lucide-react';
+import { ArrowBigUp, Bug, Lightbulb, MessageSquarePlus, Sparkles, Trash2, Reply, Check, Loader2, Filter, Search, Zap } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Dialog,
@@ -33,6 +33,8 @@ import {
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAdmin } from '@/hooks/use-admin';
+import { useSettings } from '@/components/settings-provider';
+import { cn } from '@/lib/utils';
 import {
     collection,
     query,
@@ -57,7 +59,7 @@ interface FeedbackItem {
     upvotedBy: string[];
     userId: string;
     userName: string;
-    createdAt: any; // Firestore Timestamp or Date
+    createdAt: any;
     adminReply?: string;
     adminReplyAt?: string;
 }
@@ -65,7 +67,9 @@ interface FeedbackItem {
 export function FeedbackBoard() {
     const { user, db } = useFirebase();
     const { isAdmin } = useAdmin();
+    const { settings } = useSettings();
     const { toast } = useToast();
+
     const [activeTab, setActiveTab] = useState<'bug' | 'suggestion'>('bug');
     const [bugs, setBugs] = useState<FeedbackItem[]>([]);
     const [suggestions, setSuggestions] = useState<FeedbackItem[]>([]);
@@ -73,17 +77,22 @@ export function FeedbackBoard() {
     const [openSubmitDialog, setOpenSubmitDialog] = useState(false);
     const [itemToDelete, setItemToDelete] = useState<string | null>(null);
     const [authorMap, setAuthorMap] = useState<Record<string, string>>({});
+    const [searchQuery, setSearchQuery] = useState('');
 
     const [mounted, setMounted] = useState(false);
-    const [error, setError] = useState<string | null>(null);
     const [replyingTo, setReplyingTo] = useState<string | null>(null);
     const [replyText, setReplyText] = useState('');
     const [isReplying, setIsReplying] = useState(false);
 
+    // Form State
+    const [newItemType, setNewItemType] = useState<'bug' | 'suggestion'>('bug');
+    const [newItemTitle, setNewItemTitle] = useState('');
+    const [newItemDesc, setNewItemDesc] = useState('');
+
     useEffect(() => {
         setMounted(true);
         fetchFeedback();
-    }, [db]); // Fetch when db is ready
+    }, [db]);
 
     const fetchFeedback = async () => {
         if (!db) return;
@@ -102,7 +111,7 @@ export function FeedbackBoard() {
                     type: data.category === 'bug' ? 'bug' : 'suggestion',
                     upvotes: data.upvotedBy?.length || 0,
                     upvotedBy: data.upvotedBy || [],
-                    createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(data.createdAt)
+                    createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(data.createdAt || Date.now())
                 } as FeedbackItem;
             });
 
@@ -110,16 +119,8 @@ export function FeedbackBoard() {
             setSuggestions(items.filter(f => f.type === 'suggestion'));
         } catch (err: any) {
             console.error('Error fetching feedback:', err);
-            setError('Failed to load feedback board.');
         }
     };
-
-    // Form State
-    const [newItemType, setNewItemType] = useState<'bug' | 'suggestion'>('bug');
-    const [newItemTitle, setNewItemTitle] = useState('');
-    const [newItemDesc, setNewItemDesc] = useState('');
-
-    if (!mounted) return null;
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -164,15 +165,9 @@ export function FeedbackBoard() {
 
         try {
             if (alreadyUpvoted) {
-                // Remove vote
-                await updateDoc(itemRef, {
-                    upvotedBy: arrayRemove(user.uid)
-                });
+                await updateDoc(itemRef, { upvotedBy: arrayRemove(user.uid) });
             } else {
-                // Add vote
-                await updateDoc(itemRef, {
-                    upvotedBy: arrayUnion(user.uid)
-                });
+                await updateDoc(itemRef, { upvotedBy: arrayUnion(user.uid) });
             }
             fetchFeedback();
         } catch (err: any) {
@@ -200,7 +195,6 @@ export function FeedbackBoard() {
                 adminReply: replyText,
                 adminReplyAt: new Date().toISOString()
             });
-
             toast({ title: "Reply Saved" });
             setReplyingTo(null);
             setReplyText('');
@@ -215,10 +209,7 @@ export function FeedbackBoard() {
     const handleStatusChange = async (itemId: string, newStatus: string) => {
         if (!db) return;
         try {
-            await updateDoc(doc(db, 'feedback', itemId), {
-                status: newStatus
-            });
-
+            await updateDoc(doc(db, 'feedback', itemId), { status: newStatus });
             toast({ title: "Status Updated", description: `Item is now ${newStatus}` });
             fetchFeedback();
         } catch (err: any) {
@@ -226,206 +217,289 @@ export function FeedbackBoard() {
         }
     };
 
+    // --- Components ---
+
     const StatusBadge = ({ status, itemId }: { status: string, itemId?: string }) => {
         const styles = {
             'pending': 'bg-slate-500/10 text-slate-500 border-slate-500/20',
-            'open': 'bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 border-blue-500/20',
-            'in-progress': 'bg-amber-500/10 text-amber-500 hover:bg-amber-500/20 border-amber-500/20',
-            'resolved': 'bg-green-500/10 text-green-500 hover:bg-green-500/20 border-green-500/20',
-            'closed': 'bg-red-500/10 text-red-500 hover:bg-red-500/20 border-red-500/20',
+            'open': 'bg-blue-500/10 text-blue-500 border-blue-500/20',
+            'in-progress': 'bg-amber-500/10 text-amber-500 border-amber-500/20',
+            'resolved': 'bg-green-500/10 text-green-500 border-green-500/20',
+            'closed': 'bg-red-500/10 text-red-500 border-red-500/20',
         }[status] || 'bg-slate-500/10 text-slate-500';
 
         if (isAdmin && itemId) {
             return (
                 <Select value={status} onValueChange={(val) => handleStatusChange(itemId, val)}>
-                    <SelectTrigger className={`h-7 px-2 text-[10px] w-auto gap-1 border-0 bg-transparent hover:bg-transparent focus:ring-0 font-bold uppercase tracking-wider ${styles}`}>
+                    <SelectTrigger className={cn("h-6 px-2 text-[10px] w-auto gap-1 border-0 bg-transparent hover:bg-transparent focus:ring-0 font-bold uppercase tracking-wider", styles)}>
                         <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="pending">Pending</SelectItem>
-                        <SelectItem value="open">Open</SelectItem>
-                        <SelectItem value="in-progress">In-Progress</SelectItem>
-                        <SelectItem value="resolved">Resolved</SelectItem>
-                        <SelectItem value="closed">Closed</SelectItem>
+                        {['pending', 'open', 'in-progress', 'resolved', 'closed'].map(s => (
+                            <SelectItem key={s} value={s} className="capitalize">{s.replace('-', ' ')}</SelectItem>
+                        ))}
                     </SelectContent>
                 </Select>
             );
         }
-
         return (
-            <Badge variant="outline" className={`${styles} capitalize transition-colors`}>
+            <Badge variant="outline" className={cn("text-[10px] uppercase font-bold tracking-wider border-0", styles)}>
                 {status.replace('-', ' ')}
             </Badge>
         );
     };
 
-    const renderList = (items: FeedbackItem[]) => (
-        <div className="grid gap-4">
-            <AnimatePresence mode="popLayout">
-                {items.length === 0 ? (
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="flex flex-col items-center justify-center py-16 text-center space-y-4 bg-muted/20 border border-dashed border-border/50 rounded-2xl"
-                    >
-                        <div className="p-4 rounded-full bg-muted/50">
-                            <Sparkles className="w-8 h-8 text-muted-foreground" />
+    const FeedbackCard = ({ item }: { item: FeedbackItem }) => {
+        const isNeo = settings.cardStyle === 'neo';
+        const isGlass = settings.cardStyle === 'glass';
+
+        return (
+            <motion.div
+                layout
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="group h-full"
+            >
+                <div
+                    className={cn(
+                        "relative h-full flex flex-col p-5 transition-all duration-300 rounded-[var(--card-radius)] overflow-hidden",
+                        isNeo ? "bg-card border-2 border-primary shadow-[4px_4px_0px_var(--primary)] text-card-foreground" :
+                            isGlass ? "bg-white/5 backdrop-blur-md border border-white/10 shadow-xl" :
+                                "bg-card border border-border/40 hover:border-primary/30 shadow-sm hover:shadow-md"
+                    )}
+                >
+                    {/* Status Line */}
+                    <div className="flex justify-between items-start mb-4">
+                        <div className="flex gap-2 items-center">
+                            <StatusBadge status={item.status} itemId={item.id} />
+                            <span className="text-[10px] font-medium opacity-50 uppercase tracking-widest">
+                                {item.createdAt instanceof Date ? item.createdAt.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : ''}
+                            </span>
                         </div>
-                        <div className="space-y-2">
-                            <h3 className="font-semibold text-lg">No items yet</h3>
-                            <p className="text-muted-foreground text-sm max-w-sm">
-                                Be the first to share your thoughts and help shape the future of Tool Daddy.
-                            </p>
+                        {(isAdmin || item.userId === user?.uid) && (
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 -mr-2 text-muted-foreground hover:text-destructive transition-colors opacity-0 group-hover:opacity-100"
+                                onClick={() => setItemToDelete(item.id)}
+                            >
+                                <Trash2 className="h-3 w-3" />
+                            </Button>
+                        )}
+                    </div>
+
+                    {/* Content */}
+                    <div className="flex-1 space-y-3 mb-4">
+                        <h3 className="text-lg font-bold leading-tight group-hover:text-primary transition-colors line-clamp-2">
+                            {item.title}
+                        </h3>
+                        <p className="text-sm text-muted-foreground leading-relaxed line-clamp-4">
+                            {item.description}
+                        </p>
+                    </div>
+
+                    {/* Footer */}
+                    <div className="flex items-center justify-between mt-auto pt-4 border-t border-dashed border-border/30">
+                        <div className="flex items-center gap-2">
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleUpvote(item)}
+                                className={cn(
+                                    "h-8 px-3 gap-2 rounded-full font-bold transition-all border",
+                                    (item.upvotedBy || []).includes(user?.uid || '')
+                                        ? "bg-primary text-primary-foreground border-primary hover:bg-primary/90"
+                                        : "bg-transparent border-border/50 hover:border-primary/50"
+                                )}
+                            >
+                                <ArrowBigUp className={cn("w-4 h-4", (item.upvotedBy || []).includes(user?.uid || '') && "fill-current")} />
+                                <span>{item.upvotes}</span>
+                            </Button>
                         </div>
-                    </motion.div>
-                ) : (
-                    items.map((item, index) => (
-                        <motion.div
-                            key={item.id}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.95 }}
-                            transition={{ delay: index * 0.05 }}
-                        >
-                            <Card className="group relative border-border/40 bg-card/40 backdrop-blur-sm hover:bg-card/70 hover:border-primary/20 transition-all duration-300">
-                                <CardContent className="p-4 md:p-6">
-                                    <div className="flex gap-4 md:gap-6">
-                                        {/* 1. Vote Column */}
-                                        <div className="flex flex-col items-center gap-1 shrink-0">
-                                            <Button
-                                                variant="outline"
-                                                className={`
-                                                    h-11 w-11 p-0 flex flex-col border transition-all duration-300 rounded-xl
-                                                    ${(item.upvotedBy || []).includes(user?.uid || '')
-                                                        ? "bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/25 hover:bg-primary/90"
-                                                        : "hover:border-primary/50 hover:bg-primary/5"}
-                                                `}
-                                                onClick={() => handleUpvote(item)}
-                                            >
-                                                <ArrowBigUp className={`w-6 h-6 ${(item.upvotedBy || []).includes(user?.uid || '') ? 'fill-current' : ''}`} />
-                                            </Button>
-                                            <span className="text-sm font-bold tracking-tight">{item.upvotes}</span>
-                                        </div>
 
-                                        {/* 2. Content Column */}
-                                        <div className="flex-1 min-w-0 space-y-2">
-                                            <div className="flex flex-wrap items-center gap-2">
-                                                <StatusBadge status={item.status} itemId={item.id} />
-                                                <span className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground/60">
-                                                    {item.createdAt instanceof Date ? item.createdAt.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : 'Just now'}
-                                                </span>
-                                                <span className="text-[10px] uppercase font-bold tracking-widest text-primary/60">
-                                                    BY {item.userName || authorMap[item.userId] || '...'}
-                                                </span>
-                                            </div>
+                        <div className="flex items-center gap-2">
+                            <div className="text-[10px] font-bold uppercase opacity-40">
+                                {item.userName || 'Anonymous'}
+                            </div>
+                            {item.adminReply && (
+                                <div className="flex items-center gap-1 text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                                    <Reply className="w-3 h-3" /> Replied
+                                </div>
+                            )}
+                        </div>
+                    </div>
 
-                                            <div className="space-y-1">
-                                                <h3 className="text-lg font-bold leading-tight group-hover:text-primary transition-colors truncate">
-                                                    {item.title}
-                                                </h3>
-                                                <p className="text-sm text-foreground/70 leading-relaxed whitespace-pre-wrap line-clamp-3 md:line-clamp-none">
-                                                    {item.description}
-                                                </p>
-                                            </div>
-
-                                            {/* Admin Reply Section */}
-                                            {(item.adminReply || replyingTo === item.id) && (
-                                                <div className="mt-4 pl-4 border-l-2 border-primary/30 py-1 space-y-2">
-                                                    <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.15em] text-primary">
-                                                        <div className="w-4 h-4 rounded-full bg-primary/20 flex items-center justify-center p-0.5">
-                                                            <svg viewBox="0 0 420 420" className="w-full h-full"><path d="M128 341.333C128 304.6 154.6 278 181.333 278H234.667C261.4 278 288 304.6 288 341.333V341.333C288 378.067 261.4 404.667 234.667 404.667H181.333C154.6 404.667 128 378.067 128 341.333V341.333Z" fill="currentColor" /></svg>
-                                                        </div>
-                                                        Admin Response
-                                                    </div>
-
-                                                    {replyingTo === item.id ? (
-                                                        <div className="space-y-3 pt-2">
-                                                            <Textarea
-                                                                placeholder="Type your official response..."
-                                                                className="min-h-[80px] text-sm bg-background/40 border-primary/20 focus:border-primary/50 resize-none"
-                                                                value={replyText}
-                                                                onChange={(e) => setReplyText(e.target.value)}
-                                                                autoFocus
-                                                            />
-                                                            <div className="flex justify-end gap-2">
-                                                                <Button
-                                                                    size="sm"
-                                                                    variant="ghost"
-                                                                    className="h-8 text-[10px] px-3 font-bold uppercase transition-all"
-                                                                    onClick={() => { setReplyingTo(null); setReplyText(''); }}
-                                                                >
-                                                                    Cancel
-                                                                </Button>
-                                                                <Button
-                                                                    size="sm"
-                                                                    className="h-8 text-[10px] px-3 font-bold uppercase shadow-lg shadow-primary/20"
-                                                                    onClick={() => handleSaveReply(item.id)}
-                                                                    disabled={isReplying}
-                                                                >
-                                                                    {isReplying ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <Check className="w-3 h-3 mr-1" />}
-                                                                    Save Reply
-                                                                </Button>
-                                                            </div>
-                                                        </div>
-                                                    ) : (
-                                                        <p className="text-sm text-foreground/80 italic font-medium leading-relaxed">
-                                                            "{item.adminReply}"
-                                                        </p>
-                                                    )}
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        {/* 3. Actions Column */}
-                                        <div className="flex flex-col justify-start shrink-0">
-                                            {(isAdmin || item.userId === user?.uid) && (
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="h-9 w-9 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all rounded-lg"
-                                                    onClick={() => setItemToDelete(item.id)}
-                                                >
-                                                    <Trash2 className="h-4 w-4" />
-                                                </Button>
-                                            )}
-                                            {isAdmin && !replyingTo && (
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="h-9 w-9 text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all rounded-lg"
-                                                    onClick={() => {
-                                                        setReplyingTo(item.id);
-                                                        setReplyText(item.adminReply || '');
-                                                    }}
-                                                >
-                                                    <Reply className="h-4 w-4" />
-                                                </Button>
-                                            )}
-                                        </div>
+                    {/* Admin Reply Input / Display */}
+                    {(item.adminReply || replyingTo === item.id) && (
+                        <div className="mt-4 pt-3 border-t border-border/30 bg-muted/20 -mx-5 -mb-5 px-5 py-3">
+                            {replyingTo === item.id ? (
+                                <div className="space-y-2">
+                                    <Textarea
+                                        placeholder="Admin response..."
+                                        value={replyText}
+                                        onChange={e => setReplyText(e.target.value)}
+                                        className="text-xs min-h-[60px] bg-background/50"
+                                    />
+                                    <div className="flex justify-end gap-2">
+                                        <Button size="sm" variant="ghost" onClick={() => setReplyingTo(null)} className="h-6 text-[10px]">Cancel</Button>
+                                        <Button size="sm" onClick={() => handleSaveReply(item.id)} disabled={isReplying} className="h-6 text-[10px]">Save</Button>
                                     </div>
-                                </CardContent>
-                            </Card>
-                        </motion.div>
-                    ))
-                )}
-            </AnimatePresence>
+                                </div>
+                            ) : (
+                                <div className="flex gap-3">
+                                    <div className="w-1 bg-primary rounded-full" />
+                                    <div>
+                                        <div className="text-[10px] font-bold text-primary uppercase mb-1">Admin Response</div>
+                                        <p className="text-xs text-foreground/80 italic">"{item.adminReply}"</p>
+                                    </div>
+                                    {isAdmin && (
+                                        <Button variant="ghost" size="icon" className="h-5 w-5 ml-auto opacity-50 hover:opacity-100" onClick={() => { setReplyingTo(item.id); setReplyText(item.adminReply || ''); }}>
+                                            <Reply className="h-3 w-3" />
+                                        </Button>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    )}
+                    {isAdmin && !replyingTo && !item.adminReply && (
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className="absolute top-4 right-10 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={() => { setReplyingTo(item.id); setReplyText(''); }}
+                        >
+                            <Reply className="w-3 h-3" />
+                        </Button>
+                    )}
+                </div>
+            </motion.div>
+        );
+    };
 
+    if (!mounted) return null;
+
+    const filteredBugs = bugs.filter(i => i.title.toLowerCase().includes(searchQuery.toLowerCase()) || i.description.toLowerCase().includes(searchQuery.toLowerCase()));
+    const filteredSuggestions = suggestions.filter(i => i.title.toLowerCase().includes(searchQuery.toLowerCase()) || i.description.toLowerCase().includes(searchQuery.toLowerCase()));
+
+    return (
+        <div className="min-h-screen pb-20 pt-8 px-4 md:px-8 max-w-7xl mx-auto space-y-8">
+            {/* Header Hero */}
+            <div className="flex flex-col md:flex-row gap-6 md:items-end justify-between relative overflow-hidden p-8 rounded-[30px] bg-gradient-to-br from-primary/10 via-background to-background border border-primary/5">
+                <div className="space-y-4 relative z-10 max-w-2xl">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase tracking-widest border border-primary/20">
+                        <Zap className="w-3 h-3 fill-current" />
+                        Shape the future
+                    </div>
+                    <h1 className="text-4xl md:text-5xl font-black tracking-tight leading-[0.9] text-foreground">
+                        Community <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary/50">Feedback</span>
+                    </h1>
+                    <p className="text-lg text-muted-foreground leading-relaxed">
+                        Have a brilliant idea or spotted a bug? This is the place to help us build a better tool for everyone.
+                    </p>
+                </div>
+
+                <Dialog open={openSubmitDialog} onOpenChange={setOpenSubmitDialog}>
+                    <DialogTrigger asChild>
+                        <Button size="lg" className="rounded-full px-8 h-14 text-base font-bold shadow-xl shadow-primary/20 hover:scale-105 transition-transform z-10">
+                            <MessageSquarePlus className="w-5 h-5 mr-2" />
+                            Submit Feedback
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[500px] border-primary/20 bg-background/95 backdrop-blur-2xl">
+                        <DialogHeader>
+                            <DialogTitle className="text-2xl font-bold">New Submission</DialogTitle>
+                            <DialogDescription>Let us know what's on your mind.</DialogDescription>
+                        </DialogHeader>
+                        <form onSubmit={handleSubmit} className="space-y-4 pt-4">
+                            <div className="grid grid-cols-2 gap-2 bg-muted/50 p-1 rounded-xl">
+                                <button type="button" onClick={() => setNewItemType('bug')} className={cn("py-2 px-4 rounded-lg text-sm font-bold transition-all", newItemType === 'bug' ? "bg-background shadow-sm text-red-500" : "text-muted-foreground hover:text-foreground")}>Bug Report</button>
+                                <button type="button" onClick={() => setNewItemType('suggestion')} className={cn("py-2 px-4 rounded-lg text-sm font-bold transition-all", newItemType === 'suggestion' ? "bg-background shadow-sm text-primary" : "text-muted-foreground hover:text-foreground")}>Feature Request</button>
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Title</Label>
+                                <Input value={newItemTitle} onChange={e => setNewItemTitle(e.target.value)} placeholder="What's the topic?" className="bg-muted/30 border-primary/10 focus:border-primary/50 h-10" required />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Description</Label>
+                                <Textarea value={newItemDesc} onChange={e => setNewItemDesc(e.target.value)} placeholder="Tell us more details..." className="bg-muted/30 border-primary/10 focus:border-primary/50 min-h-[120px]" required />
+                            </div>
+                            <DialogFooter>
+                                <Button type="submit" disabled={isSubmitting} className="w-full rounded-xl font-bold">{isSubmitting ? <Loader2 className="animate-spin" /> : 'Submit'}</Button>
+                            </DialogFooter>
+                        </form>
+                    </DialogContent>
+                </Dialog>
+
+                {/* Decorative BG element */}
+                <div className="absolute right-0 top-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+            </div>
+
+            {/* Controls */}
+            <div className="sticky top-4 z-40 bg-background/80 backdrop-blur-xl p-2 rounded-2xl border border-border/50 shadow-lg flex flex-col sm:flex-row gap-4 items-center justify-between">
+                <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full sm:w-auto">
+                    <TabsList className="bg-muted/50 p-1 h-12 rounded-xl w-full sm:w-auto">
+                        <TabsTrigger value="bug" className="rounded-lg h-10 px-6 gap-2 text-xs font-bold uppercase tracking-wider data-[state=active]:bg-background data-[state=active]:text-red-500">
+                            <Bug className="w-4 h-4" /> Bug Reports
+                        </TabsTrigger>
+                        <TabsTrigger value="suggestion" className="rounded-lg h-10 px-6 gap-2 text-xs font-bold uppercase tracking-wider data-[state=active]:bg-background data-[state=active]:text-primary">
+                            <Lightbulb className="w-4 h-4" /> Suggestions
+                        </TabsTrigger>
+                    </TabsList>
+                </Tabs>
+
+                <div className="relative w-full sm:w-64">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                        placeholder="Search feedback..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="pl-9 h-12 rounded-xl bg-muted/30 border-transparent focus:bg-background focus:border-primary/30"
+                    />
+                </div>
+            </div>
+
+            {/* Content Grid */}
+            <div className="min-h-[400px]">
+                <AnimatePresence mode="wait">
+                    <motion.div
+                        key={activeTab}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        transition={{ duration: 0.2 }}
+                        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+                    >
+                        {(activeTab === 'bug' ? filteredBugs : filteredSuggestions).map((item) => (
+                            <FeedbackCard key={item.id} item={item} />
+                        ))}
+                    </motion.div>
+                </AnimatePresence>
+
+                {/* Empty State */}
+                {((activeTab === 'bug' ? filteredBugs : filteredSuggestions).length === 0) && (
+                    <div className="flex flex-col items-center justify-center py-20 text-center opacity-50">
+                        <div className="w-20 h-20 rounded-3xl bg-muted flex items-center justify-center mb-6 text-primary">
+                            <Filter className="w-10 h-10" />
+                        </div>
+                        <h3 className="text-xl font-bold">No feedback found</h3>
+                        <p className="text-sm max-w-xs mx-auto mt-2">Try adjusting your search or be the first to submit a new idea.</p>
+                    </div>
+                )}
+            </div>
+
+            {/* Delete Confirmation */}
             <AlertDialog open={!!itemToDelete} onOpenChange={(open) => !open && setItemToDelete(null)}>
-                <AlertDialogContent className="bg-card/95 backdrop-blur-xl border-border/50">
+                <AlertDialogContent className="bg-card border-border">
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogTitle>Delete Feedback?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            This action cannot be undone. This feedback item will be permanently deleted from our records.
+                            This action cannot be undone.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel className="rounded-xl">Cancel</AlertDialogCancel>
-                        <AlertDialogAction
-                            onClick={() => itemToDelete && handleDelete(itemToDelete)}
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-xl"
-                        >
-                            Delete Permanently
-                        </AlertDialogAction>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => itemToDelete && handleDelete(itemToDelete)} className="bg-destructive text-destructive-foreground">Delete</AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>

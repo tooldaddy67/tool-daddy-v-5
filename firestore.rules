@@ -8,19 +8,33 @@ service cloud.firestore {
     
     // Helper to check if user is owner
     function isOwner(userId) {
-        return request.auth.uid == userId;
+        return isAuthenticated() && request.auth.uid == userId;
     }
 
     // Helper to check if user is admin (requires custom claim or specific email)
     function isAdmin() {
-        return request.auth.token.admin == true || 
-        request.auth.token.email.matches('.*@tooldaddy[.]com'); 
+        return isAuthenticated() && (
+            request.auth.token.admin == true || 
+            (request.auth.token.email != null && request.auth.token.email.matches('.*@tooldaddy[.]com')) ||
+            (exists(/databases/$(database)/documents/profiles/$(request.auth.uid)) && 
+             (get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.get('isAdmin', false) == true ||
+              get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.get('is_admin', false) == true))
+        );
     }
 
     // Profiles: User can read/write their own. Admin can read all.
     match /profiles/{userId} {
       allow read: if isOwner(userId) || isAdmin();
-      allow write: if isOwner(userId) || isAdmin();
+      allow write: if isAdmin() || (isOwner(userId) && (
+        // For updates: cannot change sensitive fields
+        (resource != null && 
+         !request.resource.data.diff(resource.data).affectedKeys().has('isAdmin') && 
+         !request.resource.data.diff(resource.data).affectedKeys().has('is_admin')) ||
+        // For creates: cannot set sensitive fields to true
+        (resource == null && 
+         request.resource.data.get('isAdmin', false) == false && 
+         request.resource.data.get('is_admin', false) == false)
+      ));
     }
 
     // Tool Usage: User can read/write their own. Admin can read all.
@@ -43,3 +57,4 @@ service cloud.firestore {
     }
   }
 }
+

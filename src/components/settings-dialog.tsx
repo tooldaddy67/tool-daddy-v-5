@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import { updateProfile, signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
+import { syncUserProfile } from '@/lib/profile-sync';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -47,7 +49,7 @@ interface SettingsDialogProps {
 }
 
 export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
-    const { user } = useUser();
+    const { user, refreshUser } = useUser();
     const auth = useAuth();
     const router = useRouter();
     const { toast } = useToast();
@@ -60,9 +62,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
         setIsAdmin(false);
     }, [user]);
 
-    const [isDeletingData, setIsDeletingData] = useState(false);
     const [isDeletingAccount, setIsDeletingAccount] = useState(false);
-    const [showDisablePersistenceDialog, setShowDisablePersistenceDialog] = useState(false);
 
     // Re-authentication state
     const [showReauthDialog, setShowReauthDialog] = useState(false);
@@ -70,28 +70,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
     const [isReauthenticating, setIsReauthenticating] = useState(false);
 
 
-    const handleDataPersistenceChange = async (enabled: boolean) => {
-        if (!enabled) {
-            // Logic handled by AlertDialog
-        } else {
-            await updateSettings({ dataPersistence: true });
-            toast({ title: "Cloud Storage Enabled", description: "Your data will now be saved to the cloud." });
-        }
-    };
 
-    const confirmDisablePersistence = async () => {
-        setIsDeletingData(true);
-        try {
-            await deleteUserData();
-            await updateSettings({ dataPersistence: false });
-            toast({ title: "Local Data Deleted", description: "All local tool data has been cleared." });
-        } catch (error) {
-            console.error(error);
-            toast({ title: "Error", description: "Failed to delete data.", variant: "destructive" });
-        } finally {
-            setIsDeletingData(false);
-        }
-    };
 
     const handleReauthAndDelete = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -100,11 +79,8 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
         setIsReauthenticating(true);
         try {
             // Verify password by attempting sign-in
-            const { error: signInError } = await auth.auth.signInWithPassword({
-                email: user?.email || '',
-                password: reauthPassword,
-            });
-            if (signInError) throw signInError;
+            // Verify password by attempting sign-in
+            await signInWithEmailAndPassword(auth, user?.email || '', reauthPassword);
 
             // Sign out and clear data
             await deleteUserAccount();
@@ -193,8 +169,10 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                                             <Button
                                                 size="sm"
                                                 onClick={async () => {
-                                                    if (user && !user.isAnonymous && auth) {
-                                                        await auth.auth.updateUser({ data: { display_name: newDisplayName, full_name: newDisplayName } });
+                                                    if (auth && auth.currentUser) {
+                                                        await updateProfile(auth.currentUser, { displayName: newDisplayName });
+                                                        await syncUserProfile(auth.currentUser);
+                                                        await refreshUser();
                                                     }
                                                     await updateSettings({ displayName: newDisplayName });
                                                     toast({ title: 'Profile Updated', description: "Username changed successfully." });
@@ -516,30 +494,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                                     {/* Data Persistence */}
                                     {/* Data Persistence - Hidden as it is always local now */}
 
-                                    <AlertDialog open={showDisablePersistenceDialog} onOpenChange={setShowDisablePersistenceDialog}>
-                                        <AlertDialogContent>
-                                            <AlertDialogHeader>
-                                                <AlertDialogTitle>Disable Cloud Storage?</AlertDialogTitle>
-                                                <AlertDialogDescription>
-                                                    This will <strong>permanently delete</strong> all your saved data (History, Palettes, Todos) from our servers.
-                                                    Future data will not be saved. This action cannot be undone.
-                                                </AlertDialogDescription>
-                                            </AlertDialogHeader>
-                                            <AlertDialogFooter>
-                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                <AlertDialogAction
-                                                    onClick={async (e) => {
-                                                        e.preventDefault(); // Prevent auto-close to show loading state if needed, though we use isDeletingData
-                                                        await confirmDisablePersistence();
-                                                        setShowDisablePersistenceDialog(false);
-                                                    }}
-                                                    className="bg-destructive hover:bg-destructive/90"
-                                                >
-                                                    {isDeletingData ? 'Deleting...' : 'Yes, Delete My Data'}
-                                                </AlertDialogAction>
-                                            </AlertDialogFooter>
-                                        </AlertDialogContent>
-                                    </AlertDialog>
+
 
                                     {/* Notifications */}
                                     <div className="flex items-center justify-between p-4 rounded-xl border border-border/50 bg-muted/30 hover:bg-muted/40 transition-colors">
@@ -594,7 +549,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                                                         <p>We collect minimal information to provide our services:</p>
                                                         <ul className="list-disc list-inside pl-2 space-y-1 text-muted-foreground">
                                                             <li><strong>Authentication:</strong> Your email and basic profile info (via Firebase Auth) to identify you.</li>
-                                                            <li><strong>User Content:</strong> Data generated by you (todo lists, color palettes, history) is stored in our database for your convenience.</li>
+                                                            <li><strong>User Content:</strong> Data generated by you (todo lists, color palettes, history) is stored <strong>locally on your device</strong>. We do not store this data on our servers.</li>
                                                         </ul>
                                                     </div>
 
@@ -849,7 +804,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                                     onClick={async () => {
                                         if (user?.email && auth) {
                                             try {
-                                                await auth.auth.resetPasswordForEmail(user.email);
+                                                await sendPasswordResetEmail(auth, user.email);
                                                 toast({ title: "Email Sent", description: "Password reset link sent to your email." });
                                             } catch (error: any) {
                                                 console.error("Reset password error", error);
