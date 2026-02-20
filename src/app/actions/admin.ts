@@ -1,3 +1,5 @@
+'use server';
+
 import { getAdminFirestore } from '@/lib/firebase-admin';
 
 export async function verifyAdminPassword(password: string, userId?: string) {
