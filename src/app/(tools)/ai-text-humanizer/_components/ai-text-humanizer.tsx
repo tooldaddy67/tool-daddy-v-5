@@ -62,7 +62,7 @@ export default function AiTextHumanizer() {
   const [rateLimitInfo, setRateLimitInfo] = useState<{ remaining: number | null, limit: number | null }>({ remaining: null, limit: 10 });
   const [cooldownTime, setCooldownTime] = useState(0);
 
-  const MAX_CHAR_LIMIT = 3000;
+  const MAX_CHAR_LIMIT = 2000;
 
   useEffect(() => {
     const fetchQuota = async () => {
@@ -229,7 +229,7 @@ export default function AiTextHumanizer() {
                   onChange={(e) => setInputText(e.target.value)}
                   className="h-full resize-none min-h-[200px]"
                   disabled={isLoading}
-                  maxLength={MAX_CHAR_LIMIT + 500}
+                  maxLength={MAX_CHAR_LIMIT}
                 />
                 <div className="absolute bottom-2 right-3 text-xs text-muted-foreground tabular-nums">
                   {inputText.length} / {MAX_CHAR_LIMIT}

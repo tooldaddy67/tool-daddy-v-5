@@ -87,6 +87,8 @@ export default function TemperatureConverterClient() {
                         <CardContent className="space-y-4">
                             <Input
                                 type="number"
+                                min="-1000000"
+                                max="1000000"
                                 value={unit.value}
                                 onChange={(e) => unit.update(e.target.value)}
                                 className="h-16 text-3xl font-black text-center shadow-none border-none bg-primary/5 focus-visible:ring-1 focus-visible:ring-primary/20"

@@ -46,6 +46,8 @@ export default function AiPlaylistMaker() {
   const { checkQuota, incrementUsage, loading: isQuotaLoading } = useQuota();
   const [quotaRemaining, setQuotaRemaining] = useState<number | null>(null);
 
+  const MAX_PROMPT_LENGTH = 300;
+
   useEffect(() => {
     const fetchQuota = async () => {
       const q = await checkQuota('ai-playlist-maker');
@@ -78,6 +80,15 @@ export default function AiPlaylistMaker() {
       toast({
         title: 'Prompt Required',
         description: 'Please enter a vibe or theme for your playlist.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (userPrompt.length > MAX_PROMPT_LENGTH) {
+      toast({
+        title: 'Prompt Too Long',
+        description: `Please keep your prompt under ${MAX_PROMPT_LENGTH} characters.`,
         variant: 'destructive',
       });
       return;
@@ -159,13 +170,20 @@ export default function AiPlaylistMaker() {
               </CardDescription>
             </CardHeader>
             <CardContent className="flex-grow flex flex-col space-y-4">
-              <Textarea
-                placeholder="e.g., 'A workout playlist with 90s hip-hop hits' or 'sad songs for walking in the rain'"
-                value={userPrompt}
-                onChange={(e) => setUserPrompt(e.target.value)}
-                className="h-full resize-none min-h-[150px]"
-                disabled={isLoading}
-              />
+              <div className="relative flex-grow">
+                <Textarea
+                  placeholder="e.g., 'A workout playlist with 90s hip-hop hits' or 'sad songs for walking in the rain'"
+                  value={userPrompt}
+                  onChange={(e) => setUserPrompt(e.target.value)}
+                  className="h-full resize-none min-h-[150px]"
+                  disabled={isLoading}
+                  maxLength={MAX_PROMPT_LENGTH}
+                />
+                <div className={`absolute bottom-2 right-3 text-xs tabular-nums ${userPrompt.length > MAX_PROMPT_LENGTH ? 'text-destructive font-semibold' : 'text-muted-foreground'
+                  }`}>
+                  {userPrompt.length} / {MAX_PROMPT_LENGTH}
+                </div>
+              </div>
               <div className="space-y-2">
                 <p className="text-xs text-muted-foreground">Or try an example:</p>
                 <div className="flex flex-wrap gap-2">

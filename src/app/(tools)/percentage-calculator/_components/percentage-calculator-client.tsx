@@ -61,12 +61,12 @@ export default function PercentageCalculatorClient() {
                         <div className="flex items-center gap-4 w-full">
                             <div className="space-y-1 flex-1">
                                 <Label className="text-[10px] uppercase opacity-50 font-bold tracking-widest pl-1">Percentage (%)</Label>
-                                <Input type="number" value={p1} onChange={(e) => setP1(e.target.value)} className="h-12 text-lg text-center font-bold" />
+                                <Input type="number" min="-9999999999" max="9999999999" value={p1} onChange={(e) => setP1(e.target.value)} className="h-12 text-lg text-center font-bold" />
                             </div>
                             <span className="mt-6 text-muted-foreground">of</span>
                             <div className="space-y-1 flex-1">
                                 <Label className="text-[10px] uppercase opacity-50 font-bold tracking-widest pl-1">Total Value</Label>
-                                <Input type="number" value={x1} onChange={(e) => setX1(e.target.value)} className="h-12 text-lg text-center font-bold" />
+                                <Input type="number" min="-9999999999" max="9999999999" value={x1} onChange={(e) => setX1(e.target.value)} className="h-12 text-lg text-center font-bold" />
                             </div>
                         </div>
                         <ArrowRight className="hidden sm:block mt-6 text-muted-foreground opacity-30" />
@@ -89,12 +89,12 @@ export default function PercentageCalculatorClient() {
                         <div className="flex items-center gap-4 w-full">
                             <div className="space-y-1 flex-1">
                                 <Label className="text-[10px] uppercase opacity-50 font-bold tracking-widest pl-1">Part (X)</Label>
-                                <Input type="number" value={x2} onChange={(e) => setX2(e.target.value)} className="h-12 text-lg text-center font-bold" />
+                                <Input type="number" min="-9999999999" max="9999999999" value={x2} onChange={(e) => setX2(e.target.value)} className="h-12 text-lg text-center font-bold" />
                             </div>
                             <span className="mt-6 text-muted-foreground">is what % of</span>
                             <div className="space-y-1 flex-1">
                                 <Label className="text-[10px] uppercase opacity-50 font-bold tracking-widest pl-1">Whole (Y)</Label>
-                                <Input type="number" value={y2} onChange={(e) => setY2(e.target.value)} className="h-12 text-lg text-center font-bold" />
+                                <Input type="number" min="-9999999999" max="9999999999" value={y2} onChange={(e) => setY2(e.target.value)} className="h-12 text-lg text-center font-bold" />
                             </div>
                         </div>
                         <ArrowRight className="hidden sm:block mt-6 text-muted-foreground opacity-30" />
@@ -117,12 +117,12 @@ export default function PercentageCalculatorClient() {
                         <div className="flex items-center gap-4 w-full">
                             <div className="space-y-1 flex-1">
                                 <Label className="text-[10px] uppercase opacity-50 font-bold tracking-widest pl-1">From value</Label>
-                                <Input type="number" value={x3} onChange={(e) => setX3(e.target.value)} className="h-12 text-lg text-center font-bold" />
+                                <Input type="number" min="-9999999999" max="9999999999" value={x3} onChange={(e) => setX3(e.target.value)} className="h-12 text-lg text-center font-bold" />
                             </div>
                             <span className="mt-6 text-muted-foreground text-center animate-pulse">→</span>
                             <div className="space-y-1 flex-1">
                                 <Label className="text-[10px] uppercase opacity-50 font-bold tracking-widest pl-1">To value</Label>
-                                <Input type="number" value={y3} onChange={(e) => setY3(e.target.value)} className="h-12 text-lg text-center font-bold" />
+                                <Input type="number" min="-9999999999" max="9999999999" value={y3} onChange={(e) => setY3(e.target.value)} className="h-12 text-lg text-center font-bold" />
                             </div>
                         </div>
                         <ArrowRight className="hidden sm:block mt-6 text-muted-foreground opacity-30" />

@@ -56,6 +56,8 @@ export default function EtaCalculatorClient() {
                             <Input
                                 id="distance"
                                 type="number"
+                                min="0"
+                                max="100000"
                                 value={distance}
                                 onChange={(e) => setDistance(e.target.value)}
                                 className="h-12 text-lg"
@@ -66,6 +68,8 @@ export default function EtaCalculatorClient() {
                             <Input
                                 id="speed"
                                 type="number"
+                                min="1"
+                                max="5000"
                                 value={speed}
                                 onChange={(e) => setSpeed(e.target.value)}
                                 className="h-12 text-lg"

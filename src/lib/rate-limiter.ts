@@ -49,7 +49,9 @@ export async function checkPersistentRateLimit(toolId?: string): Promise<{
   const DEFAULT_LIMIT = 30;
   const limits: Record<string, number> = {
     'ai-text-humanizer': 5,
-    'ai-image-enhancer': 2
+    'ai-playlist-maker': 5,
+    'ai-image-enhancer': 2,
+    'mac-address-lookup': 20,
   };
 
   const limit = (toolId && limits[toolId]) || DEFAULT_LIMIT;

@@ -307,15 +307,15 @@ function CountdownTimer() {
         <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
           <div className="font-mono text-3xl md:text-4xl font-bold tracking-tighter flex items-center justify-center">
             {isEditing === 'h' ? (
-              <Input type="number" min="0" value={hours} onChange={(e) => handleTimeInputChange(e, 'h')} onBlur={handleEditBlur} autoFocus className="w-10 h-10 md:w-12 md:h-12 text-center bg-transparent border-0 text-3xl md:text-4xl shadow-none focus-visible:ring-0 p-0" />
+              <Input type="number" min="0" max="99" value={hours} onChange={(e) => handleTimeInputChange(e, 'h')} onBlur={handleEditBlur} autoFocus className="w-10 h-10 md:w-12 md:h-12 text-center bg-transparent border-0 text-3xl md:text-4xl shadow-none focus-visible:ring-0 p-0" />
             ) : <span onClick={() => setIsEditing('h')} className="w-10 md:w-12 cursor-pointer">{hours}</span>}
             :
             {isEditing === 'm' ? (
-              <Input type="number" min="0" value={minutes} onChange={(e) => handleTimeInputChange(e, 'm')} onBlur={handleEditBlur} autoFocus className="w-10 h-10 md:w-12 md:h-12 text-center bg-transparent border-0 text-3xl md:text-4xl shadow-none focus-visible:ring-0 p-0" />
+              <Input type="number" min="0" max="59" value={minutes} onChange={(e) => handleTimeInputChange(e, 'm')} onBlur={handleEditBlur} autoFocus className="w-10 h-10 md:w-12 md:h-12 text-center bg-transparent border-0 text-3xl md:text-4xl shadow-none focus-visible:ring-0 p-0" />
             ) : <span onClick={() => setIsEditing('m')} className="w-10 md:w-12 cursor-pointer">{minutes}</span>}
             :
             {isEditing === 's' ? (
-              <Input type="number" min="0" value={seconds} onChange={(e) => handleTimeInputChange(e, 's')} onBlur={handleEditBlur} autoFocus className="w-10 h-10 md:w-12 md:h-12 text-center bg-transparent border-0 text-3xl md:text-4xl shadow-none focus-visible:ring-0 p-0" />
+              <Input type="number" min="0" max="59" value={seconds} onChange={(e) => handleTimeInputChange(e, 's')} onBlur={handleEditBlur} autoFocus className="w-10 h-10 md:w-12 md:h-12 text-center bg-transparent border-0 text-3xl md:text-4xl shadow-none focus-visible:ring-0 p-0" />
             ) : <span onClick={() => setIsEditing('s')} className="w-10 md:w-12 cursor-pointer">{seconds}</span>}
           </div>
           <div className="flex justify-center gap-2 text-xs text-muted-foreground mt-1">
