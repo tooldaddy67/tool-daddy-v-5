@@ -66,7 +66,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
 
     // Re-authentication state
     const [showReauthDialog, setShowReauthDialog] = useState(false);
-    const [reauthPassword, setReauthPassword] = useState('');
+    const [confirmEmail, setConfirmEmail] = useState('');
     const [isReauthenticating, setIsReauthenticating] = useState(false);
 
 
@@ -74,14 +74,15 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
 
     const handleReauthAndDelete = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!auth) return;
+        if (!auth || !user) return;
+
+        if (confirmEmail.toLowerCase() !== user.email?.toLowerCase()) {
+            toast({ title: "Verification Failed", description: "Email address does not match your account.", variant: "destructive" });
+            return;
+        }
 
         setIsReauthenticating(true);
         try {
-            // Verify password by attempting sign-in
-            // Verify password by attempting sign-in
-            await signInWithEmailAndPassword(auth, user?.email || '', reauthPassword);
-
             // Sign out and clear data
             await deleteUserAccount();
             setShowReauthDialog(false);
@@ -90,7 +91,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
             window.location.href = '/';
 
         } catch (error: any) {
-            toast({ title: "Verification Failed", description: error.message || 'Incorrect password', variant: "destructive" });
+            toast({ title: "Error", description: error.message || 'Failed to delete account', variant: "destructive" });
         } finally {
             setIsReauthenticating(false);
         }
@@ -104,9 +105,9 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                 return;
             }
 
-            // For security, ask for password confirmation
+            // For security, ask for email confirmation
             setShowReauthDialog(true);
-            toast({ title: "Security Check", description: "Please enter your password to confirm deletion." });
+            toast({ title: "Security Check", description: "Please enter your email to confirm deletion." });
         } catch (error: any) {
             toast({ title: "Error", description: "Failed to delete account. Please try again later.", variant: "destructive" });
         } finally {
@@ -783,44 +784,26 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                     <DialogHeader>
                         <DialogTitle>Confirm Deletion</DialogTitle>
                         <DialogDescription>
-                            Please enter your password to confirm permanently deleting your account.
+                            Please enter your email address (<strong>{user?.email}</strong>) to confirm permanently deleting your account.
                         </DialogDescription>
                     </DialogHeader>
                     <form onSubmit={handleReauthAndDelete} className="space-y-4 pt-2">
                         <div className="space-y-2">
-                            <Label htmlFor="current-password">Current Password</Label>
+                            <Label htmlFor="confirm-email">Confirm Email Address</Label>
                             <Input
-                                id="current-password"
-                                type="password"
-                                value={reauthPassword}
-                                onChange={(e) => setReauthPassword(e.target.value)}
+                                id="confirm-email"
+                                type="email"
+                                placeholder={user?.email || ''}
+                                value={confirmEmail}
+                                onChange={(e) => setConfirmEmail(e.target.value)}
                                 required
+                                className="border-primary/20"
                             />
-                            <div className="flex justify-end">
-                                <Button
-                                    type="button"
-                                    variant="link"
-                                    className="p-0 h-auto text-xs text-muted-foreground hover:text-primary"
-                                    onClick={async () => {
-                                        if (user?.email && auth) {
-                                            try {
-                                                await sendPasswordResetEmail(auth, user.email);
-                                                toast({ title: "Email Sent", description: "Password reset link sent to your email." });
-                                            } catch (error: any) {
-                                                console.error("Reset password error", error);
-                                                toast({ title: "Error", description: error.message, variant: "destructive" });
-                                            }
-                                        }
-                                    }}
-                                >
-                                    Forgot Password?
-                                </Button>
-                            </div>
                         </div>
                         <DialogFooter>
                             <Button type="button" variant="ghost" onClick={() => setShowReauthDialog(false)}>Cancel</Button>
-                            <Button type="submit" variant="destructive" disabled={isReauthenticating}>
-                                {isReauthenticating ? 'Verifying...' : 'Delete Account'}
+                            <Button type="submit" variant="destructive" disabled={isReauthenticating || confirmEmail.toLowerCase() !== user?.email?.toLowerCase()}>
+                                {isReauthenticating ? 'Deleting...' : 'Delete Account'}
                             </Button>
                         </DialogFooter>
                     </form>

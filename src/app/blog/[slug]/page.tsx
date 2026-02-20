@@ -1,50 +1,35 @@
-import { getPostBySlug, getPublishedPosts } from '@/lib/blog-server';
+import { getPostBySlug } from '@/lib/hashnode';
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { ArrowLeft, Calendar, User, Tag } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
+import Link from 'next/link';
+import { ArrowLeft, Calendar, User, Clock } from 'lucide-react';
+import { ToolCTA } from '@/components/blog/tool-cta';
+import { Button } from '@/components/ui/button';
 
-interface BlogPostPageProps {
-    params: Promise<{
-        slug: string;
-    }>;
+interface PageProps {
+    params: Promise<{ slug: string }>;
 }
 
-export async function generateStaticParams() {
-    const posts = await getPublishedPosts();
-    return posts.map((post) => ({
-        slug: post.slug,
-    }));
-}
-
-export async function generateMetadata({ params }: BlogPostPageProps): Promise<Metadata> {
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
     const { slug } = await params;
     const post = await getPostBySlug(slug);
-
-    if (!post) {
-        return {
-            title: 'Post Not Found',
-        };
-    }
+    if (!post) return { title: 'Post Not Found | Tool Daddy' };
 
     return {
-        title: `${post.title} - Tool Daddy Blog`,
-        description: post.excerpt,
+        title: `${post.title} | Tool Daddy Blog`,
+        description: post.seo?.description || post.brief,
         openGraph: {
             title: post.title,
-            description: post.excerpt,
+            description: post.seo?.description || post.brief,
+            images: post.coverImage ? [post.coverImage.url] : [],
             type: 'article',
-            publishedTime: post.createdAt, // CreatedAt is ISO string from server
-            authors: [post.author?.displayName || 'Tool Daddy'],
-            images: post.coverImage ? [post.coverImage] : [],
-        }
+            publishedTime: post.publishedAt,
+        },
     };
 }
 
-export default async function BlogPostPage({ params }: BlogPostPageProps) {
+export default async function BlogPostPage({ params }: PageProps) {
     const { slug } = await params;
     const post = await getPostBySlug(slug);
 
@@ -52,71 +37,70 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
         notFound();
     }
 
+    const { title, content, coverImage, publishedAt } = post;
+
+    // Estimate read time (assuming ~200 words per minute)
+    const wordCount = content?.html ? content.html.replace(/<[^>]+>/g, '').split(/\s+/).length : 0;
+    const readTime = Math.ceil(wordCount / 200);
+
     return (
-        <article className="container mx-auto px-4 py-12 md:py-24 max-w-4xl">
-            <Link href="/blog">
-                <Button variant="ghost" className="mb-8 pl-0 hover:pl-2 transition-all">
-                    <ArrowLeft className="mr-2 h-4 w-4" /> Back to Blog
-                </Button>
+        <div className="container max-w-4xl py-12 px-4 md:px-6">
+            <Link href="/blog" className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-primary mb-8 transition-colors group">
+                <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" /> Back to Blog
             </Link>
 
-            <header className="mb-12 space-y-6">
-                <div className="flex flex-wrap gap-2 mb-4">
-                    {post.tags?.map(tag => (
-                        <Badge key={tag} variant="secondary" className="text-sm capitalize px-3 py-1">
-                            {tag}
-                        </Badge>
-                    ))}
-                </div>
-                <h1 className="text-3xl md:text-5xl font-bold tracking-tight font-headline text-balance">
-                    {post.title}
-                </h1>
-
-                <div className="flex flex-wrap items-center gap-6 text-muted-foreground text-sm md:text-base border-y border-border/40 py-4">
-                    <div className="flex items-center gap-2">
-                        <User className="h-4 w-4" />
-                        <span>{post.author?.displayName || 'Tool Daddy Team'}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4" />
-                        <time dateTime={post.createdAt}>
-                            {post.createdAt ? new Date(post.createdAt).toLocaleDateString(undefined, {
+            <article className="prose prose-invert prose-lg max-w-none">
+                <header className="mb-10 not-prose">
+                    <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground mb-4">
+                        <span className="flex items-center gap-1">
+                            <Calendar className="w-4 h-4" />
+                            {new Date(publishedAt).toLocaleDateString(undefined, {
                                 year: 'numeric',
                                 month: 'long',
-                                day: 'numeric'
-                            }) : 'N/A'}
-                        </time>
+                                day: 'numeric',
+                            })}
+                        </span>
+                        <span className="flex items-center gap-1">
+                            <Clock className="w-4 h-4" />
+                            {readTime} min read
+                        </span>
                     </div>
-                </div>
-            </header>
 
-            {post.coverImage && (
-                <div className="relative w-full aspect-video mb-12 rounded-xl overflow-hidden border border-border/20 shadow-xl">
-                    {/* Using generic img tag if Image component fails setup, or assume paths are correct */}
-                    <div className="absolute inset-0 bg-muted flex items-center justify-center text-muted-foreground">
-                        {post.coverImage ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img src={post.coverImage} alt={post.title} className="w-full h-full object-cover" />
-                        ) : (
-                            'No Cover Image'
-                        )}
-                    </div>
-                    {/* 
-                <Image 
-                    src={post.coverImage} 
-                    alt={post.title}
-                    fill
-                    className="object-cover"
-                    priority
+                    <h1 className="text-3xl md:text-5xl font-bold font-headline mb-6 leading-tight">
+                        {title}
+                    </h1>
+
+                    {coverImage && (
+                        <div className="aspect-video w-full relative rounded-2xl overflow-hidden shadow-2xl border border-white/5 mb-8">
+                            <Image
+                                src={coverImage.url}
+                                alt={title}
+                                fill
+                                className="object-cover"
+                                priority
+                            />
+                        </div>
+                    )}
+                </header>
+
+                {/* Blog Content */}
+                <div
+                    className="blog-content prose-headings:font-headline prose-a:text-primary prose-img:rounded-xl prose-pre:bg-muted/50 prose-pre:border prose-pre:border-border/50"
+                    dangerouslySetInnerHTML={{ __html: content?.html || '' }}
                 />
-             */}
-                </div>
-            )}
 
-            <div
-                className="prose prose-lg dark:prose-invert prose-headings:font-headline prose-a:text-primary prose-img:rounded-xl max-w-none"
-                dangerouslySetInnerHTML={{ __html: post.content }}
-            />
-        </article>
+                <div className="mt-16 pt-8 border-t border-border/50">
+                    <ToolCTA />
+                </div>
+            </article>
+
+            <div className="mt-12 flex justify-center">
+                <Button asChild variant="outline" className="gap-2">
+                    <Link href="/blog">
+                        <ArrowLeft className="w-4 h-4" /> Read More Articles
+                    </Link>
+                </Button>
+            </div>
+        </div>
     );
 }

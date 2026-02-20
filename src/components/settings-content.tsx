@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { updateProfile, signOut } from 'firebase/auth';
+import { syncUserProfile } from '@/lib/profile-sync';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -61,7 +63,7 @@ export function SettingsContent({ isDialog = false, onClose }: SettingsContentPr
 
     // Re-authentication state
     const [showReauthDialog, setShowReauthDialog] = useState(false);
-    const [reauthPassword, setReauthPassword] = useState('');
+    const [confirmEmail, setConfirmEmail] = useState('');
 
 
 
@@ -90,17 +92,15 @@ export function SettingsContent({ isDialog = false, onClose }: SettingsContentPr
 
     const handleReauthAndDelete = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!auth) return;
+        if (!auth || !user) return;
+
+        if (confirmEmail.toLowerCase() !== user.email?.toLowerCase()) {
+            toast({ title: "Verification Failed", description: "Email address does not match your account.", variant: "destructive" });
+            return;
+        }
 
         setIsReauthenticating(true);
         try {
-            // Verify password by attempting sign-in
-            const { error: signInError } = await auth.auth.signInWithPassword({
-                email: user?.email || '',
-                password: reauthPassword,
-            });
-            if (signInError) throw signInError;
-
             // Sign out and clear data
             await deleteUserAccount();
             setShowReauthDialog(false);
@@ -109,7 +109,7 @@ export function SettingsContent({ isDialog = false, onClose }: SettingsContentPr
             window.location.href = '/';
 
         } catch (error: any) {
-            toast({ title: "Verification Failed", description: error.message || 'Incorrect password', variant: "destructive" });
+            toast({ title: "Error", description: error.message || 'Failed to delete account', variant: "destructive" });
         } finally {
             setIsReauthenticating(false);
         }
@@ -123,9 +123,9 @@ export function SettingsContent({ isDialog = false, onClose }: SettingsContentPr
                 return;
             }
 
-            // For security, ask for password confirmation
+            // For security, ask for email confirmation
             setShowReauthDialog(true);
-            toast({ title: "Security Check", description: "Please enter your password to confirm deletion." });
+            toast({ title: "Security Check", description: "Please enter your email to confirm deletion." });
         } catch (error: any) {
             toast({ title: "Error", description: "Failed to delete account. Please try again later.", variant: "destructive" });
         } finally {
@@ -187,8 +187,9 @@ export function SettingsContent({ isDialog = false, onClose }: SettingsContentPr
                                         <Button
                                             size="sm"
                                             onClick={async () => {
-                                                if (user && !user.isAnonymous && auth) {
-                                                    await auth.auth.updateUser({ data: { display_name: newDisplayName, full_name: newDisplayName } });
+                                                if (auth && auth.currentUser) {
+                                                    await updateProfile(auth.currentUser, { displayName: newDisplayName });
+                                                    await syncUserProfile(auth.currentUser);
                                                 }
                                                 await updateSettings({ displayName: newDisplayName });
                                                 toast({ title: 'Profile Updated', description: "Username changed successfully." });
@@ -649,7 +650,7 @@ export function SettingsContent({ isDialog = false, onClose }: SettingsContentPr
                                             className="w-full justify-between h-12 bg-muted/30 border-border/50 hover:bg-muted/50 group"
                                             onClick={async () => {
                                                 try {
-                                                    if (auth) await auth.auth.signOut();
+                                                    if (auth) await signOut(auth);
                                                     if (onClose) onClose();
                                                     toast({ title: "Logged Out", description: "Come back soon!" });
                                                     router.push('/');
@@ -939,44 +940,26 @@ export function SettingsContent({ isDialog = false, onClose }: SettingsContentPr
                     <DialogHeader>
                         <DialogTitle>Confirm Deletion</DialogTitle>
                         <DialogDescription>
-                            Please enter your password to confirm permanently deleting your account.
+                            Please enter your email address (<strong>{user?.email}</strong>) to confirm permanently deleting your account.
                         </DialogDescription>
                     </DialogHeader>
                     <form onSubmit={handleReauthAndDelete} className="space-y-4 pt-2">
                         <div className="space-y-2">
-                            <Label htmlFor="current-password">Current Password</Label>
+                            <Label htmlFor="confirm-email">Confirm Email Address</Label>
                             <Input
-                                id="current-password"
-                                type="password"
-                                value={reauthPassword}
-                                onChange={(e) => setReauthPassword(e.target.value)}
+                                id="confirm-email"
+                                type="email"
+                                placeholder={user?.email || ''}
+                                value={confirmEmail}
+                                onChange={(e) => setConfirmEmail(e.target.value)}
                                 required
+                                className="border-primary/20"
                             />
-                            <div className="flex justify-end">
-                                <Button
-                                    type="button"
-                                    variant="link"
-                                    className="p-0 h-auto text-xs text-muted-foreground hover:text-primary"
-                                    onClick={async () => {
-                                        if (user?.email && auth) {
-                                            try {
-                                                await auth.auth.resetPasswordForEmail(user.email);
-                                                toast({ title: "Email Sent", description: "Password reset link sent to your email." });
-                                            } catch (error: any) {
-                                                console.error("Reset password error", error);
-                                                toast({ title: "Error", description: error.message, variant: "destructive" });
-                                            }
-                                        }
-                                    }}
-                                >
-                                    Forgot Password?
-                                </Button>
-                            </div>
                         </div>
                         <DialogFooter>
                             <Button type="button" variant="ghost" onClick={() => setShowReauthDialog(false)}>Cancel</Button>
-                            <Button type="submit" variant="destructive" disabled={isReauthenticating}>
-                                {isReauthenticating ? 'Verifying...' : 'Delete Account'}
+                            <Button type="submit" variant="destructive" disabled={isReauthenticating || confirmEmail.toLowerCase() !== user?.email?.toLowerCase()}>
+                                {isReauthenticating ? 'Deleting...' : 'Delete Account'}
                             </Button>
                         </DialogFooter>
                     </form>
