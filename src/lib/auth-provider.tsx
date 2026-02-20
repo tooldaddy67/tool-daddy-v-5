@@ -6,6 +6,7 @@ import { getAuth, Auth, onAuthStateChanged, User, signOut, GoogleAuthProvider, s
 import { getFirestore, Firestore } from 'firebase/firestore';
 import { getAnalytics, Analytics, isSupported } from 'firebase/analytics';
 import { firebaseConfig } from '@/firebase/config';
+import { syncUserProfile } from '@/lib/profile-sync';
 
 // ------------------------------------------------------------------
 // Types
@@ -105,6 +106,9 @@ export function FirebaseAuthProvider({ children }: { children: ReactNode }) {
             (fbUser) => {
                 setFirebaseUser(fbUser);
                 setUser(mapUser(fbUser));
+                if (fbUser) {
+                    syncUserProfile(fbUser);
+                }
                 setIsUserLoading(false);
             },
             (error) => {
