@@ -59,6 +59,18 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'cloudmate-test.s3.us-east-1.amazonaws.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'cdn.hashnode.com',
+        port: '',
+        pathname: '/**',
+      },
     ],
   },
   // Headers moved to middleware.ts

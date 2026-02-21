@@ -1,19 +1,9 @@
-import { GraphQLClient } from 'graphql-request';
-
 const API_ENDPOINT = 'https://gql.hashnode.com';
 
-export const hashnodeClient = new GraphQLClient(API_ENDPOINT, {
-    headers: {
-        // Only include Authorization if the token exists to avoid errors on public posts
-        ...(process.env.HASHNODE_ACCESS_TOKEN && {
-            Authorization: process.env.HASHNODE_ACCESS_TOKEN,
-        }),
-    },
-});
-
 export const GET_POSTS_QUERY = `
-  query GetPosts($publicationId: ObjectId!, $first: Int!) {
-    publication(id: $publicationId) {
+  query GetPosts($host: String!, $first: Int!) {
+    publication(host: $host) {
+      id
       posts(first: $first) {
         edges {
           node {
@@ -33,8 +23,8 @@ export const GET_POSTS_QUERY = `
 `;
 
 export const GET_POST_QUERY = `
-  query GetPost($publicationId: ObjectId!, $slug: String!) {
-    publication(id: $publicationId) {
+  query GetPost($host: String!, $slug: String!) {
+    publication(host: $host) {
       post(slug: $slug) {
         id
         title
@@ -58,54 +48,79 @@ export const GET_POST_QUERY = `
 `;
 
 export interface Post {
-    id: string;
-    title: string;
-    brief: string;
-    slug: string;
-    coverImage?: {
-        url: string;
-    };
-    content?: {
-        html: string;
-    };
-    seo?: {
-        title?: string;
-        description?: string;
-    };
-    publishedAt: string;
+  id: string;
+  title: string;
+  brief: string;
+  slug: string;
+  coverImage?: {
+    url: string;
+  };
+  content?: {
+    html: string;
+  };
+  seo?: {
+    title?: string;
+    description?: string;
+  };
+  publishedAt: string;
 }
 
 export async function getAllPosts(first = 10): Promise<Post[]> {
-    const publicationId = process.env.HASHNODE_PUBLICATION_ID;
-    if (!publicationId) {
-        console.warn('HASHNODE_PUBLICATION_ID is not set.');
-        return [];
-    }
+  const host = 'tooldaddy.hashnode.dev';
+  const token = process.env.HASHNODE_ACCESS_TOKEN;
 
-    try {
-        const data: any = await hashnodeClient.request(GET_POSTS_QUERY, {
-            publicationId,
-            first,
-        });
-        return data.publication?.posts?.edges.map((edge: any) => edge.node) || [];
-    } catch (error) {
-        console.error('Error fetching posts:', error);
-        return [];
-    }
+  try {
+    // Add a timestamp to the URL to bypass Next.js Data Cache entirely
+    const url = `${API_ENDPOINT}?t=${Date.now()}`;
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token && { 'Authorization': token }),
+      },
+      body: JSON.stringify({
+        query: GET_POSTS_QUERY,
+        variables: { host, first },
+      }),
+      cache: 'no-store'
+    });
+
+    if (!response.ok) return [];
+
+    const json = await response.json();
+    const posts = json.data?.publication?.posts?.edges.map((edge: any) => edge.node) || [];
+    return posts;
+  } catch (error) {
+    console.error('Error in getAllPosts:', error);
+    return [];
+  }
 }
 
 export async function getPostBySlug(slug: string): Promise<Post | null> {
-    const publicationId = process.env.HASHNODE_PUBLICATION_ID;
-    if (!publicationId) return null;
+  const host = 'tooldaddy.hashnode.dev';
+  const token = process.env.HASHNODE_ACCESS_TOKEN;
 
-    try {
-        const data: any = await hashnodeClient.request(GET_POST_QUERY, {
-            publicationId,
-            slug,
-        });
-        return data.publication?.post || null;
-    } catch (error) {
-        console.error(`Error fetching post ${slug}:`, error);
-        return null;
-    }
+  try {
+    const url = `${API_ENDPOINT}?t=${Date.now()}`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token && { 'Authorization': token }),
+      },
+      body: JSON.stringify({
+        query: GET_POST_QUERY,
+        variables: { host, slug },
+      }),
+      cache: 'no-store'
+    });
+
+    if (!response.ok) return null;
+    const json = await response.json();
+    return json.data?.publication?.post || null;
+  } catch (error) {
+    console.error(`Error fetching post ${slug}:`, error);
+    return null;
+  }
 }
