@@ -36,8 +36,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         return (
             <div className="flex h-screen w-full flex-col items-center justify-center gap-4 p-4 text-center animate-in fade-in zoom-in-95 duration-300">
                 <AdminPasswordGate>
-                    <div className="bg-success/10 p-4 rounded-full">
-                        <ShieldCheck className="h-12 w-12 text-success" />
+                    <div className="bg-green-500/10 p-4 rounded-full">
+                        <ShieldCheck className="h-12 w-12 text-green-500" />
                     </div>
                     <div className="space-y-2">
                         <h1 className="text-2xl font-bold tracking-tight">Access Granted!</h1>
