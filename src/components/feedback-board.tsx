@@ -64,10 +64,206 @@ interface FeedbackItem {
     adminReplyAt?: string;
 }
 
+// Extracted Component: StatusBadge
+const StatusBadge = ({ status, itemId, isAdmin, onStatusChange }: { status: string, itemId?: string, isAdmin: boolean, onStatusChange: (itemId: string, val: string) => void }) => {
+    const styles: Record<string, string> = {
+        'pending': 'bg-slate-500/10 text-slate-500 border-slate-500/20',
+        'open': 'bg-blue-500/10 text-blue-500 border-blue-500/20',
+        'in-progress': 'bg-amber-500/10 text-amber-500 border-amber-500/20',
+        'resolved': 'bg-green-500/10 text-green-500 border-green-500/20',
+        'closed': 'bg-red-500/10 text-red-500 border-red-500/20',
+    };
+    const styleClass = styles[status] || 'bg-slate-500/10 text-slate-500';
+
+    if (isAdmin && itemId) {
+        return (
+            <Select value={status} onValueChange={(val) => onStatusChange(itemId, val)}>
+                <SelectTrigger className={cn("h-6 px-2 text-[10px] w-auto gap-1 border-0 bg-transparent hover:bg-transparent focus:ring-0 font-bold uppercase tracking-wider", styleClass)}>
+                    <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                    {['pending', 'open', 'in-progress', 'resolved', 'closed'].map(s => (
+                        <SelectItem key={s} value={s} className="capitalize">{s.replace('-', ' ')}</SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+        );
+    }
+    return (
+        <Badge variant="outline" className={cn("text-[10px] uppercase font-bold tracking-wider border-0", styleClass)}>
+            {status.replace('-', ' ')}
+        </Badge>
+    );
+};
+
+// Extracted Component: FeedbackItemCard
+const FeedbackItemCard = ({
+    item,
+    isActiveReply,
+    onSetReplyingTo,
+    onSaveReply,
+    onDelete,
+    onUpvote,
+    onStatusChange
+}: {
+    item: FeedbackItem,
+    isActiveReply: boolean,
+    onSetReplyingTo: (id: string | null) => void,
+    onSaveReply: (id: string, text: string) => Promise<void>,
+    onDelete: (id: string) => void,
+    onUpvote: (item: FeedbackItem) => void,
+    onStatusChange: (id: string, status: string) => void
+}) => {
+    const { user } = useFirebase(); // Assuming useFirebase provides user context safely
+    const { isAdmin } = useAdmin();
+    const { settings } = useSettings();
+    const [localReplyText, setLocalReplyText] = useState('');
+    const [isSavingReply, setIsSavingReply] = useState(false);
+
+    // Initialize local text when starting to edit
+    useEffect(() => {
+        if (isActiveReply) {
+            setLocalReplyText(item.adminReply || '');
+        }
+    }, [isActiveReply, item.adminReply]);
+
+    const handleSave = async () => {
+        setIsSavingReply(true);
+        await onSaveReply(item.id, localReplyText);
+        setIsSavingReply(false);
+    };
+
+    const isNeo = settings.cardStyle === 'neo';
+    const isGlass = settings.cardStyle === 'glass';
+
+    return (
+        <motion.div
+            layout
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="group h-full"
+        >
+            <div
+                className={cn(
+                    "relative h-full flex flex-col p-5 transition-all duration-300 rounded-[var(--card-radius)] overflow-hidden",
+                    isNeo ? "bg-card border-2 border-primary shadow-[4px_4px_0px_var(--primary)] text-card-foreground" :
+                        isGlass ? "bg-white/5 backdrop-blur-md border border-white/10 shadow-xl" :
+                            "bg-card border border-border/40 hover:border-primary/30 shadow-sm hover:shadow-md"
+                )}
+            >
+                {/* Status Line */}
+                <div className="flex justify-between items-start mb-4">
+                    <div className="flex gap-2 items-center">
+                        <StatusBadge status={item.status} itemId={item.id} isAdmin={isAdmin} onStatusChange={onStatusChange} />
+                        <span className="text-[10px] font-medium opacity-50 uppercase tracking-widest">
+                            {item.createdAt instanceof Date ? item.createdAt.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : ''}
+                        </span>
+                    </div>
+                    {(isAdmin || item.userId === user?.uid) && (
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 -mr-2 text-muted-foreground hover:text-destructive transition-colors opacity-0 group-hover:opacity-100"
+                            onClick={() => onDelete(item.id)}
+                        >
+                            <Trash2 className="h-3 w-3" />
+                        </Button>
+                    )}
+                </div>
+
+                {/* Content */}
+                <div className="flex-1 space-y-3 mb-4">
+                    <h3 className="text-lg font-bold leading-tight group-hover:text-primary transition-colors line-clamp-2">
+                        {item.title}
+                    </h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed line-clamp-4">
+                        {item.description}
+                    </p>
+                </div>
+
+                {/* Footer */}
+                <div className="flex items-center justify-between mt-auto pt-4 border-t border-dashed border-border/30">
+                    <div className="flex items-center gap-2">
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => onUpvote(item)}
+                            className={cn(
+                                "h-8 px-3 gap-2 rounded-full font-bold transition-all border",
+                                (item.upvotedBy || []).includes(user?.uid || '')
+                                    ? "bg-primary text-primary-foreground border-primary hover:bg-primary/90"
+                                    : "bg-transparent border-border/50 hover:border-primary/50"
+                            )}
+                        >
+                            <ArrowBigUp className={cn("w-4 h-4", (item.upvotedBy || []).includes(user?.uid || '') && "fill-current")} />
+                            <span>{item.upvotes}</span>
+                        </Button>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                        <div className="text-[10px] font-bold uppercase opacity-40">
+                            {item.userName || 'Anonymous'}
+                        </div>
+                        {item.adminReply && (
+                            <div className="flex items-center gap-1 text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                                <Reply className="w-3 h-3" /> Replied
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* Admin Reply Input / Display */}
+                {(item.adminReply || isActiveReply) && (
+                    <div className="mt-4 pt-3 border-t border-border/30 bg-muted/20 -mx-5 -mb-5 px-5 py-3">
+                        {isActiveReply ? (
+                            <div className="space-y-2">
+                                <Textarea
+                                    placeholder="Admin response..."
+                                    value={localReplyText}
+                                    onChange={e => setLocalReplyText(e.target.value)}
+                                    className="text-xs min-h-[60px] bg-background/50"
+                                />
+                                <div className="flex justify-end gap-2">
+                                    <Button size="sm" variant="ghost" onClick={() => onSetReplyingTo(null)} className="h-6 text-[10px]">Cancel</Button>
+                                    <Button size="sm" onClick={handleSave} disabled={isSavingReply} className="h-6 text-[10px]">Save</Button>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="flex gap-3">
+                                <div className="w-1 bg-primary rounded-full" />
+                                <div>
+                                    <div className="text-[10px] font-bold text-primary uppercase mb-1">Admin Response</div>
+                                    <p className="text-xs text-foreground/80 italic">"{item.adminReply}"</p>
+                                </div>
+                                {isAdmin && (
+                                    <Button variant="ghost" size="icon" className="h-5 w-5 ml-auto opacity-50 hover:opacity-100" onClick={() => onSetReplyingTo(item.id)}>
+                                        <Reply className="h-3 w-3" />
+                                    </Button>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                )}
+                {isAdmin && !isActiveReply && !item.adminReply && (
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="absolute top-4 right-10 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={() => onSetReplyingTo(item.id)}
+                    >
+                        <Reply className="w-3 h-3" />
+                    </Button>
+                )}
+            </div>
+        </motion.div>
+    );
+};
+
 export function FeedbackBoard() {
     const { user, db } = useFirebase();
     const { isAdmin } = useAdmin();
-    const { settings } = useSettings();
+    const { settings } = useSettings(); // settings still used for other parts if needed, or removed if unused in main
     const { toast } = useToast();
 
     const [activeTab, setActiveTab] = useState<'bug' | 'suggestion'>('bug');
@@ -75,16 +271,16 @@ export function FeedbackBoard() {
     const [suggestions, setSuggestions] = useState<FeedbackItem[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [openSubmitDialog, setOpenSubmitDialog] = useState(false);
+    // itemToDelete state
     const [itemToDelete, setItemToDelete] = useState<string | null>(null);
-    const [authorMap, setAuthorMap] = useState<Record<string, string>>({});
     const [searchQuery, setSearchQuery] = useState('');
 
     const [mounted, setMounted] = useState(false);
-    const [replyingTo, setReplyingTo] = useState<string | null>(null);
-    const [replyText, setReplyText] = useState('');
-    const [isReplying, setIsReplying] = useState(false);
 
-    // Form State
+    // Replying state tracks WHICH item is being replied to, but NOT the text content
+    const [replyingTo, setReplyingTo] = useState<string | null>(null);
+
+    // Form State for new feedback
     const [newItemType, setNewItemType] = useState<'bug' | 'suggestion'>('bug');
     const [newItemTitle, setNewItemTitle] = useState('');
     const [newItemDesc, setNewItemDesc] = useState('');
@@ -187,22 +383,18 @@ export function FeedbackBoard() {
         }
     };
 
-    const handleSaveReply = async (itemId: string) => {
+    const handleSaveReply = async (itemId: string, text: string) => {
         if (!db) return;
-        setIsReplying(true);
         try {
             await updateDoc(doc(db, 'feedback', itemId), {
-                adminReply: replyText,
+                adminReply: text,
                 adminReplyAt: new Date().toISOString()
             });
             toast({ title: "Reply Saved" });
             setReplyingTo(null);
-            setReplyText('');
             fetchFeedback();
         } catch (err: any) {
             toast({ title: "Failed to save reply", description: err.message, variant: "destructive" });
-        } finally {
-            setIsReplying(false);
         }
     };
 
@@ -217,170 +409,12 @@ export function FeedbackBoard() {
         }
     };
 
-    // --- Components ---
-
-    const StatusBadge = ({ status, itemId }: { status: string, itemId?: string }) => {
-        const styles = {
-            'pending': 'bg-slate-500/10 text-slate-500 border-slate-500/20',
-            'open': 'bg-blue-500/10 text-blue-500 border-blue-500/20',
-            'in-progress': 'bg-amber-500/10 text-amber-500 border-amber-500/20',
-            'resolved': 'bg-green-500/10 text-green-500 border-green-500/20',
-            'closed': 'bg-red-500/10 text-red-500 border-red-500/20',
-        }[status] || 'bg-slate-500/10 text-slate-500';
-
-        if (isAdmin && itemId) {
-            return (
-                <Select value={status} onValueChange={(val) => handleStatusChange(itemId, val)}>
-                    <SelectTrigger className={cn("h-6 px-2 text-[10px] w-auto gap-1 border-0 bg-transparent hover:bg-transparent focus:ring-0 font-bold uppercase tracking-wider", styles)}>
-                        <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {['pending', 'open', 'in-progress', 'resolved', 'closed'].map(s => (
-                            <SelectItem key={s} value={s} className="capitalize">{s.replace('-', ' ')}</SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-            );
-        }
-        return (
-            <Badge variant="outline" className={cn("text-[10px] uppercase font-bold tracking-wider border-0", styles)}>
-                {status.replace('-', ' ')}
-            </Badge>
-        );
-    };
-
-    const FeedbackCard = ({ item }: { item: FeedbackItem }) => {
-        const isNeo = settings.cardStyle === 'neo';
-        const isGlass = settings.cardStyle === 'glass';
-
-        return (
-            <motion.div
-                layout
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                className="group h-full"
-            >
-                <div
-                    className={cn(
-                        "relative h-full flex flex-col p-5 transition-all duration-300 rounded-[var(--card-radius)] overflow-hidden",
-                        isNeo ? "bg-card border-2 border-primary shadow-[4px_4px_0px_var(--primary)] text-card-foreground" :
-                            isGlass ? "bg-white/5 backdrop-blur-md border border-white/10 shadow-xl" :
-                                "bg-card border border-border/40 hover:border-primary/30 shadow-sm hover:shadow-md"
-                    )}
-                >
-                    {/* Status Line */}
-                    <div className="flex justify-between items-start mb-4">
-                        <div className="flex gap-2 items-center">
-                            <StatusBadge status={item.status} itemId={item.id} />
-                            <span className="text-[10px] font-medium opacity-50 uppercase tracking-widest">
-                                {item.createdAt instanceof Date ? item.createdAt.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : ''}
-                            </span>
-                        </div>
-                        {(isAdmin || item.userId === user?.uid) && (
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-6 w-6 -mr-2 text-muted-foreground hover:text-destructive transition-colors opacity-0 group-hover:opacity-100"
-                                onClick={() => setItemToDelete(item.id)}
-                            >
-                                <Trash2 className="h-3 w-3" />
-                            </Button>
-                        )}
-                    </div>
-
-                    {/* Content */}
-                    <div className="flex-1 space-y-3 mb-4">
-                        <h3 className="text-lg font-bold leading-tight group-hover:text-primary transition-colors line-clamp-2">
-                            {item.title}
-                        </h3>
-                        <p className="text-sm text-muted-foreground leading-relaxed line-clamp-4">
-                            {item.description}
-                        </p>
-                    </div>
-
-                    {/* Footer */}
-                    <div className="flex items-center justify-between mt-auto pt-4 border-t border-dashed border-border/30">
-                        <div className="flex items-center gap-2">
-                            <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleUpvote(item)}
-                                className={cn(
-                                    "h-8 px-3 gap-2 rounded-full font-bold transition-all border",
-                                    (item.upvotedBy || []).includes(user?.uid || '')
-                                        ? "bg-primary text-primary-foreground border-primary hover:bg-primary/90"
-                                        : "bg-transparent border-border/50 hover:border-primary/50"
-                                )}
-                            >
-                                <ArrowBigUp className={cn("w-4 h-4", (item.upvotedBy || []).includes(user?.uid || '') && "fill-current")} />
-                                <span>{item.upvotes}</span>
-                            </Button>
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                            <div className="text-[10px] font-bold uppercase opacity-40">
-                                {item.userName || 'Anonymous'}
-                            </div>
-                            {item.adminReply && (
-                                <div className="flex items-center gap-1 text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
-                                    <Reply className="w-3 h-3" /> Replied
-                                </div>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Admin Reply Input / Display */}
-                    {(item.adminReply || replyingTo === item.id) && (
-                        <div className="mt-4 pt-3 border-t border-border/30 bg-muted/20 -mx-5 -mb-5 px-5 py-3">
-                            {replyingTo === item.id ? (
-                                <div className="space-y-2">
-                                    <Textarea
-                                        placeholder="Admin response..."
-                                        value={replyText}
-                                        onChange={e => setReplyText(e.target.value)}
-                                        className="text-xs min-h-[60px] bg-background/50"
-                                    />
-                                    <div className="flex justify-end gap-2">
-                                        <Button size="sm" variant="ghost" onClick={() => setReplyingTo(null)} className="h-6 text-[10px]">Cancel</Button>
-                                        <Button size="sm" onClick={() => handleSaveReply(item.id)} disabled={isReplying} className="h-6 text-[10px]">Save</Button>
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="flex gap-3">
-                                    <div className="w-1 bg-primary rounded-full" />
-                                    <div>
-                                        <div className="text-[10px] font-bold text-primary uppercase mb-1">Admin Response</div>
-                                        <p className="text-xs text-foreground/80 italic">"{item.adminReply}"</p>
-                                    </div>
-                                    {isAdmin && (
-                                        <Button variant="ghost" size="icon" className="h-5 w-5 ml-auto opacity-50 hover:opacity-100" onClick={() => { setReplyingTo(item.id); setReplyText(item.adminReply || ''); }}>
-                                            <Reply className="h-3 w-3" />
-                                        </Button>
-                                    )}
-                                </div>
-                            )}
-                        </div>
-                    )}
-                    {isAdmin && !replyingTo && !item.adminReply && (
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            className="absolute top-4 right-10 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                            onClick={() => { setReplyingTo(item.id); setReplyText(''); }}
-                        >
-                            <Reply className="w-3 h-3" />
-                        </Button>
-                    )}
-                </div>
-            </motion.div>
-        );
-    };
-
     if (!mounted) return null;
 
     const filteredBugs = bugs.filter(i => i.title.toLowerCase().includes(searchQuery.toLowerCase()) || i.description.toLowerCase().includes(searchQuery.toLowerCase()));
     const filteredSuggestions = suggestions.filter(i => i.title.toLowerCase().includes(searchQuery.toLowerCase()) || i.description.toLowerCase().includes(searchQuery.toLowerCase()));
+
+    const activeList = activeTab === 'bug' ? filteredBugs : filteredSuggestions;
 
     return (
         <div className="min-h-screen pb-20 pt-8 px-4 md:px-8 max-w-7xl mx-auto space-y-8">
@@ -470,14 +504,23 @@ export function FeedbackBoard() {
                         transition={{ duration: 0.2 }}
                         className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
                     >
-                        {(activeTab === 'bug' ? filteredBugs : filteredSuggestions).map((item) => (
-                            <FeedbackCard key={item.id} item={item} />
+                        {activeList.map((item) => (
+                            <FeedbackItemCard
+                                key={item.id}
+                                item={item}
+                                isActiveReply={replyingTo === item.id}
+                                onSetReplyingTo={setReplyingTo}
+                                onSaveReply={handleSaveReply}
+                                onDelete={setItemToDelete}
+                                onUpvote={handleUpvote}
+                                onStatusChange={handleStatusChange}
+                            />
                         ))}
                     </motion.div>
                 </AnimatePresence>
 
                 {/* Empty State */}
-                {((activeTab === 'bug' ? filteredBugs : filteredSuggestions).length === 0) && (
+                {activeList.length === 0 && (
                     <div className="flex flex-col items-center justify-center py-20 text-center opacity-50">
                         <div className="w-20 h-20 rounded-3xl bg-muted flex items-center justify-center mb-6 text-primary">
                             <Filter className="w-10 h-10" />
@@ -506,3 +549,4 @@ export function FeedbackBoard() {
         </div>
     );
 }
+

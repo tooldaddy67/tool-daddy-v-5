@@ -17,6 +17,8 @@ function initializeServerApp() {
     return initializeApp(firebaseConfig, 'server-app');
 }
 
+import { getAdminFirestore } from '@/lib/firebase-admin';
+
 export function getFirestoreServer() {
-    return null;
+    return getAdminFirestore();
 }

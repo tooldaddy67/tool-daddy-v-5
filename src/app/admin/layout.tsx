@@ -3,14 +3,17 @@
 import { useAdmin } from '@/hooks/use-admin';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-import { Loader2, ShieldAlert } from 'lucide-react';
+import { Loader2, ShieldAlert, ShieldCheck } from 'lucide-react';
+import { useUser } from '@/firebase';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
+import { AdminPasswordGate } from '@/components/admin-password-gate';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
     const { isAdmin, loading } = useAdmin();
+    const { user } = useUser();
     const router = useRouter();
     const pathname = usePathname();
 
@@ -32,32 +35,32 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     if (!isAdmin) {
         return (
             <div className="flex h-screen w-full flex-col items-center justify-center gap-4 p-4 text-center animate-in fade-in zoom-in-95 duration-300">
-                <div className="bg-destructive/10 p-4 rounded-full">
-                    <ShieldAlert className="h-12 w-12 text-destructive" />
-                </div>
-                <div className="space-y-2">
-                    <h1 className="text-2xl font-bold tracking-tight">Access Restricted</h1>
-                    <p className="text-muted-foreground max-w-[400px]">
-                        This area is protected. You either don't have permission or your session needs a refresh.
-                    </p>
-                </div>
-                <div className="flex gap-3">
-                    <Button variant="outline" onClick={() => router.push('/')}>
-                        Return Home
-                    </Button>
+                <AdminPasswordGate>
+                    <div className="bg-success/10 p-4 rounded-full">
+                        <ShieldCheck className="h-12 w-12 text-success" />
+                    </div>
+                    <div className="space-y-2">
+                        <h1 className="text-2xl font-bold tracking-tight">Access Granted!</h1>
+                        <p className="text-muted-foreground max-w-[400px]">
+                            Password verified. Please reload to initialize your admin session.
+                        </p>
+                    </div>
                     <Button onClick={() => window.location.reload()}>
-                        Retry Verification
+                        Reload Dashboard
                     </Button>
-                </div>
+                </AdminPasswordGate>
+
                 <div className="mt-8 p-4 bg-muted/50 rounded-lg text-xs font-mono text-left w-full max-w-md overflow-auto border border-border/50">
                     <p className="font-bold mb-2 opacity-50 uppercase tracking-widest">Debug Diagnostic</p>
                     <div className="grid grid-cols-[100px_1fr] gap-1">
                         <span className="opacity-70">Status:</span>
-                        <span className="text-destructive font-bold">Denied</span>
-                        <span className="opacity-70">Loading:</span>
-                        <span>{String(loading)}</span>
+                        <span className="text-destructive font-bold">Admin Permission Required</span>
+                        <span className="opacity-70">Authenticated:</span>
+                        <span>{String(!!user)}</span>
+                        <span className="opacity-70">Profile Found:</span>
+                        <span>{String(isAdmin !== undefined)}</span>
                         <span className="opacity-70">Is Admin:</span>
-                        <span>{String(isAdmin)}</span>
+                        <span className={isAdmin ? "text-success font-bold" : "text-destructive"}>{String(isAdmin)}</span>
                         <span className="opacity-70">Current Path:</span>
                         <span>{pathname}</span>
                     </div>
