@@ -12,7 +12,9 @@ import { ArrowLeft } from 'lucide-react';
 import { ALL_TOOLS_CATEGORIES } from '@/lib/tools-data';
 import { cn } from '@/lib/utils';
 
-export default function ToolsPage() {
+import { Suspense } from 'react';
+
+function ToolsContent() {
     const [searchQuery, setSearchQuery] = useState("");
     const searchParams = useSearchParams();
     const router = useRouter();
@@ -68,5 +70,20 @@ export default function ToolsPage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function ToolsPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="h-8 w-8 animate-spin text-primary border-4 border-primary border-t-transparent rounded-full" />
+                    <p className="text-muted-foreground font-medium animate-pulse">Initializing toolkit...</p>
+                </div>
+            </div>
+        }>
+            <ToolsContent />
+        </Suspense>
     );
 }

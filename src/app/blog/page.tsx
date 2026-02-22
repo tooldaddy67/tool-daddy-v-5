@@ -8,8 +8,8 @@ export const metadata: Metadata = {
     description: 'Read the latest articles about web development, productivity tools, and tech tutorials from Tool Daddy.',
 };
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+// Enable ISR for blog posts
+export const revalidate = 3600;
 
 export default async function BlogPage() {
     try {
