@@ -27,10 +27,13 @@ export default function VideoToAudioConverter() {
   const [isAdModalOpen, setIsAdModalOpen] = useState(false);
   const [progress, setProgress] = useState(0);
 
-  const ffmpegRef = useRef(new FFmpeg());
+  const ffmpegRef = useRef<FFmpeg | null>(null);
 
   useEffect(() => {
     const loadFfmpeg = async () => {
+      if (!ffmpegRef.current) {
+        ffmpegRef.current = new FFmpeg();
+      }
       const ffmpeg = ffmpegRef.current;
       try {
         await ffmpeg.load();
@@ -96,6 +99,8 @@ export default function VideoToAudioConverter() {
       });
 
       const ffmpeg = ffmpegRef.current;
+      if (!ffmpeg) return;
+
       await ffmpeg.writeFile(videoFile.name, await fetchFile(videoFile));
 
       await ffmpeg.exec(['-i', videoFile.name, '-q:a', '0', '-map', 'a', 'output.mp3']);
