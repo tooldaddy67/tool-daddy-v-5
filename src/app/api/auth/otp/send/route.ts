@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { sendEmail } from '@/lib/send-email';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limiter';
 import { logAuditEvent } from '@/lib/audit-log';
+import { getAdminFirestore } from '@/lib/firebase-admin';
 import { z } from 'zod';
 import { sanitizeString } from '@/lib/sanitization';
 
@@ -40,10 +41,17 @@ export async function POST(req: Request) {
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const expiresAt = Date.now() + 10 * 60 * 1000; // 10 minutes from now
 
-    console.log(`[OTP] MOCK STORAGE: OTP ${otp} for ${email} expires at ${expiresAt}`);
-    // Database removed - just logging for now
+    const db = getAdminFirestore();
 
-    console.log('[OTP] OTP stored successfully. Sending email...');
+    // Store in Firestore securely
+    await db.collection('otps').doc(email).set({
+      code: otp,
+      expiresAt: new Date(expiresAt),
+      attempts: 0,
+      createdAt: new Date(),
+    });
+
+    console.log('[OTP] OTP stored successfully in Firestore. Sending email...');
 
     // Send email
     const subject = 'Your Verification Code - Tool Daddy';
