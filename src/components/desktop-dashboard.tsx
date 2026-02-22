@@ -136,9 +136,9 @@ export function DesktopDashboard() {
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                 <div className="space-y-1">
                     <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide">{formattedDate}</p>
-                    <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-foreground">
+                    <h2 className="text-3xl md:text-5xl font-bold tracking-tight text-foreground">
                         Hello, {user?.displayName?.split(' ')[0] || 'Friend'}
-                    </h1>
+                    </h2>
                     <p className="text-xl md:text-2xl text-muted-foreground font-light">How can I help you today?</p>
                 </div>
 

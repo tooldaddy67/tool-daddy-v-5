@@ -11,7 +11,6 @@ export default function robots(): MetadataRoute.Robots {
         disallow: [
           '/api/', // Hide API routes
           '/admin/', // Hide admin routes if any
-          '/_next/', // Hide Next.js internal
         ],
       },
       {

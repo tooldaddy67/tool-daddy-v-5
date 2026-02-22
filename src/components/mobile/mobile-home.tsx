@@ -78,9 +78,9 @@ export function MobileHome() {
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
                     >
-                        <h1 className="text-2xl font-black tracking-tight text-foreground">
+                        <h2 className="text-2xl font-black tracking-tight text-foreground">
                             {greeting}
-                        </h1>
+                        </h2>
                         <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mt-1 opacity-60">Ready to build something?</p>
                     </m.div>
 

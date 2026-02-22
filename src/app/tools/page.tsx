@@ -37,9 +37,9 @@ export default function ToolsPage() {
                     )}
                     <div className="space-y-4">
                         <div className="space-y-1 relative z-10">
-                            <h1 className="text-4xl font-black tracking-tighter text-white uppercase leading-tight block opacity-100">
+                            <h2 className="text-4xl font-black tracking-tighter text-white uppercase leading-tight block opacity-100">
                                 {categoryFilter ? categoryFilter.replace(/-/g, ' ') : 'All Tools'}
-                            </h1>
+                            </h2>
                             <div className="h-1.5 w-16 bg-primary mx-auto rounded-full shadow-[0_0_15px_hsl(var(--primary)/0.3)]" />
                         </div>
                         <p className="text-muted-foreground text-[12px] font-black uppercase tracking-[0.3em] text-center opacity-60">

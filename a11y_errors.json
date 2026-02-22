@@ -1,0 +1,18 @@
+{
+  "color-contrast": [
+    "div.pt-12 > div.flex > div > p.text-xs",
+    "footer.w-full > div.mx-auto > div.flex > p.text-[10px]",
+    "div.mx-auto > div.flex > p.text-[10px] > a.underline",
+    "div.mx-auto > div.flex > p.text-[10px] > a.underline"
+  ],
+  "heading-order": [
+    "div > a.flex > div.flex > h4.text-base"
+  ],
+  "label-content-name-mismatch": [
+    "div.fixed > div.bg-secondary/95 > div.flex > div"
+  ],
+  "link-name": [
+    "div.px-6 > div.grid > div.aspect-[4/5] > a.absolute",
+    "div.px-6 > div.grid > div.aspect-[4/5] > a.absolute"
+  ]
+}

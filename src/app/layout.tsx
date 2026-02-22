@@ -6,12 +6,12 @@ import { ThemeProvider } from '@/components/theme-provider';
 import { FirebaseClientProvider } from '@/firebase';
 import { Inter, Space_Grotesk, Playfair_Display } from 'next/font/google';
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+// Static optimization enabled by removing force-dynamic
 
 import Script from 'next/script';
 import NextDynamic from 'next/dynamic';
 import { LazyMotion, domAnimation } from 'framer-motion';
+import { GoogleTagManager, GoogleAnalytics } from '@next/third-parties/google';
 
 import PageHeader from '@/components/page-header';
 import { ClientOnlyExtras } from '@/components/client-only-extras';
@@ -97,15 +97,10 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <link rel="apple-touch-icon" href="/icon.png" />
         {/* Preconnect to external domains for performance */}
-        <link rel="preconnect" href="https://www.googletagmanager.com" />
-        <link rel="preconnect" href="https://www.google-analytics.com" />
-        <link rel="preconnect" href="https://www.google.com" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       </head>
       <body suppressHydrationWarning className="min-h-screen bg-background font-body antialiased">
-        <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-P2725PBH"
-          height="0" width="0" style={{ display: "none", visibility: "hidden" }} title="gtm"></iframe></noscript>
 
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
           <FirebaseClientProvider>
@@ -147,28 +142,8 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
           <Toaster />
         </ThemeProvider>
 
-        <Script id="google-tag-manager" strategy="lazyOnload">
-          {`
-            (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-            new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-            j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-            'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-            })(window,document,'script','dataLayer','GTM-P2725PBH');
-          `}
-        </Script>
-        <Script src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_ID || 'G-95Z6VMSH51'}`} strategy="lazyOnload" />
-        <Script id="google-analytics" strategy="lazyOnload">
-          {`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', '${process.env.NEXT_PUBLIC_GA_ID || 'G-95Z6VMSH51'}', {
-              page_path: window.location.pathname,
-              anonymize_ip: true,
-              cookie_flags: 'SameSite=None;Secure'
-            });
-          `}
-        </Script>
+        <GoogleTagManager gtmId="GTM-P2725PBH" />
+        <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID || 'G-95Z6VMSH51'} />
         <Script src="https://www.google.com/recaptcha/api.js?render=6Lfe02YsAAAAADPOetn7_P0L2oW2xhLgDVmYZgbF" strategy="lazyOnload" />
       </body>
     </html>

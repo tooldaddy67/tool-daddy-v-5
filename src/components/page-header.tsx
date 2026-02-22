@@ -90,26 +90,28 @@ export default function PageHeader() {
         )}
         <div className="flex-1"></div>
         <div className="flex items-center gap-1">
-          <Link href="/blog">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="w-10 h-10 rounded-full"
-              aria-label="Blog"
-            >
+          <Button
+            asChild
+            variant="ghost"
+            size="icon"
+            className="w-10 h-10 rounded-full"
+            aria-label="Blog"
+          >
+            <Link href="/blog">
               <BookOpen className="h-5 w-5" />
-            </Button>
-          </Link>
-          <Link href="/history">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="w-10 h-10 rounded-full"
-              aria-label="History"
-            >
+            </Link>
+          </Button>
+          <Button
+            asChild
+            variant="ghost"
+            size="icon"
+            className="w-10 h-10 rounded-full"
+            aria-label="History"
+          >
+            <Link href="/history">
               <History className="h-5 w-5" />
-            </Button>
-          </Link>
+            </Link>
+          </Button>
           <NotificationBell />
           <Button
             variant="ghost"
