@@ -14,6 +14,7 @@ import { LazyMotion, domAnimation } from 'framer-motion';
 import { GoogleTagManager, GoogleAnalytics } from '@next/third-parties/google';
 
 import PageHeader from '@/components/page-header';
+import { constructMetadata } from '@/lib/seo';
 import { ClientOnlyExtras } from '@/components/client-only-extras';
 
 const AppSidebar = NextDynamic(() => import('@/components/app-sidebar'));
@@ -38,34 +39,7 @@ const playfair = Playfair_Display({
   variable: '--font-playfair',
 });
 
-export const metadata: Metadata = {
-  title: 'Tool Daddy - Your Ultimate Suite of Online Tools',
-  description: 'Your complete suite for media manipulation. Convert, download, enhance, and more. All in one place.',
-  keywords: ['image converter', 'video converter', 'online tools', 'image compressor', 'QR code generator', 'metadata extractor', 'audio converter', 'file converter', 'free online tools'],
-  authors: [{ name: 'Tool Daddy Team' }],
-  creator: 'Tool Daddy',
-  publisher: 'Tool Daddy',
-  openGraph: {
-    type: 'website',
-    locale: 'en_US',
-    url: process.env.NEXT_PUBLIC_BASE_URL || 'https://tool-daddy.com',
-    siteName: 'Tool Daddy',
-    title: 'Tool Daddy - Your Ultimate Suite of Online Tools',
-    description: 'Your complete suite for media manipulation. Convert, download, enhance, and more.',
-    images: [{ url: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://tool-daddy.com'}/og-image.png`, width: 1200, height: 630, alt: 'Tool Daddy' }],
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'Tool Daddy - Your Ultimate Suite of Online Tools',
-    description: 'Your complete suite for media manipulation.',
-    images: [`${process.env.NEXT_PUBLIC_BASE_URL || 'https://tool-daddy.com'}/og-image.png`],
-  },
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: { index: true, follow: true, 'max-video-preview': -1, 'max-image-preview': 'large', 'max-snippet': -1 },
-  },
-};
+export const metadata = constructMetadata();
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -118,6 +92,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
                           '@context': 'https://schema.org',
                           '@type': 'WebSite',
                           name: 'Tool Daddy',
+                          alternateName: 'ToolDaddy',
                           description: 'The ultimate free online tool suite. Image compression, video conversion, AI tools, and more.',
                           url: process.env.NEXT_PUBLIC_BASE_URL || 'https://tool-daddy.com',
                           potentialAction: {

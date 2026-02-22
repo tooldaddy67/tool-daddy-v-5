@@ -2,15 +2,26 @@ import { Metadata } from 'next';
 import dynamic from 'next/dynamic';
 import { Skeleton } from '@/components/ui/skeleton';
 
-export const metadata: Metadata = {
+import { constructMetadata } from '@/lib/seo';
+
+export const metadata = constructMetadata({
   title: 'QR Code Generator | Tool Daddy',
   description: 'Create custom QR codes for URLs, text, and more instantly with our free online generator.',
   keywords: ['qr code generator', 'create qr code', 'free qr code', 'online qr code', 'marketing tools'],
-  openGraph: {
-    title: 'QR Code Generator | Tool Daddy',
-    description: 'Create custom QR codes instantly with our free online generator.',
-    type: 'website',
-  }
+  canonical: '/qr-code-generator',
+});
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: 'QR Code Generator',
+  operatingSystem: 'Windows, macOS, Linux, Android, iOS',
+  applicationCategory: 'UtilitiesApplication',
+  offers: {
+    '@type': 'Offer',
+    price: '0',
+    priceCurrency: 'USD',
+  },
 };
 
 const QrCodeGenerator = dynamic(() => import('./_components/qr-code-generator'), {
@@ -39,5 +50,13 @@ function QrCodeGeneratorSkeleton() {
 }
 
 export default function QrCodeGeneratorPage() {
-  return <QrCodeGenerator />;
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <QrCodeGenerator />
+    </>
+  );
 }

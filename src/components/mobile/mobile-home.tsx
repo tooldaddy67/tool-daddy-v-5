@@ -70,9 +70,9 @@ export function MobileHome() {
             <div className="pt-12 px-6 pb-6 space-y-6">
                 <div className="flex items-center justify-between">
                     <div>
-                        <h2 className="text-2xl font-black tracking-tight text-foreground">
+                        <h1 className="text-2xl font-black tracking-tight text-foreground">
                             {greeting}
-                        </h2>
+                        </h1>
                         <p className="text-xs font-bold text-foreground/50 uppercase tracking-widest mt-1">Ready to build something?</p>
                     </div>
 

@@ -19,19 +19,36 @@ function ImageCompressorSkeleton() {
   )
 }
 
-import { Metadata } from 'next';
+import { constructMetadata } from '@/lib/seo';
 
-export const metadata: Metadata = {
+export const metadata = constructMetadata({
   title: 'Image Compressor | Tool Daddy',
   description: 'Compress your images effortlessly without losing quality. Support for JPEG, PNG, and WebP.',
   keywords: ['image compressor', 'compress images', 'jpeg compressor', 'png compressor', 'online image tool'],
-  openGraph: {
-    title: 'Image Compressor | Tool Daddy',
-    description: 'Compress your images effortlessly without losing quality.',
-    type: 'website',
-  }
+  canonical: '/image-compressor',
+});
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: 'Image Compressor',
+  operatingSystem: 'Windows, macOS, Linux, Android, iOS',
+  applicationCategory: 'MultimediaApplication',
+  offers: {
+    '@type': 'Offer',
+    price: '0',
+    priceCurrency: 'USD',
+  },
 };
 
 export default function ImageCompressorPage() {
-  return <ImageCompressor />;
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <ImageCompressor />
+    </>
+  );
 }

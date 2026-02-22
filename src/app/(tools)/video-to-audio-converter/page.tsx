@@ -2,20 +2,31 @@ import { Metadata } from 'next';
 import dynamic from 'next/dynamic';
 import { Skeleton } from '@/components/ui/skeleton';
 
-export const metadata: Metadata = {
+import { constructMetadata } from '@/lib/seo';
+
+export const metadata = constructMetadata({
   title: 'Video to Audio Converter | Tool Daddy',
   description: 'Extract high-quality audio from your video files instantly. Support for MP4 to MP3, MOV to AAC, and more.',
   keywords: ['video to audio', 'extract audio', 'mp4 to mp3', 'video converter', 'audio extractor'],
-  openGraph: {
-    title: 'Video to Audio Converter | Tool Daddy',
-    description: 'Extract high-quality audio from your video files instantly.',
-    type: 'website',
-  }
-};
+  canonical: '/video-to-audio-converter',
+});
 
 const VideoToAudioConverter = dynamic(() => import('./_components/video-to-audio-converter'), {
   loading: () => <VideoToAudioConverterSkeleton />,
 });
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: 'Video to Audio Converter',
+  operatingSystem: 'Windows, macOS, Linux, Android, iOS',
+  applicationCategory: 'MultimediaApplication',
+  offers: {
+    '@type': 'Offer',
+    price: '0',
+    priceCurrency: 'USD',
+  },
+};
 
 function VideoToAudioConverterSkeleton() {
   return (
@@ -30,5 +41,13 @@ function VideoToAudioConverterSkeleton() {
 }
 
 export default function VideoToAudioConverterPage() {
-  return <VideoToAudioConverter />;
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <VideoToAudioConverter />
+    </>
+  );
 }

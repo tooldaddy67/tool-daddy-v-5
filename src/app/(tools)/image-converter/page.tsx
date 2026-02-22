@@ -2,15 +2,26 @@ import { Metadata } from 'next';
 import dynamic from 'next/dynamic';
 import { Skeleton } from '@/components/ui/skeleton';
 
-export const metadata: Metadata = {
+import { constructMetadata } from '@/lib/seo';
+
+export const metadata = constructMetadata({
   title: 'Image Converter | Tool Daddy',
   description: 'Convert images between multiple formats including JPEG, PNG, WebP, and SVG with our fast online converter.',
   keywords: ['image converter', 'convert images', 'png to jpg', 'jpg to webp', 'online image tool'],
-  openGraph: {
-    title: 'Image Converter | Tool Daddy',
-    description: 'Convert images between multiple formats instantly.',
-    type: 'website',
-  }
+  canonical: '/image-converter',
+});
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: 'Image Converter',
+  operatingSystem: 'Windows, macOS, Linux, Android, iOS',
+  applicationCategory: 'MultimediaApplication',
+  offers: {
+    '@type': 'Offer',
+    price: '0',
+    priceCurrency: 'USD',
+  },
 };
 
 const ImageConverter = dynamic(() => import('./_components/image-converter'), {
@@ -30,5 +41,13 @@ function ImageConverterSkeleton() {
 }
 
 export default function ImageConverterPage() {
-  return <ImageConverter />;
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <ImageConverter />
+    </>
+  );
 }

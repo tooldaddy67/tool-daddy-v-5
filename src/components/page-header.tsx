@@ -34,8 +34,31 @@ export default function PageHeader() {
 
   const authRoutes = ['/login', '/signup'];
 
+  const breadcrumbLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'Home',
+        item: process.env.NEXT_PUBLIC_BASE_URL || 'https://tool-daddy.com',
+      },
+      ...(currentTool ? [{
+        '@type': 'ListItem',
+        position: 2,
+        name: currentTool.name,
+        item: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://tool-daddy.com'}${currentTool.href}`,
+      }] : []),
+    ],
+  };
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }}
+      />
       <header className={cn(
         "hidden xl:flex sticky top-0 z-50 h-16 items-center gap-4 border-b border-white/10 px-4 xl:px-6 transition-all duration-300 shadow-sm relative overflow-hidden",
         settings.sidebarStyle === 'mini' && "xl:pl-2"
