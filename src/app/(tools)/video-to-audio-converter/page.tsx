@@ -15,6 +15,7 @@ export const metadata: Metadata = {
 
 const VideoToAudioConverter = dynamic(() => import('./_components/video-to-audio-converter'), {
   loading: () => <VideoToAudioConverterSkeleton />,
+  ssr: false,
 });
 
 function VideoToAudioConverterSkeleton() {
