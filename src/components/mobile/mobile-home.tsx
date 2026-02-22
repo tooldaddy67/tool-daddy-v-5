@@ -73,7 +73,7 @@ export function MobileHome() {
                         <h2 className="text-2xl font-black tracking-tight text-foreground">
                             {greeting}
                         </h2>
-                        <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mt-1 opacity-60">Ready to build something?</p>
+                        <p className="text-xs font-bold text-foreground/50 uppercase tracking-widest mt-1">Ready to build something?</p>
                     </div>
 
                     <div className="flex items-center gap-2">

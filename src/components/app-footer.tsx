@@ -40,7 +40,7 @@ export default function AppFooter() {
           <Logo />
           <p className="text-[10px] md:text-sm text-muted-foreground text-center sm:text-left">&copy; {new Date().getFullYear()} Tool Daddy. All Rights Reserved.</p>
         </div>
-        <div className="flex flex-col items-center sm:items-end gap-2 text-xs text-muted-foreground/60 text-center sm:text-right w-full sm:w-auto">
+        <div className="flex flex-col items-center sm:items-end gap-2 text-xs text-muted-foreground/80 text-center sm:text-right w-full sm:w-auto">
           <div className="flex flex-wrap justify-center sm:justify-end items-center gap-3 md:gap-4 text-xs md:text-sm text-foreground/80">
             <Link href="https://discord.gg/TgErTdrGrG" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2" aria-label="Join our Discord community">
               <DiscordIcon />
@@ -55,10 +55,10 @@ export default function AppFooter() {
               Feedback
             </Link>
           </div>
-          <p className="text-[10px] sm:text-xs px-4 sm:px-0">
+          <p className="text-[10px] sm:text-xs px-4 sm:px-0 text-foreground/60">
             This site is protected by reCAPTCHA and the Google{' '}
-            <a href="https://policies.google.com/privacy" className="underline hover:text-foreground">Privacy Policy</a> and{' '}
-            <a href="https://policies.google.com/terms" className="underline hover:text-foreground">Terms of Service</a> apply.
+            <a href="https://policies.google.com/privacy" className="underline hover:text-foreground/80">Privacy Policy</a> and{' '}
+            <a href="https://policies.google.com/terms" className="underline hover:text-foreground/80">Terms of Service</a> apply.
           </p>
         </div>
       </div>
