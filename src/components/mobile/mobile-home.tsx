@@ -20,7 +20,7 @@ const NotificationsPopover = dynamic(() => import("./notifications-popover").the
 
 const RecentActivity = dynamic(() => import("./recent-activity").then(mod => mod.RecentActivity), {
     ssr: false,
-    loading: () => <div className="h-44 w-full bg-muted/10 animate-pulse rounded-3xl mb-8" />
+    loading: () => <div className="h-8 w-full opacity-50 px-5 mb-8" />
 });
 
 export function MobileHome() {
@@ -119,7 +119,7 @@ export function MobileHome() {
                             exit={{ opacity: 0, height: 0 }}
                             className="bg-secondary/30 rounded-3xl border border-white/5 p-4 space-y-3 overflow-hidden"
                         >
-                            <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground px-2">Search Results</h2>
+                            <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/80 px-2">Search Results</h2>
                             <div className="space-y-2">
                                 {filteredTools.length > 0 ? filteredTools.map((tool) => (
                                     <Link
@@ -149,7 +149,11 @@ export function MobileHome() {
                     <div
                         className="aspect-[4/5] bg-[#111] dark:bg-[#000] rounded-[3xl] p-4 flex flex-col justify-between relative overflow-hidden group shadow-xl transition-all duration-300 active:scale-95"
                     >
-                        <Link href="/tools?category=converters" className="absolute inset-0 z-20" />
+                        <Link
+                            href="/tools?category=converters"
+                            className="absolute inset-0 z-20"
+                            aria-label="View all Smart Converters"
+                        />
                         <div>
                             <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center mb-3">
                                 <Replace className="w-5 h-5 text-white" />
@@ -169,7 +173,11 @@ export function MobileHome() {
                     <div
                         className="aspect-[4/5] bg-white dark:bg-zinc-100 rounded-[3xl] p-4 flex flex-col justify-between relative overflow-hidden group shadow-xl transition-all duration-300 active:scale-95"
                     >
-                        <Link href="/tools?category=productivity" className="absolute inset-0 z-20" />
+                        <Link
+                            href="/tools?category=productivity"
+                            className="absolute inset-0 z-20"
+                            aria-label="View all Power Utilities"
+                        />
                         <div>
                             <div className="w-10 h-10 rounded-full bg-black/5 flex items-center justify-center mb-3">
                                 <Wrench className="w-5 h-5 text-black" />
@@ -225,7 +233,7 @@ function RecommendationList({ tools }: { tools: any[] }) {
                         className="flex items-center justify-between p-5 bg-muted/50 rounded-[2rem] hover:opacity-90 transition-opacity group"
                     >
                         <div className="flex flex-col gap-2">
-                            <h4 className="text-base font-bold text-foreground">{tool.name}</h4>
+                            <h3 className="text-base font-bold text-foreground">{tool.name}</h3>
                             <div className="flex items-center gap-2">
                                 <span className="text-[10px] font-bold text-primary bg-primary/10 px-3 py-1 rounded-full uppercase tracking-wider">
                                     Utility

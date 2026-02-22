@@ -1,29 +1,28 @@
 --- Categories ---
-Performance: 0.73
+Performance: 0.77
 Accessibility: 0.91
 Best Practices: 0.92
 SEO: 0.91
 
 --- Top Failing Audits ---
-Browser errors were logged to the console (errors-in-console): score=0, value=null, details=6 items
-Minimize main-thread work (mainthread-work-breakdown): score=0, value=2.6 s, details=6 items
+Browser errors were logged to the console (errors-in-console): score=0, value=null, details=8 items
+Minimize main-thread work (mainthread-work-breakdown): score=0, value=3.8 s, details=7 items
+Reduce JavaScript execution time (bootup-time): score=0, value=1.7 s, details=7 items
 Background and foreground colors do not have a sufficient contrast ratio. (color-contrast): score=0, value=null, details=4 items
 Heading elements are not in a sequentially-descending order (heading-order): score=0, value=null, details=1 items
 Elements with visible text labels do not have matching accessible names. (label-content-name-mismatch): score=0, value=null, details=1 items
 Links do not have a discernible name (link-name): score=0, value=null, details=2 items
-Reduce unused CSS (unused-css-rules): score=0, value=Est savings of 18 KiB, details=1 items
-  - https://tool-daddy-v-5.vercel.app/_next/static/chunks/88387ba0f6c080d9.css: undefinedms wasted
-Reduce unused JavaScript (unused-javascript): score=0, value=Est savings of 437 KiB, details=6 items
-  - https://www.googletagmanager.com/gtag/js?id=G-SPWZ25MGLC: undefinedms wasted
-  - https://www.googletagmanager.com/gtag/js?id=G-SPWZ25MGLC&cx=c&gtm=4e62i1: undefinedms wasted
+Reduce unused JavaScript (unused-javascript): score=0, value=Est savings of 337 KiB, details=5 items
+  - https://www.googletagmanager.com/gtag/js?l=dataLayer&id=G-SPWZ25MGLC: undefinedms wasted
   - https://tool-daddy-v-5.vercel.app/_next/static/chunks/30b4118e568d0a8a.js: undefinedms wasted
   - https://www.googletagmanager.com/gtm.js?id=GTM-P2725PBH: undefinedms wasted
-  - https://www.googletagmanager.com/gtag/js?l=dataLayer&id=G-SPWZ25MGLC: undefinedms wasted
+  - https://www.googletagmanager.com/gtag/js?id=G-SPWZ25MGLC: undefinedms wasted
   - https://tool-daddy-v-5.vercel.app/_next/static/chunks/2cdf2cb014f4654e.js: undefinedms wasted
 Issues were logged in the `Issues` panel in Chrome Devtools (inspector-issues): score=0, value=null, details=1 items
 robots.txt is not valid (robots-txt): score=0, value=1 error found, details=1 items
-Page prevented back/forward cache restoration (bf-cache): score=0, value=3 failure reasons, details=3 items
-Duplicated JavaScript (duplicated-javascript-insight): score=0, value=Est savings of 1 KiB, details=4 items
-Legacy JavaScript (legacy-javascript-insight): score=0, value=Est savings of 14 KiB, details=1 items
 Network dependency tree (network-dependency-tree-insight): score=0, value=null, details=3 items
-Render blocking requests (render-blocking-insight): score=0, value=Est savings of 110 ms, details=2 items
+Render blocking requests (render-blocking-insight): score=0, value=Est savings of 100 ms, details=2 items
+Largest Contentful Paint (largest-contentful-paint): score=0.11, value=6.2 s, details=none
+Reduce unused CSS (unused-css-rules): score=0.5, value=Est savings of 18 KiB, details=1 items
+  - https://tool-daddy-v-5.vercel.app/_next/static/chunks/1b5459b2f5bff562.css: undefinedms wasted
+Duplicated JavaScript (duplicated-javascript-insight): score=0.5, value=Est savings of 10 KiB, details=10 items

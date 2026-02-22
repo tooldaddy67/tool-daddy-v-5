@@ -1,0 +1,45 @@
+--- Categories ---
+Performance: 0.77
+Accessibility: 0.91
+Best Practices: 0.92
+SEO: 0.91
+
+--- Top Failing Audits ---
+Browser errors were logged to the console (errors-in-console): score=0, value=null
+  - Error: security | Connecting to 'https://firebase.googleapis.com/v1alpha/projects/-/apps/1:233526439835:web:3cfbfa379c9b6c55edfb3e/webConfig' violates the following Content Security Policy directive: "connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://firebaseinstallations.googleapis.com https://www.google-analytics.com https://us-central1-tool-dady.cloudfunctions.net https://accounts.google.com https://*.firebaseapp.com". The action has been blocked.
+  - Error: network | Failed to load resource: the server responded with a status of 400 ()
+  - Error: network | Failed to load resource: the server responded with a status of 404 ()
+  - Error: javascript | Fetch API cannot load https://firebase.googleapis.com/v1alpha/projects/-/apps/1:233526439835:web:3cfbfa379c9b6c55edfb3e/webConfig. Refused to connect because it violates the document's Content Security Policy.
+  - Error: console.error | FirebaseError: Installations: Create Installation request failed with error "400 INVALID_ARGUMENT: Request contains an invalid argument." (installations/request-failed).
+    at v (https://tool-daddy-v-5.vercel.app/_next/static/chunks/30b4118e568d0a8a.js:21:70714)
+    at async I (https://tool-daddy-v-5.vercel.app/_next/static/chunks/30b4118e568d0a8a.js:21:71473)
+    at async M (https://tool-daddy-v-5.vercel.app/_next/static/chunks/30b4118e568d0a8a.js:21:73543)
+Minimize main-thread work (mainthread-work-breakdown): score=0, value=3.8 s
+Reduce JavaScript execution time (bootup-time): score=0, value=1.7 s
+Background and foreground colors do not have a sufficient contrast ratio. (color-contrast): score=0, value=null
+  - Node: <p class="text-xs font-bold text-muted-foreground uppercase tracking-widest mt-1 opa…"> | Ratio: undefined
+  - Node: <p class="text-[10px] sm:text-xs px-4 sm:px-0"> | Ratio: undefined
+  - Node: <a href="https://policies.google.com/privacy" class="underline hover:text-foreground"> | Ratio: undefined
+  - Node: <a href="https://policies.google.com/terms" class="underline hover:text-foreground"> | Ratio: undefined
+Heading elements are not in a sequentially-descending order (heading-order): score=0, value=null
+  - Node: <h4 class="text-base font-bold text-foreground">
+Elements with visible text labels do not have matching accessible names. (label-content-name-mismatch): score=0, value=null
+Links do not have a discernible name (link-name): score=0, value=null
+  - Link Node: <a class="absolute inset-0 z-20" href="/tools?category=converters">
+  - Link Node: <a class="absolute inset-0 z-20" href="/tools?category=productivity">
+Reduce unused JavaScript (unused-javascript): score=0, value=Est savings of 337 KiB
+  - URL: https://www.googletagmanager.com/gtag/js?l=dataLayer&id=G-SPWZ25MGLC | Wasted: 102352
+  - URL: https://tool-daddy-v-5.vercel.app/_next/static/chunks/30b4118e568d0a8a.js | Wasted: 94019
+  - URL: https://www.googletagmanager.com/gtm.js?id=GTM-P2725PBH | Wasted: 67339
+  - URL: https://www.googletagmanager.com/gtag/js?id=G-SPWZ25MGLC | Wasted: 60989
+  - URL: https://tool-daddy-v-5.vercel.app/_next/static/chunks/2cdf2cb014f4654e.js | Wasted: 20713
+Issues were logged in the `Issues` panel in Chrome Devtools (inspector-issues): score=0, value=null
+robots.txt is not valid (robots-txt): score=0, value=1 error found
+Network dependency tree (network-dependency-tree-insight): score=0, value=null
+Render blocking requests (render-blocking-insight): score=0, value=Est savings of 100 ms
+Largest Contentful Paint (largest-contentful-paint): score=0.11, value=6.2 s
+Reduce unused CSS (unused-css-rules): score=0.5, value=Est savings of 18 KiB
+  - URL: https://tool-daddy-v-5.vercel.app/_next/static/chunks/1b5459b2f5bff562.css | Wasted: 18467
+Duplicated JavaScript (duplicated-javascript-insight): score=0.5, value=Est savings of 10 KiB
+Legacy JavaScript (legacy-javascript-insight): score=0.5, value=Est savings of 14 KiB
+Time to Interactive (interactive): score=0.53, value=7.0 s

@@ -23,8 +23,8 @@ export function RecentActivity() {
                     <div className="h-6 w-32 bg-muted/20 animate-pulse rounded-full" />
                 </div>
                 <div className="flex px-5 gap-3">
-                    <div className="w-[160px] h-[140px] rounded-3xl bg-muted/10 animate-pulse flex-shrink-0" />
-                    <div className="w-[160px] h-[140px] rounded-3xl bg-muted/10 animate-pulse flex-shrink-0" />
+                    <div className="w-[160px] h-10 rounded-2xl bg-muted/10 animate-pulse flex-shrink-0" />
+                    <div className="w-[160px] h-10 rounded-2xl bg-muted/10 animate-pulse flex-shrink-0" />
                 </div>
             </div>
         );
@@ -69,9 +69,9 @@ export function RecentActivity() {
                                 </div>
 
                                 <div>
-                                    <h4 className="font-bold text-sm text-foreground line-clamp-2 leading-tight mb-1">
+                                    <h3 className="font-bold text-sm text-foreground line-clamp-2 leading-tight mb-1">
                                         {tool.name}
-                                    </h4>
+                                    </h3>
                                     <div className="flex items-center text-[10px] text-muted-foreground group-hover:text-primary transition-colors">
                                         Open Tool <ArrowRight className="w-3 h-3 ml-1 -rotate-45 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
                                     </div>
