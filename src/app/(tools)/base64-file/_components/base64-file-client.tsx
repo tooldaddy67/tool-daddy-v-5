@@ -9,6 +9,21 @@ import { FileUp, FileDown, Copy, Check, Trash2, Download, Eye, FileText } from '
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
 
+function RelativeImageWrapper({ base64, fileType }: { base64: string, fileType: string }) {
+    const src = `data:${fileType || (base64.startsWith('iVBORw') ? 'image/png' : 'image/jpeg')};base64,${base64}`;
+    return (
+        <div className="relative w-full h-full">
+            <Image
+                src={src}
+                alt="Preview"
+                fill
+                className="object-contain"
+                unoptimized
+            />
+        </div>
+    );
+}
+
 export default function Base64FileClient() {
     const [fileBase64, setFileBase64] = useState('');
     const [fileName, setFileName] = useState('');
@@ -246,12 +261,8 @@ export default function Base64FileClient() {
                     <CardContent className="flex-1 flex flex-col gap-6">
                         {fileBase64 && isImage ? (
                             <div className="relative aspect-video w-full rounded-2xl overflow-hidden border-2 border-primary/20 bg-black/20 flex items-center justify-center">
-                                <img
-                                    src={`data:${fileType || (fileBase64.startsWith('iVBORw') ? 'image/png' : 'image/jpeg')};base64,${fileBase64}`}
-                                    alt="Preview"
-                                    className="max-h-full object-contain"
-                                />
-                                <div className="absolute top-4 right-4 p-2 bg-background/80 blur-backdrop rounded-lg border border-border text-[10px] font-bold uppercase">
+                                <RelativeImageWrapper base64={fileBase64} fileType={fileType} />
+                                <div className="absolute top-4 right-4 p-2 bg-background/80 blur-backdrop rounded-lg border border-border text-[10px] font-bold uppercase z-10">
                                     Image Preview
                                 </div>
                             </div>

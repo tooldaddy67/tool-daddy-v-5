@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { BlogPost } from '@/lib/blog-server';
 import { Calendar, User, ArrowRight } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import Image from 'next/image';
 // @ts-ignore
 import { motion } from 'framer-motion';
 
@@ -49,8 +50,7 @@ export function BlogCard({ post, index }: BlogCardProps) {
                         <div className="flex items-center gap-2">
                             <div className="h-6 w-6 rounded-full bg-primary/20 flex items-center justify-center overflow-hidden">
                                 {post.author?.photoURL ?
-                                    // eslint-disable-next-line @next/next/no-img-element
-                                    <img src={post.author.photoURL} alt={post.author.displayName} className="h-full w-full object-cover" />
+                                    <Image src={post.author.photoURL} alt={post.author.displayName || "Author"} width={24} height={24} className="h-full w-full object-cover" />
                                     : <User className="h-3 w-3 text-primary" />
                                 }
                             </div>

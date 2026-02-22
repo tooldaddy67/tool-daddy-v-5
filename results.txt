@@ -1,0 +1,57 @@
+--- Categories ---
+Performance: 0.73
+Accessibility: 0.91
+Best Practices: 0.92
+SEO: 1
+
+--- Top Failing Audits ---
+Browser errors were logged to the console (errors-in-console): score=0, value=null, details=4 items
+Missing source maps for large first-party JavaScript (valid-source-maps): score=0, value=null, details=35 items
+Background and foreground colors do not have a sufficient contrast ratio. (color-contrast): score=0, value=null, details=4 items
+Heading elements are not in a sequentially-descending order (heading-order): score=0, value=null, details=1 items
+Elements with visible text labels do not have matching accessible names. (label-content-name-mismatch): score=0, value=null, details=1 items
+Links do not have a discernible name (link-name): score=0, value=null, details=2 items
+Minify JavaScript (unminified-javascript): score=0, value=Est savings of 492 KiB, details=23 items
+  - http://localhost:3000/_next/static/chunks/node_modules_%40firebase_firestore_dist_index_esm2017_d9c36ae7.js: undefinedms wasted
+  - http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_17643121._.js: undefinedms wasted
+  - http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js: undefinedms wasted
+  - http://localhost:3000/_next/static/chunks/94568_%40firebase_auth_dist_esm2017_39867e80._.js: undefinedms wasted
+  - http://localhost:3000/_next/static/chunks/node_modules_%40firebase_0ec1a0bf._.js: undefinedms wasted
+  - http://localhost:3000/_next/static/chunks/node_modules_a8213fe3._.js: undefinedms wasted
+  - http://localhost:3000/_next/static/chunks/node_modules_motion-dom_dist_es_f159af65._.js: undefinedms wasted
+  - http://localhost:3000/_next/static/chunks/src_0c5cdd05._.js: undefinedms wasted
+  - http://localhost:3000/_next/static/chunks/node_modules_a334985a._.js: undefinedms wasted
+  - http://localhost:3000/_next/static/chunks/node_modules_next_dist_f3530cac._.js: undefinedms wasted
+  - http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_a0e4c7b4._.js: undefinedms wasted
+  - http://localhost:3000/_next/static/chunks/node_modules_next_3883ef45._.js: undefinedms wasted
+  - http://localhost:3000/_next/static/chunks/node_modules_123e5e8e._.js: undefinedms wasted
+  - http://localhost:3000/_next/static/chunks/node_modules_%40radix-ui_4ba79eb8._.js: undefinedms wasted
+  - http://localhost:3000/_next/static/chunks/src_48bd0865._.js: undefinedms wasted
+  - http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-server-dom-turbopack_9212ccad._.js: undefinedms wasted
+  - http://localhost:3000/_next/static/chunks/turbopack-_23a915ee._.js: undefinedms wasted
+  - http://localhost:3000/_next/static/chunks/node_modules_next_dist_be32b49c._.js: undefinedms wasted
+  - http://localhost:3000/_next/static/chunks/node_modules_%40floating-ui_1b6e7b6d._.js: undefinedms wasted
+  - http://localhost:3000/_next/static/chunks/_7351949d._.js: undefinedms wasted
+  - http://localhost:3000/_next/static/chunks/src_components_94ed7bb3._.js: undefinedms wasted
+  - http://localhost:3000/_next/static/chunks/node_modules_lucide-react_dist_esm_39f27f11._.js: undefinedms wasted
+  - http://localhost:3000/_next/static/chunks/node_modules_957995aa._.js: undefinedms wasted
+Reduce unused JavaScript (unused-javascript): score=0, value=Est savings of 798 KiB, details=11 items
+  - http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_next-devtools_index_1dd7fb59.js: undefinedms wasted
+  - http://localhost:3000/_next/static/chunks/node_modules_%40firebase_firestore_dist_index_esm2017_d9c36ae7.js: undefinedms wasted
+  - https://www.googletagmanager.com/gtag/js?l=dataLayer&id=G-SPWZ25MGLC: undefinedms wasted
+  - https://www.googletagmanager.com/gtm.js?id=GTM-P2725PBH: undefinedms wasted
+  - http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_17643121._.js: undefinedms wasted
+  - https://www.googletagmanager.com/gtag/js?id=G-SPWZ25MGLC: undefinedms wasted
+  - http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js: undefinedms wasted
+  - http://localhost:3000/_next/static/chunks/94568_%40firebase_auth_dist_esm2017_39867e80._.js: undefinedms wasted
+  - http://localhost:3000/_next/static/chunks/node_modules_%40radix-ui_4ba79eb8._.js: undefinedms wasted
+  - http://localhost:3000/_next/static/chunks/node_modules_123e5e8e._.js: undefinedms wasted
+  - http://localhost:3000/_next/static/chunks/node_modules_%40firebase_0ec1a0bf._.js: undefinedms wasted
+Issues were logged in the `Issues` panel in Chrome Devtools (inspector-issues): score=0, value=null, details=1 items
+Page prevented back/forward cache restoration (bf-cache): score=0, value=5 failure reasons, details=5 items
+Network dependency tree (network-dependency-tree-insight): score=0, value=null, details=3 items
+Largest Contentful Paint (largest-contentful-paint): score=0.46, value=2.5 s, details=none
+Reduce unused CSS (unused-css-rules): score=0.5, value=Est savings of 20 KiB, details=1 items
+  - http://localhost:3000/_next/static/chunks/%5Broot-of-the-server%5D__239163b7._.css: undefinedms wasted
+Legacy JavaScript (legacy-javascript-insight): score=0.5, value=Est savings of 8 KiB, details=1 items
+Render blocking requests (render-blocking-insight): score=0.5, value=null, details=1 items
