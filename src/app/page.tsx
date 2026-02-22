@@ -1,24 +1,14 @@
-"use client"
-
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
-import { useUser } from '@/firebase/provider';
-import ToolGrid from '@/components/tool-grid';
-import DynamicToolCard from '@/components/dynamic-tool-card';
-import { Sparkles, Minimize, Shuffle, ChevronDown } from 'lucide-react';
+import { HomeTools } from '@/components/home-tools';
 
 const MobileHome = dynamic(() => import('@/components/mobile/mobile-home').then(mod => mod.MobileHome), {
-  ssr: true, // Keep SSR for SEO on the home screen
   loading: () => <div className="min-h-screen bg-background animate-pulse" />
 });
 
-const DesktopDashboard = dynamic(() => import('@/components/desktop-dashboard').then(mod => mod.DesktopDashboard), {
-  ssr: false // Only needed on desktop client
-});
+import { DesktopDashboard } from '@/components/desktop-dashboard-wrapper';
 
 export default function Home() {
-  const { user } = useUser();
-
   return (
     <>
       <MobileHome />
@@ -46,46 +36,7 @@ export default function Home() {
           <DesktopDashboard />
 
           {/* Explore Our Tools Section */}
-          <section className="space-y-12 py-12">
-            <div className="flex flex-col items-center text-center space-y-4">
-              <h2 className="text-4xl font-bold tracking-tight font-headline">Explore Our Tools</h2>
-              <p className="text-muted-foreground max-w-2xl text-lg">
-                Discover a wide range of utilities designed to boost your productivity.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <DynamicToolCard
-                name="AI Image Enhancer"
-                description="Upscale and enhance your images before being redirected."
-                href="/ai-image-enhancer"
-                icon={Sparkles}
-                isExternal={false}
-                variantIndex={0}
-              />
-              <DynamicToolCard
-                name="Image Compressor"
-                description="Reduce image file size while maintaining quality."
-                href="/image-compressor"
-                icon={Minimize}
-                variantIndex={1}
-              />
-              <DynamicToolCard
-                name="Token Generator"
-                description="Generate random strings with customizable character sets."
-                href="/token-generator"
-                icon={Shuffle}
-                variantIndex={2}
-              />
-            </div>
-
-            <div className="flex justify-center">
-              <Link href="/tools" className="group flex flex-col items-center gap-2 text-muted-foreground hover:text-primary transition-colors">
-                <span className="text-lg font-medium">Explore More Tools</span>
-                <ChevronDown className="w-6 h-6 animate-bounce group-hover:text-primary" />
-              </Link>
-            </div>
-          </section>
+          <HomeTools />
         </main>
       </div>
     </>

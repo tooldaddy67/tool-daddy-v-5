@@ -3,6 +3,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { useFirebase, useAuth } from '@/firebase';
 import { updateProfile } from 'firebase/auth';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -51,9 +52,9 @@ export default function DashboardPage() {
         <div className="container mx-auto py-10 space-y-8 px-4">
             {/* Header Section */}
             <div className="flex flex-col md:flex-row items-center md:items-start gap-6 bg-card/50 backdrop-blur-sm p-6 rounded-2xl border border-border/20 shadow-sm">
-                <div className="h-24 w-24 rounded-full bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center text-white text-3xl font-bold uppercase shadow-lg shrink-0 overflow-hidden">
+                <div className="h-24 w-24 rounded-full bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center text-white text-3xl font-bold uppercase shadow-lg shrink-0 overflow-hidden relative">
                     {user.photoURL ? (
-                        <img src={user.photoURL} alt={user.displayName || 'User'} className="h-full w-full object-cover" />
+                        <Image src={user.photoURL} alt={user.displayName || 'User'} fill className="object-cover" />
                     ) : (
                         (user.displayName?.[0] || user.email?.[0] || 'U')
                     )}
