@@ -16,7 +16,21 @@ export function RecentActivity() {
         return null;
     };
 
-    if (!isLoaded || recentTools.length === 0) return null;
+    if (!isLoaded) {
+        return (
+            <div className="w-full mb-8 xl:hidden">
+                <div className="px-5 mb-4 flex items-center justify-between">
+                    <div className="h-6 w-32 bg-muted/20 animate-pulse rounded-full" />
+                </div>
+                <div className="flex px-5 gap-3">
+                    <div className="w-[160px] h-[140px] rounded-3xl bg-muted/10 animate-pulse flex-shrink-0" />
+                    <div className="w-[160px] h-[140px] rounded-3xl bg-muted/10 animate-pulse flex-shrink-0" />
+                </div>
+            </div>
+        );
+    }
+
+    if (recentTools.length === 0) return null;
 
     const displayTools = recentTools
         .map(rt => {

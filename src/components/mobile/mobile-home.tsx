@@ -20,7 +20,7 @@ const NotificationsPopover = dynamic(() => import("./notifications-popover").the
 
 const RecentActivity = dynamic(() => import("./recent-activity").then(mod => mod.RecentActivity), {
     ssr: false,
-    loading: () => <div className="h-32 w-full bg-muted/20 animate-pulse rounded-3xl mb-8" />
+    loading: () => <div className="h-44 w-full bg-muted/10 animate-pulse rounded-3xl mb-8" />
 });
 
 export function MobileHome() {
@@ -43,20 +43,15 @@ export function MobileHome() {
         ).slice(0, 8);
     }, [searchQuery]);
 
-    // Recommended tools for the "Special for you" section - Dynamic Shuffle
+    // Recommended tools for the "Special for you" section - Dynamic Shuffle after mount
     const recommendedTools = useMemo(() => {
         const mobileTools = ALL_TOOLS.filter(tool => !tool.isExternal && !tool.desktopOnly);
 
-        // During SSR or first client render, return a stable subset
+        // During SSR or first client render, return a stable subset to avoid CLS and double render
         if (!mounted) return mobileTools.slice(0, 3);
 
-        // Fischer-Yates Shuffle (only on Client after mount)
-        const shuffled = [...mobileTools];
-        for (let i = shuffled.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-        }
-        return shuffled.slice(0, 3);
+        // Simple shuffle (only on Client after mount) - avoid complex logic if possible
+        return [...mobileTools].sort(() => Math.random() - 0.5).slice(0, 3);
     }, [mounted]);
 
     const greeting = useMemo(() => {
@@ -74,15 +69,12 @@ export function MobileHome() {
             {/* Header / Top Info */}
             <div className="pt-12 px-6 pb-6 space-y-6">
                 <div className="flex items-center justify-between">
-                    <m.div
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                    >
+                    <div>
                         <h2 className="text-2xl font-black tracking-tight text-foreground">
                             {greeting}
                         </h2>
                         <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mt-1 opacity-60">Ready to build something?</p>
-                    </m.div>
+                    </div>
 
                     <div className="flex items-center gap-2">
                         <ThemeToggle />
@@ -91,12 +83,7 @@ export function MobileHome() {
                 </div>
 
                 {/* Search Bar - Functional */}
-                <m.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1 }}
-                    className="relative"
-                >
+                <div className="relative">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
                     <input
                         type="text"
@@ -105,14 +92,9 @@ export function MobileHome() {
                         onChange={(e) => setSearchQuery(e.target.value)}
                         className="w-full h-14 bg-secondary/50 border border-border/40 rounded-2xl pl-12 pr-4 text-sm font-bold focus:bg-secondary focus:border-primary/50 transition-all outline-none"
                     />
-                </m.div>
+                </div>
 
-                <m.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.2 }}
-                    className="w-full overflow-x-auto scrollbar-hide no-scrollbar snap-x snap-mandatory"
-                >
+                <div className="w-full overflow-x-auto scrollbar-hide no-scrollbar snap-x snap-mandatory">
                     <div className="flex gap-2 pb-2 px-1 w-max">
                         {ALL_TOOLS_CATEGORIES.map((cat) => (
                             <Link
@@ -124,7 +106,7 @@ export function MobileHome() {
                             </Link>
                         ))}
                     </div>
-                </m.div>
+                </div>
             </div>
 
             <div className="px-6 space-y-10 flex-1">
@@ -164,11 +146,8 @@ export function MobileHome() {
                 {/* Hero Feature Cards */}
                 <div className="grid grid-cols-2 gap-4">
                     {/* Left Card - Dark Theme (Converters) */}
-                    <m.div
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: 0.2 }}
-                        className="aspect-[4/5] bg-[#111] dark:bg-[#000] rounded-[2rem] p-5 flex flex-col justify-between relative overflow-hidden group shadow-xl"
+                    <div
+                        className="aspect-[4/5] bg-[#111] dark:bg-[#000] rounded-[3xl] p-4 flex flex-col justify-between relative overflow-hidden group shadow-xl transition-all duration-300 active:scale-95"
                     >
                         <Link href="/tools?category=converters" className="absolute inset-0 z-20" />
                         <div>
@@ -184,14 +163,11 @@ export function MobileHome() {
                                 <ArrowRight className="w-4 h-4 text-black" />
                             </div>
                         </div>
-                    </m.div>
+                    </div>
 
                     {/* Right Card - Light Theme (Power Utilities) */}
-                    <m.div
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: 0.3 }}
-                        className="aspect-[4/5] bg-white dark:bg-zinc-100 rounded-[2rem] p-5 flex flex-col justify-between relative overflow-hidden group shadow-xl"
+                    <div
+                        className="aspect-[4/5] bg-white dark:bg-zinc-100 rounded-[3xl] p-4 flex flex-col justify-between relative overflow-hidden group shadow-xl transition-all duration-300 active:scale-95"
                     >
                         <Link href="/tools?category=productivity" className="absolute inset-0 z-20" />
                         <div>
@@ -207,7 +183,7 @@ export function MobileHome() {
                                 <ArrowRight className="w-4 h-4 text-white" />
                             </div>
                         </div>
-                    </m.div>
+                    </div>
                 </div>
 
                 {/* Jump Back In - Recent Activity */}
