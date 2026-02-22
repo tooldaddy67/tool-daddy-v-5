@@ -45,6 +45,12 @@ export default function AppFooter() {
             <Link href="https://discord.gg/TgErTdrGrG" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2" aria-label="Join our Discord community">
               <DiscordIcon />
             </Link>
+            <Link href="/privacy" className="text-muted-foreground hover:text-foreground transition-colors whitespace-nowrap">
+              Privacy Policy
+            </Link>
+            <Link href="/terms" className="text-muted-foreground hover:text-foreground transition-colors whitespace-nowrap">
+              Terms
+            </Link>
             <Link href="/about" className="text-muted-foreground hover:text-foreground transition-colors whitespace-nowrap">
               About Us
             </Link>
