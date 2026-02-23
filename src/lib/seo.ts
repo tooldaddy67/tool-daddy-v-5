@@ -1,12 +1,15 @@
 import { Metadata } from 'next';
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://tool-daddy.com';
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ||
+    (process.env.NODE_ENV === 'development'
+        ? 'http://localhost:3000'
+        : 'https://tool-daddy.com');
 
 export function constructMetadata({
     title = 'Tool Daddy - Your Ultimate Suite of Online Tools',
     description = 'Your complete suite for media manipulation. Convert, download, enhance, and more. All in one place.',
     image = '/og-image.png',
-    icons = '/favicon.ico',
+    icons = '/icon.png',
     noIndex = false,
     canonical = '',
     keywords = [],
@@ -14,7 +17,7 @@ export function constructMetadata({
     title?: string;
     description?: string;
     image?: string;
-    icons?: string;
+    icons?: string | Metadata['icons'];
     noIndex?: boolean;
     canonical?: string;
     keywords?: string[];
@@ -66,7 +69,15 @@ export function constructMetadata({
             images: [image.startsWith('http') ? image : `${BASE_URL}${image}`],
             creator: '@tooldaddy',
         },
-        icons,
+        appleWebApp: {
+            capable: true,
+            statusBarStyle: 'default',
+            title,
+        },
+        icons: {
+            icon: icons as string,
+            apple: icons as string,
+        },
         ...(noIndex && {
             robots: {
                 index: false,
