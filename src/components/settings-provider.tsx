@@ -17,7 +17,7 @@ export type BorderStyle = 'sharp' | 'smooth' | 'round';
 export type BGStyle = 'dark' | 'mesh' | 'pulse';
 export type SidebarStyle = 'full' | 'mini' | 'float';
 export type CardStyle = 'glass' | 'neo' | 'minimal';
-export type Outfit = 'default' | 'windows-xp' | 'mac-os' | 'elementary-os' | 'linux-mint' | 'kde-plasma';
+export type Outfit = 'default' | 'windows-xp' | 'mac-os' | 'elementary-os' | 'linux-mint' | 'kde-plasma' | 'terminal';
 
 interface UserSettings {
     displayName: string;

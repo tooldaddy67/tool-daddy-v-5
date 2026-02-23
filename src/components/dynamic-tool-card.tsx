@@ -17,6 +17,7 @@ interface DynamicToolCardProps {
   isExternal?: boolean;
   variantIndex?: number;
   compact?: boolean;
+  className?: string;
 }
 
 const CardSkeleton = () => (

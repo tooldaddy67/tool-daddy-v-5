@@ -1,19 +1,40 @@
-
 'use client';
 
 import { TOOL_CATEGORIES } from '@/lib/constants';
 import DynamicToolCard from '@/components/dynamic-tool-card';
 import { useSettings } from '@/components/settings-provider';
+import { XPToolLayout } from './outfits/xp-layout';
+import { MacLaunchpadLayout } from './outfits/mac-layout';
+import { TerminalLayout } from './outfits/terminal-layout';
 
 export default function ToolGrid() {
   const { settings } = useSettings();
   let toolIndex = 0;
 
+  // --- Render Custom OS Layouts ---
+  if (settings.outfit === 'windows-xp') {
+    return <XPToolLayout />;
+  }
+
+  if (settings.outfit === 'mac-os') {
+    return <MacLaunchpadLayout />;
+  }
+
+  // Use Terminal layout for certain Linux fits if preferred, or as a distinct experience
+  // For now, let's tie it to 'kde-plasma' or similar if they want a power-user feel, or keep it as an option.
+  // Actually, let's make it easy to trigger for any 'linux' type fit if requested, 
+  // but for now let's just use it if the user specifically selects it.
+  // Assuming 'elementary-os' is the more traditional one, maybe KDE gets the terminal?
+  // User said "Linux Mode: A Terminal interface", so let's check for any linux fit or add a 'cli' fit if possible.
+  if (settings.outfit === 'terminal') {
+    return <TerminalLayout />;
+  }
+
   const getGridClass = () => {
     switch (settings.uiDensity) {
       case 'cozy':
         return 'grid-cols-1';
-      case 'compact': // Revert to 3 cols for wider cards, matching standard but with compact height
+      case 'compact':
         return 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3';
       case 'standard':
       default:

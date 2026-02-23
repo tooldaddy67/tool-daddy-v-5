@@ -437,7 +437,8 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                                         { id: 'mac-os', label: 'Mac OS' },
                                         { id: 'elementary-os', label: 'Elementary OS' },
                                         { id: 'linux-mint', label: 'Linux Mint' },
-                                        { id: 'kde-plasma', label: 'KDE Plasma' }
+                                        { id: 'kde-plasma', label: 'KDE Plasma' },
+                                        { id: 'terminal', label: 'Terminal (CLI)' }
                                     ] as { id: Outfit; label: string }[]).map((o) => (
                                         <button
                                             key={o.id}
