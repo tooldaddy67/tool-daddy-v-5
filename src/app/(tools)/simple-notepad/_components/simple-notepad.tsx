@@ -5,7 +5,7 @@ import { useUser } from '@/firebase';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Notebook, Bold, Italic, Highlighter, Download, Loader2, Trash2, Brush, Maximize, Minimize, ChevronDown, Paintbrush, List, ListOrdered, Heading1, Heading2, Heading3, Pilcrow } from 'lucide-react';
+import { Notebook, Bold, Italic, Highlighter, Download, Loader2, Trash2, Brush, Maximize, Minimize, ChevronDown, Paintbrush, List, ListOrdered, Heading1, Heading2, Heading3, Pilcrow, Volume2 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import {
   Dialog,
@@ -64,6 +64,29 @@ export default function SimpleNotepad() {
   const [isPdfDialogOpen, setIsPdfDialogOpen] = useState(false);
   const [isTxtDialogOpen, setIsTxtDialogOpen] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
+  const [keyboardSoundEnabled, setKeyboardSoundEnabled] = useState(true);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Initialize audio
+  useEffect(() => {
+    const audio = new Audio('/audio/keyboard-click.mp3');
+    audio.preload = 'auto';
+    audioRef.current = audio;
+  }, []);
+
+  const playKeyboardSound = useCallback(() => {
+    if (keyboardSoundEnabled && audioRef.current) {
+      // Create a short-lived audio element for overlapping sounds
+      const sound = new Audio('/audio/keyboard-click.mp3');
+      sound.volume = 0.4;
+      const playPromise = sound.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(() => {
+          // Ignore errors like "user hasn't interacted"
+        });
+      }
+    }
+  }, [keyboardSoundEnabled]);
 
   const [isAdModalOpen, setIsAdModalOpen] = useState(false);
   const [downloadType, setDownloadType] = useState<'pdf' | 'txt' | null>(null);
@@ -433,6 +456,10 @@ export default function SimpleNotepad() {
                   </DialogContent>
                 </Dialog>
 
+                <Button variant="outline" onClick={() => setKeyboardSoundEnabled(!keyboardSoundEnabled)} title={keyboardSoundEnabled ? "Disable keyboard sound" : "Enable keyboard sound"}>
+                  <Volume2 className={cn("mr-2 h-4 w-4", !keyboardSoundEnabled && "text-muted-foreground")} />
+                  {keyboardSoundEnabled ? "Sound On" : "Sound Off"}
+                </Button>
                 <Button variant="outline" onClick={handleClear} title="Clear all notes">
                   <Trash2 className="mr-2 h-4 w-4" />
                   Clear
@@ -451,6 +478,7 @@ export default function SimpleNotepad() {
                 ref={editorRef}
                 contentEditable={true}
                 onInput={handleInput}
+                onKeyDown={playKeyboardSound}
                 suppressContentEditableWarning={true}
                 className="prose prose-sm dark:prose-invert max-w-none p-6 bg-background focus:outline-none flex-grow overflow-y-auto break-words whitespace-pre-wrap"
                 data-placeholder="Start typing..."

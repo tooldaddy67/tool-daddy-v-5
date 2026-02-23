@@ -760,3 +760,285 @@
 .animate-gradient-x {
   animation: gradient-x 3s ease infinite;
 }
+
+/* --- THE OUTFITS SYSTEM --- */
+
+/* --- WINDOWS XP OUTFIT --- */
+[data-outfit="windows-xp"] {
+  --radius: 0px !important;
+  /* XP is sharp by default */
+  --font-headline: 'Tahoma', 'Trebuchet MS', 'Segoe UI', sans-serif !important;
+  --font-body: 'Tahoma', 'Trebuchet MS', 'Segoe UI', sans-serif !important;
+}
+
+[data-outfit="windows-xp"] body {
+  background: url('https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&q=80&w=2560') no-repeat center center fixed !important;
+  background-size: cover !important;
+  -webkit-font-smoothing: subpixel-antialiased !important;
+  -moz-osx-font-smoothing: auto !important;
+}
+
+/* XP Components */
+[data-outfit="windows-xp"] .tool-island,
+[data-outfit="windows-xp"] .bg-card,
+[data-outfit="windows-xp"] [role="dialog"],
+[data-outfit="windows-xp"] [data-sidebar="sidebar"] {
+  background: #ece9d8 !important;
+  border: 1px solid !important;
+  border-color: #ffffff #808080 #808080 #ffffff !important;
+  border-radius: 8px 8px 0 0 !important;
+  box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.3) !important;
+  color: #000 !important;
+}
+
+/* Dark Mode XP */
+.dark[data-outfit="windows-xp"] .tool-island,
+.dark[data-outfit="windows-xp"] .bg-card,
+.dark[data-outfit="windows-xp"] [role="dialog"],
+.dark[data-outfit="windows-xp"] [data-sidebar="sidebar"],
+.dark [data-outfit="windows-xp"] .tool-island,
+.dark [data-outfit="windows-xp"] .bg-card,
+.dark [data-outfit="windows-xp"] [role="dialog"],
+.dark [data-outfit="windows-xp"] [data-sidebar="sidebar"] {
+  background: #2b2b2b !important;
+  border-color: #444 #111 #111 #444 !important;
+  color: #ddd !important;
+}
+
+[data-outfit="windows-xp"] [data-sidebar="group-label"] {
+  background: linear-gradient(to right, #74a0eb 0%, #a7c6f0 100%) !important;
+  color: #fff !important;
+  font-weight: bold !important;
+  height: 25px !important;
+  padding: 0 10px !important;
+  margin-bottom: 5px !important;
+  border-radius: 4px 4px 0 0 !important;
+  opacity: 1 !important;
+  display: flex !important;
+  align-items: center !important;
+  text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.3) !important;
+}
+
+.dark [data-outfit="windows-xp"] [data-sidebar="group-label"] {
+  background: linear-gradient(to right, #003366 0%, #0066cc 100%) !important;
+}
+
+/* XP Header */
+[data-outfit="windows-xp"] header {
+  background: linear-gradient(to bottom, #245edb 0%, #3f8cf3 9%, #245edb 18%, #245edb 92%, #333 100%) !important;
+  border-bottom: none !important;
+  color: #fff !important;
+  height: 34px !important;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 254, 0.3) !important;
+}
+
+.dark [data-outfit="windows-xp"] header {
+  background: linear-gradient(to bottom, #111 0%, #333 100%) !important;
+}
+
+[data-outfit="windows-xp"] header * {
+  color: #fff !important;
+}
+
+/* XP Buttons */
+[data-outfit="windows-xp"] .bg-primary,
+[data-outfit="windows-xp"] [data-state=active] {
+  background: linear-gradient(to bottom, #54cf54 0%, #3dbd3d 50%, #2e8b2e 100%) !important;
+  border: 1px solid #003c74 !important;
+  border-radius: 6px !important;
+  color: white !important;
+  text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.4) !important;
+  box-shadow: inset 1px 1px 2px rgba(255, 255, 255, 0.5), 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* --- MAC OS OUTFIT --- */
+[data-outfit="mac-os"] {
+  --font-headline: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
+}
+
+[data-outfit="mac-os"] body {
+  background: url('https://images.unsplash.com/photo-1621244290074-601f78fec5ce?auto=format&fit=crop&q=80&w=2560') no-repeat center center fixed !important;
+  background-size: cover !important;
+}
+
+[data-outfit="mac-os"] .tool-island,
+[data-outfit="mac-os"] .bg-card,
+[data-outfit="mac-os"] [role="dialog"],
+[data-outfit="mac-os"] .popover-content,
+[data-outfit="mac-os"] [data-sidebar="sidebar"] {
+  background: hsla(var(--background), 0.6) !important;
+  backdrop-filter: blur(var(--glass-blur)) saturate(180%) !important;
+  border: 0.5px solid hsla(var(--foreground), 0.1) !important;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1) !important;
+  border-radius: calc(var(--radius) * 1.5) !important;
+  color: hsl(var(--foreground)) !important;
+}
+
+[data-outfit="mac-os"] header {
+  background: hsla(var(--background), 0.6) !important;
+  backdrop-filter: blur(20px) !important;
+  border-bottom: 0.5px solid hsla(var(--foreground), 0.1) !important;
+  color: hsl(var(--foreground)) !important;
+}
+
+[data-outfit="mac-os"] header *,
+[data-outfit="mac-os"] [data-sidebar="sidebar"] * {
+  color: hsl(var(--foreground)) !important;
+}
+
+/* Mac Primary Button */
+[data-outfit="mac-os"] .bg-primary {
+  background: #007aff !important;
+  color: #fff !important;
+  border-radius: 8px !important;
+}
+
+/* --- ELEMENTARY OS OUTFIT (Pantheon) --- */
+[data-outfit="elementary-os"] {
+  --font-headline: 'Inter', sans-serif !important;
+}
+
+[data-outfit="elementary-os"] body {
+  background: url('https://images.unsplash.com/photo-1579546929518-9e396f3cc809?auto=format&fit=crop&q=80&w=2560') no-repeat center center fixed !important;
+  background-size: cover !important;
+}
+
+/* Feature 2: Picture-in-Picture (Floating Cards) */
+[data-outfit="elementary-os"] .tool-island,
+[data-outfit="elementary-os"] .bg-card,
+[data-outfit="elementary-os"] [role="dialog"] {
+  background: hsl(var(--card)) !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  border-radius: var(--radius) !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12) !important;
+  color: hsl(var(--foreground)) !important;
+  transition: transform 0.3s ease !important;
+}
+
+/* Feature: Breadcrumb Pathbar (Pantheon Style) */
+[data-outfit="elementary-os"] [aria-label="breadcrumb"] ol {
+  background: rgba(0, 0, 0, 0.05) !important;
+  padding: 4px 12px !important;
+  border-radius: 6px !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+}
+
+[data-outfit="elementary-os"] [aria-label="breadcrumb"] li {
+  color: #333 !important;
+  font-weight: 500 !important;
+}
+
+/* Feature: Tattle-Tale Indicators in Header */
+[data-outfit="elementary-os"] header {
+  background: hsla(var(--background), 0.8) !important;
+  backdrop-filter: blur(15px) !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05) !important;
+  height: 48px !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+}
+
+/* Feature: Tattle-Tale Indicators in Header - Removed per user request to fix settings button */
+
+/* --- LINUX MINT (CINNAMON) --- */
+[data-outfit="linux-mint"] {
+  --primary: 100 40% 45% !important;
+}
+
+[data-outfit="linux-mint"] body {
+  background: #343434 !important;
+  background-image: linear-gradient(135deg, #1a1a1a 0%, #343434 100%) !important;
+}
+
+/* Feature: Corner Bar & Process Monitor */
+[data-outfit="linux-mint"] header {
+  background: #2f2f2f !important;
+  border-bottom: 3px solid #87bf44 !important;
+  height: 40px !important;
+  position: relative !important;
+}
+
+/* Feature: Corner Bar & Process Monitor - Removed per user request to fix settings button */
+
+/* Feature: Nemo Actions & XApp Thumbnailers */
+[data-outfit="linux-mint"] .tool-island {
+  background: hsl(var(--card)) !important;
+  border: 1px solid #808080 !important;
+  border-radius: 4px !important;
+  transition: all 0.2s ease !important;
+}
+
+[data-outfit="linux-mint"] .tool-island:hover {
+  transform: translateY(-2px) !important;
+  border-color: #87bf44 !important;
+  box-shadow: 0 4px 20px rgba(135, 191, 68, 0.2) !important;
+}
+
+[data-outfit="linux-mint"] .bg-primary {
+  background: #87bf44 !important;
+  color: #222 !important;
+  font-weight: bold !important;
+}
+
+/* --- KDE PLASMA OUTFIT (Plasma 6.6 Era) --- */
+[data-outfit="kde-plasma"] {
+  --primary: 200 100% 50% !important;
+}
+
+[data-outfit="kde-plasma"] body {
+  background: url('https://images.unsplash.com/photo-1614850523296-d8c1af93d400?auto=format&fit=crop&q=80&w=2560') no-repeat center center fixed !important;
+  background-size: cover !important;
+}
+
+/* Feature: Floating Panel (Plasma 6.6 style) */
+[data-outfit="kde-plasma"] header {
+  background: hsla(var(--background), 0.8) !important;
+  backdrop-filter: blur(25px) saturate(150%) !important;
+  margin: 10px 20px 0 20px !important;
+  border-radius: 12px !important;
+  border: 1.5px solid hsla(var(--foreground), 0.1) !important;
+  width: calc(100% - 40px) !important;
+  height: 48px !important;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Feature: QR Wi-Fi & Clipboard History in Header */
+/* Feature: QR Wi-Fi & Clipboard History in Header - Removed per user request to fix settings button */
+
+/* Feature: KRunner Search Floating */
+[data-outfit="kde-plasma"] [data-sidebar="input"] {
+  background: hsla(var(--background), 0.95) !important;
+  border: 2px solid hsla(var(--primary), 0.7) !important;
+  border-radius: 10px !important;
+  margin: 15px !important;
+  width: calc(100% - 30px) !important;
+  box-shadow: 0 0 20px hsla(var(--primary), 0.3) !important;
+}
+
+/* Feature: Activities (Sidebar Groups) */
+[data-outfit="kde-plasma"] [data-sidebar="group-label"] {
+  background: linear-gradient(to right, hsla(var(--primary), 0.15), transparent) !important;
+  border-left: 4px solid hsl(var(--primary)) !important;
+  font-weight: 800 !important;
+  padding: 8px 16px !important;
+  color: hsl(var(--primary)) !important;
+}
+
+/* --- UNIVERSAL OUTFIT SUPPORT --- */
+
+/* Grayscale Mode */
+.grayscale [data-outfit] body,
+.grayscale [data-outfit] header,
+.grayscale [data-outfit] .bg-primary,
+.grayscale [data-outfit] [role="dialog"],
+.grayscale [data-outfit] .tool-island {
+  filter: grayscale(100%) contrast(1.1) !important;
+}
+
+/* UI Settings Resilience (Radius/Blur) */
+/* This ensures outfits respect sliders while keeping their core identity */
+[data-outfit="mac-os"],
+[data-outfit="kde-plasma"],
+[data-outfit="elementary-os"] {
+  --radius: var(--card-radius) !important;
+}

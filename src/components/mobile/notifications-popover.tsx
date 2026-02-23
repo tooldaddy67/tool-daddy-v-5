@@ -22,16 +22,59 @@ function timeAgo(date: Date): string {
     return `${days}d ago`;
 }
 
+import { useEffect } from "react";
+import { collection, query, orderBy, onSnapshot, writeBatch, doc } from "firebase/firestore";
+
 export function NotificationsPopover() {
-    const { user, isUserLoading } = useFirebase();
+    const { user, isUserLoading, db } = useFirebase();
     const { settings } = useSettings();
     const [open, setOpen] = useState(false);
+    const [notifications, setNotifications] = useState<any[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
 
-    const notifications: any[] = [];
-    const isLoading = false;
-    const unreadCount = 0;
+    // Fetch notifications
+    useEffect(() => {
+        if (!user || !db || user.isAnonymous) {
+            setIsLoading(false);
+            return;
+        }
 
-    const handleMarkAllRead = useCallback(() => { }, []);
+        const q = query(
+            collection(db, 'profiles', user.uid, 'notifications'),
+            orderBy('createdAt', 'desc')
+        );
+
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const newNotifs = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+            setNotifications(newNotifs);
+            setIsLoading(false);
+        }, (err) => {
+            console.error("Error fetching notifications:", err);
+            setIsLoading(false);
+        });
+
+        return () => unsubscribe();
+    }, [user, db]);
+
+    const unreadCount = useMemo(() =>
+        notifications.filter(n => !n.read).length
+        , [notifications]);
+
+    const handleMarkAllRead = useCallback(async () => {
+        if (!user || !db) return;
+        const unreadNotifs = notifications.filter(n => !n.read);
+        if (unreadNotifs.length === 0) return;
+
+        const batch = writeBatch(db);
+        unreadNotifs.forEach(n => {
+            const ref = doc(db, 'profiles', user.uid, 'notifications', n.id);
+            batch.update(ref, { read: true });
+        });
+        await batch.commit();
+    }, [user, db, notifications]);
 
     // Don't show for anonymous/loading users OR if notifications are disabled
     if (isUserLoading || !user || user.isAnonymous || !settings.notifications) return null;

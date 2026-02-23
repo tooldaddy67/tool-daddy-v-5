@@ -16,7 +16,7 @@ import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { ALL_TOOLS } from '@/lib/constants';
 import { Fragment } from 'react';
-import { HomeIcon, Settings, BookOpen, History } from 'lucide-react';
+import { HomeIcon, Settings, BookOpen, History, Music } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { NotificationBell } from './notification-bell';
 const SettingsDialog = dynamic(() => import('./settings-dialog').then(mod => mod.SettingsDialog), {
@@ -24,13 +24,14 @@ const SettingsDialog = dynamic(() => import('./settings-dialog').then(mod => mod
 });
 import { Button } from '@/components/ui/button';
 import { useSettings } from '@/components/settings-provider';
+import { DesktopMusicPlayer } from './desktop-music-player';
 
 export default function PageHeader() {
   const pathname = usePathname();
   const currentTool = ALL_TOOLS.find((tool) => tool.href === pathname);
   const isHome = pathname === '/';
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const { settings } = useSettings();
+  const { settings, updateSettings } = useSettings();
 
   const authRoutes = ['/login', '/signup'];
 
@@ -145,9 +146,19 @@ export default function PageHeader() {
           >
             <Settings className="h-5 w-5" />
           </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className={cn("w-10 h-10 rounded-full", settings.showMusicPlayer && "text-primary bg-primary/10")}
+            onClick={() => updateSettings({ showMusicPlayer: !settings.showMusicPlayer })}
+            aria-label="Toggle Music Player"
+          >
+            <Music className="h-5 w-5" />
+          </Button>
           <ThemeToggle />
         </div>
       </header>
+      <DesktopMusicPlayer />
 
       <SettingsDialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen} />
     </>

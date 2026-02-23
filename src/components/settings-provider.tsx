@@ -17,6 +17,7 @@ export type BorderStyle = 'sharp' | 'smooth' | 'round';
 export type BGStyle = 'dark' | 'mesh' | 'pulse';
 export type SidebarStyle = 'full' | 'mini' | 'float';
 export type CardStyle = 'glass' | 'neo' | 'minimal';
+export type Outfit = 'default' | 'windows-xp' | 'mac-os' | 'elementary-os' | 'linux-mint' | 'kde-plasma';
 
 interface UserSettings {
     displayName: string;
@@ -43,6 +44,8 @@ interface UserSettings {
     glassOpacity: number;
     cardGlowStrength: number;
     textGlow: boolean;
+    showMusicPlayer: boolean;
+    outfit: Outfit;
 }
 
 interface SettingsContextType {
@@ -78,6 +81,8 @@ const defaultSettings: UserSettings = {
     glassOpacity: 90,
     cardGlowStrength: 40,
     textGlow: false,
+    showMusicPlayer: false,
+    outfit: 'default',
 };
 
 export const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
@@ -161,6 +166,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
 
         root.setAttribute('data-sidebar-style', localSettings.sidebarStyle);
         root.setAttribute('data-card-style', localSettings.cardStyle);
+        root.setAttribute('data-outfit', localSettings.outfit);
 
         const body = document.body;
         body.classList.remove('sidebar-mini', 'sidebar-float', 'ui-neo', 'ui-minimal', 'ui-glass');

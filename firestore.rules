@@ -35,6 +35,11 @@ service cloud.firestore {
          request.resource.data.get('isAdmin', false) == false && 
          request.resource.data.get('is_admin', false) == false)
       ));
+
+      // Notifications: User can read/write their own.
+      match /notifications/{notifId} {
+        allow read, write: if isOwner(userId);
+      }
     }
 
     // Tool Usage: User can read/write their own. Admin can read all.

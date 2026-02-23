@@ -9,6 +9,8 @@ export interface NotificationPayload {
     link?: string;
 }
 
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+
 /**
  * Creates a notification for a given user and displays a toast.
  * - If userId & firestore are provided, saves to DB.
@@ -26,5 +28,20 @@ export async function sendNotification(
         variant: payload.type === 'error' ? 'destructive' : 'default',
     });
 
-    // 2. Database saving disabled (System rebuild in progress)
+    // 2. Save to Firestore if user is logged in
+    if (firestore && userId) {
+        try {
+            const notificationsRef = collection(firestore, 'profiles', userId, 'notifications');
+            await addDoc(notificationsRef, {
+                title: payload.title,
+                message: payload.message,
+                type: payload.type || 'info',
+                link: payload.link || null,
+                read: false,
+                createdAt: serverTimestamp(),
+            });
+        } catch (error) {
+            console.error('Error saving notification:', error);
+        }
+    }
 }

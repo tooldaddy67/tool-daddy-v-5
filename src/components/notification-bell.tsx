@@ -7,6 +7,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useFirebase } from '@/firebase';
 import { cn } from '@/lib/utils';
+import Link from 'next/link';
 
 type Notification = {
     id: string;
@@ -30,21 +31,67 @@ function timeAgo(date: Date): string {
 }
 
 import { useSettings } from '@/components/settings-provider';
+import { collection, query, orderBy, onSnapshot, updateDoc, doc, writeBatch } from 'firebase/firestore';
 
 export function NotificationBell() {
-    const { user, isUserLoading } = useFirebase();
+    const { user, isUserLoading, db } = useFirebase();
     const { settings } = useSettings();
     const [open, setOpen] = useState(false);
+    const [notifications, setNotifications] = useState<Notification[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
 
-    const notifications: Notification[] = [];
-    const isLoading = false;
-    const unreadCount = 0;
+    // Fetch notifications
+    useEffect(() => {
+        if (!user || !db || user.isAnonymous) {
+            setIsLoading(false);
+            return;
+        }
 
-    const handleMarkAllRead = useCallback(() => { }, []);
-    const handleMarkRead = useCallback((notifId: string) => { }, []);
+        const q = query(
+            collection(db, 'profiles', user.uid, 'notifications'),
+            orderBy('createdAt', 'desc')
+        );
 
-    // Don't show for anonymous/loading users OR if notifications are disabled
-    if (isUserLoading || !user || user.isAnonymous || !settings.notifications) return null;
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const newNotifs = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            } as Notification));
+            setNotifications(newNotifs);
+            setIsLoading(false);
+        }, (err) => {
+            console.error("Error fetching notifications:", err);
+            setIsLoading(false);
+        });
+
+        return () => unsubscribe();
+    }, [user, db]);
+
+    const unreadCount = useMemo(() =>
+        notifications.filter(n => !n.read).length
+        , [notifications]);
+
+    const handleMarkAllRead = useCallback(async () => {
+        if (!user || !db) return;
+        const unreadNotifs = notifications.filter(n => !n.read);
+        if (unreadNotifs.length === 0) return;
+
+        const batch = writeBatch(db);
+        unreadNotifs.forEach(n => {
+            const ref = doc(db, 'profiles', user.uid, 'notifications', n.id);
+            batch.update(ref, { read: true });
+        });
+        await batch.commit();
+    }, [user, db, notifications]);
+
+    const handleMarkRead = useCallback(async (notifId: string) => {
+        if (!user || !db) return;
+        const ref = doc(db, 'profiles', user.uid, 'notifications', notifId);
+        await updateDoc(ref, { read: true });
+    }, [user, db]);
+
+    // Don't show ONLY if notifications are disabled in settings
+    if (!settings.notifications) return null;
 
     return (
         <Popover open={open} onOpenChange={setOpen}>
@@ -78,6 +125,15 @@ export function NotificationBell() {
                         {isLoading ? (
                             <div className="flex items-center justify-center py-8">
                                 <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                            </div>
+                        ) : (!user || user.isAnonymous) ? (
+                            <div className="py-20 text-center flex flex-col items-center justify-center px-4">
+                                <Bell className="h-10 w-10 text-muted-foreground/20 mb-3" />
+                                <p className="text-sm font-medium text-foreground/70">Sign in to see notifications</p>
+                                <p className="text-xs text-muted-foreground mt-1">Get updates on your tools and history.</p>
+                                <Button asChild variant="link" size="sm" className="mt-2">
+                                    <Link href="/login">Login Now</Link>
+                                </Button>
                             </div>
                         ) : !notifications || notifications.length === 0 ? (
                             <div className="py-8 text-center text-sm text-muted-foreground">

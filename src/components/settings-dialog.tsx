@@ -21,7 +21,7 @@ import { useUser, useAuth } from '@/firebase';
 import { Settings, Type, Palette, CheckCircle2, Layers, Maximize, Activity, Gauge, Image as ImageIcon, Sparkles, UserIcon, ShieldCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { useSettings, type FontPair, type ColorTheme, type BlurIntensity, type BorderStyle, type UIDensity, type BGStyle, type SidebarStyle, type CardStyle } from '@/components/settings-provider';
+import { useSettings, type FontPair, type ColorTheme, type BlurIntensity, type BorderStyle, type UIDensity, type BGStyle, type SidebarStyle, type CardStyle, type Outfit } from '@/components/settings-provider';
 // @ts-ignore
 import { motion, AnimatePresence } from 'framer-motion';
 import { Slider } from '@/components/ui/slider';
@@ -41,7 +41,7 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { Lock, Bell, FileText, Trash2, HelpCircle, CloudOff, LayoutTemplate, Shield, LogOut, Database, ChevronRight, Heart, Share2, ExternalLink, MessageCircle } from 'lucide-react';
+import { Lock, Bell, FileText, Trash2, HelpCircle, CloudOff, LayoutTemplate, Shield, LogOut, Database, ChevronRight, Heart, Share2, ExternalLink, MessageCircle, Shirt } from 'lucide-react';
 
 interface SettingsDialogProps {
     open: boolean;
@@ -424,6 +424,39 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                                 </div>
                             </div>
 
+                            {/* Try Outfits Section */}
+                            <div className="space-y-4 pt-4 border-t border-border/50">
+                                <div className="flex items-center gap-2 text-sm font-semibold opacity-70 uppercase tracking-wider text-primary">
+                                    <Shirt className="w-4 h-4" />
+                                    <span>Try Outfits</span>
+                                </div>
+                                <div className="grid grid-cols-3 gap-3">
+                                    {([
+                                        { id: 'default', label: 'Our Fit' },
+                                        { id: 'windows-xp', label: 'Windows XP' },
+                                        { id: 'mac-os', label: 'Mac OS' },
+                                        { id: 'elementary-os', label: 'Elementary OS' },
+                                        { id: 'linux-mint', label: 'Linux Mint' },
+                                        { id: 'kde-plasma', label: 'KDE Plasma' }
+                                    ] as { id: Outfit; label: string }[]).map((o) => (
+                                        <button
+                                            key={o.id}
+                                            onClick={() => updateSettings({ outfit: o.id })}
+                                            className={cn(
+                                                "flex flex-col items-center justify-center p-3 rounded-xl border text-center transition-all",
+                                                settings.outfit === o.id
+                                                    ? "border-primary bg-primary/10 glow-sm"
+                                                    : "border-border/50 bg-muted/30 hover:bg-muted/50"
+                                            )}
+                                        >
+                                            <span className="text-[10px] font-bold uppercase tracking-tight">
+                                                {o.label}
+                                            </span>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
                             {/* Advanced Feel - Effects & Polish */}
                             <div className="space-y-4 pt-4 border-t border-border/50">
                                 <div className="flex items-center gap-2 text-sm font-semibold opacity-70 uppercase tracking-wider text-primary">
@@ -480,6 +513,13 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                                                 onValueChange={([v]) => updateSettings({ animSpeed: v })}
                                             />
                                         </div>
+                                    </div>
+                                    <div className="flex items-center justify-between">
+                                        <div className="space-y-0.5">
+                                            <Label className="text-sm font-medium">Desktop Music Player</Label>
+                                            <p className="text-[10px] text-muted-foreground">Floating Mac-style player for focus music</p>
+                                        </div>
+                                        <Switch checked={settings.showMusicPlayer} onCheckedChange={(v) => updateSettings({ showMusicPlayer: v })} />
                                     </div>
                                 </div>
                             </div>
