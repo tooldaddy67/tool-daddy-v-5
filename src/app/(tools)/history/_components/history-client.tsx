@@ -59,7 +59,7 @@ export default function HistoryClient() {
                 {/* Main Page Header */}
                 <div className="flex flex-col items-center justify-center text-center space-y-6 my-10 relative">
                     <div className="space-y-1 relative z-10">
-                        <h1 className="text-5xl md:text-7xl font-black tracking-tighter text-white uppercase leading-tight block">
+                        <h1 className="text-5xl md:text-7xl font-black tracking-tighter text-foreground uppercase leading-tight block">
                             Activity History
                         </h1>
                         <div className="h-2 w-20 bg-primary mx-auto rounded-full shadow-[0_0_15px_hsl(var(--primary)/0.3)]" />
@@ -93,7 +93,7 @@ export default function HistoryClient() {
                             <History className="w-12 h-12 text-primary/40" />
                         </div>
                         <div className="space-y-1">
-                            <h3 className="text-xl font-black text-white uppercase tracking-tight">
+                            <h3 className="text-xl font-black text-foreground uppercase tracking-tight">
                                 {history.length === 0 ? "Archives Empty" : "No Matches Found"}
                             </h3>
                             <p className="text-muted-foreground text-sm font-medium">
@@ -116,7 +116,7 @@ export default function HistoryClient() {
                             return (
                                 <div
                                     key={item.id}
-                                    className="group flex flex-col bg-[#0a0d14] border-2 border-zinc-800/50 rounded-2xl overflow-hidden hover:border-primary/50 transition-all duration-300 hover:shadow-[0_0_30px_hsl(var(--primary)/0.1)]"
+                                    className="group flex flex-col bg-card/60 backdrop-blur-md border-2 border-border/50 rounded-2xl overflow-hidden hover:border-primary/50 transition-all duration-300 hover:shadow-[0_0_30px_hsl(var(--primary)/0.1)]"
                                 >
                                     <div className="p-5 flex-grow space-y-5">
                                         <div className="flex items-center justify-between">
@@ -125,7 +125,7 @@ export default function HistoryClient() {
                                                     <Icon className="w-5 h-5" />
                                                 </div>
                                                 <div className="space-y-0.5">
-                                                    <h3 className="font-black text-[13px] uppercase tracking-wider text-white">
+                                                    <h3 className="font-black text-[13px] uppercase tracking-wider text-card-foreground">
                                                         {item.tool}
                                                     </h3>
                                                     <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-widest opacity-60">

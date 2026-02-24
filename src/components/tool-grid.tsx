@@ -20,16 +20,6 @@ export default function ToolGrid() {
     return <MacLaunchpadLayout />;
   }
 
-  // Use Terminal layout for certain Linux fits if preferred, or as a distinct experience
-  // For now, let's tie it to 'kde-plasma' or similar if they want a power-user feel, or keep it as an option.
-  // Actually, let's make it easy to trigger for any 'linux' type fit if requested, 
-  // but for now let's just use it if the user specifically selects it.
-  // Assuming 'elementary-os' is the more traditional one, maybe KDE gets the terminal?
-  // User said "Linux Mode: A Terminal interface", so let's check for any linux fit or add a 'cli' fit if possible.
-  if (settings.outfit === 'terminal') {
-    return <TerminalLayout />;
-  }
-
   const getGridClass = () => {
     switch (settings.uiDensity) {
       case 'cozy':

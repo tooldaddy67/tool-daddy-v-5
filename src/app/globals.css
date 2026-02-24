@@ -766,9 +766,9 @@
 /* --- WINDOWS XP OUTFIT --- */
 [data-outfit="windows-xp"] {
   --radius: 0px !important;
-  /* XP is sharp by default */
-  --font-headline: 'Tahoma', 'Trebuchet MS', 'Segoe UI', sans-serif !important;
-  --font-body: 'Tahoma', 'Trebuchet MS', 'Segoe UI', sans-serif !important;
+  --font-headline: 'Tahoma', 'Trebuchet MS', 'MS Sans Serif', sans-serif !important;
+  --font-body: 'Tahoma', 'Trebuchet MS', 'MS Sans Serif', sans-serif !important;
+  letter-spacing: -0.01em;
 }
 
 [data-outfit="windows-xp"] body {
@@ -849,6 +849,91 @@
   color: white !important;
   text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.4) !important;
   box-shadow: inset 1px 1px 2px rgba(255, 255, 255, 0.5), 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Global text visibility fixes for XP in Light Mode */
+[data-outfit="windows-xp"]:not(.dark) h1.text-white,
+[data-outfit="windows-xp"]:not(.dark) h2.text-white,
+[data-outfit="windows-xp"]:not(.dark) h3.text-white,
+[data-outfit="windows-xp"]:not(.dark) p.text-white,
+[data-outfit="windows-xp"]:not(.dark) span.text-white:not(.bg-primary *):not(.bg-secondary *):not(button *) {
+  color: #003366 !important;
+}
+
+/* Force dark text for cards and settings elements in XP Light mode */
+[data-outfit="windows-xp"]:not(.dark) .glow-card *,
+[data-outfit="windows-xp"]:not(.dark) [role="dialog"] button:not(.bg-primary *) *,
+[data-outfit="windows-xp"]:not(.dark) [role="dialog"] label,
+[data-outfit="windows-xp"]:not(.dark) [role="dialog"] span:not(.text-primary) {
+  color: #000 !important;
+}
+
+/* Ensure XP cards/buttons have clear backgrounds and contrast */
+[data-outfit="windows-xp"]:not(.dark) .glow-card,
+[data-outfit="windows-xp"]:not(.dark) .bg-muted\/30,
+[data-outfit="windows-xp"]:not(.dark) .bg-muted\/40 {
+  background-color: #ffffff !important;
+  opacity: 1 !important;
+  border-color: #808080 !important;
+}
+
+/* Slightly darken muted text for better contrast on XP beige */
+[data-outfit="windows-xp"]:not(.dark) .text-muted-foreground {
+  color: #555555 !important;
+}
+
+/* Restore white text for components with dark backgrounds */
+[data-outfit="windows-xp"]:not(.dark) header *,
+[data-outfit="windows-xp"]:not(.dark) .bg-primary *,
+[data-outfit="windows-xp"]:not(.dark) [data-sidebar="group-label"],
+[data-outfit="windows-xp"]:not(.dark) .bg-\[\#3169c6\] *,
+[data-outfit="windows-xp"]:not(.dark) .group:hover *,
+[data-outfit="windows-xp"]:not(.dark) .hover\:text-white:hover {
+  color: #fff !important;
+}
+
+[data-outfit="terminal"] [data-sidebar="sidebar"],
+[data-outfit="terminal"] .peer,
+[data-outfit="terminal"] .group\/sidebar-wrapper>div:not(main),
+[data-outfit="terminal"] [data-sidebar="trigger"],
+[data-outfit="terminal"] footer,
+[data-outfit="terminal"] .MobileNav,
+[data-outfit="terminal"] section,
+[data-outfit="terminal"] .DesktopDashboard {
+  display: none !important;
+  width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+[data-outfit="terminal"] main {
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100% !important;
+  max-width: none !important;
+  flex: 1 1 100% !important;
+}
+
+/* Ensure the main content wrapper also expands fully edge-to-edge */
+[data-outfit="terminal"] main>div:last-child {
+  width: 100% !important;
+  max-width: none !important;
+  align-items: stretch !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+[data-outfit="terminal"] .space-y-32>* {
+  margin-top: 0 !important;
+}
+
+[data-outfit="terminal"] header {
+  background: #000000 !important;
+  border-bottom: 1px solid #3465a4 !important;
+}
+
+[data-outfit="terminal"] header * {
+  color: #ffffff !important;
 }
 
 /* --- MAC OS OUTFIT --- */

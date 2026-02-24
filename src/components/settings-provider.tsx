@@ -205,6 +205,18 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
         }
 
         const updated = { ...localSettings, ...newSettings };
+
+        // Force light theme for XP and Mac outfits when they are first selected
+        if (newSettings.outfit === 'windows-xp' || newSettings.outfit === 'mac-os') {
+            // Need a way to set next-themes theme. 
+            // In Next.js with next-themes, we usually use useTheme()
+            // Since we're in a provider, we can't use useTheme() here easily if it's outside.
+            // But we can manually set it in localStorage and trigger a refresh or use document.documentElement
+            document.documentElement.classList.remove('dark');
+            document.documentElement.style.colorScheme = 'light';
+            localStorage.setItem('theme', 'light');
+        }
+
         setLocalSettings(updated);
         localStorage.setItem('tool-dady-settings', JSON.stringify(updated));
     };
