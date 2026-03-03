@@ -8,6 +8,7 @@ const UISound = dynamic(() => import('@/components/ui-sound').then(mod => mod.UI
 const GrainOverlay = dynamic(() => import('@/components/grain-overlay').then(mod => mod.GrainOverlay), { ssr: false });
 const ScrollIndicator = dynamic(() => import('@/components/scroll-indicator').then(mod => mod.ScrollIndicator), { ssr: false });
 const FloatingFeedback = dynamic(() => import('@/components/floating-feedback').then(mod => mod.FloatingFeedback), { ssr: false });
+const ZenBackground = dynamic(() => import('@/components/zen-background').then(mod => mod.ZenBackground), { ssr: false });
 
 export function ClientOnlyExtras() {
     const [isMobile, setIsMobile] = useState(false);
@@ -19,6 +20,7 @@ export function ClientOnlyExtras() {
     if (isMobile) {
         return (
             <>
+                <ZenBackground />
                 <FloatingFeedback />
             </>
         );
@@ -26,6 +28,7 @@ export function ClientOnlyExtras() {
 
     return (
         <>
+            <ZenBackground />
             <CursorTrail />
             <UISound />
             <GrainOverlay />

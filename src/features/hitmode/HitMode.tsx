@@ -38,6 +38,11 @@ export function HitMode({ compact = false }: { compact?: boolean }) {
         setHitCount((prev) => prev + 1);
         setLastEvent(event);
 
+        // Dispatch global event for Zen Background
+        if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('hit-impact', { detail: event }));
+        }
+
         // Trigger shake
         setIsShaking(true);
         setTimeout(() => setIsShaking(false), 250);
