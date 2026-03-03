@@ -14,9 +14,10 @@ const nextConfig: NextConfig = {
   productionBrowserSourceMaps: true, // Enable source maps in production for easier debugging and to fix 404 errors
   compress: true, // Enable gzip compression
 
-  // ✅ Cache optimization
   experimental: {
     optimizePackageImports: ['@radix-ui/react-*', 'lucide-react', 'framer-motion', 'date-fns', 'mathjs', 'lucide-react'],
+    // @ts-ignore - Required for cross-origin dev access (127.0.0.1)
+    allowedDevOrigins: ['127.0.0.1:3000', 'localhost:3000'],
   },
 
   images: {

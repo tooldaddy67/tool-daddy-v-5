@@ -17,7 +17,8 @@ import {
     Grid,
     ListTodo,
     Loader2,
-    Trash2
+    Trash2,
+    Sparkles
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
@@ -26,6 +27,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useRouter } from 'next/navigation';
 import { DesktopCalendar } from '@/components/desktop-calendar';
 import { useSettings } from '@/components/settings-provider';
+import { HitMode } from '@/features/hitmode/HitMode';
 
 export function DesktopDashboard() {
     const { user, isUserLoading } = useFirebase();
@@ -288,6 +290,13 @@ export function DesktopDashboard() {
                                     </div>
                                 </Link>
                             ))}
+                        </CardContent>
+                    </Card>
+
+                    {/* Hit / Knock Mode Card */}
+                    <Card className="tool-island transition-all duration-500 overflow-hidden" style={{ borderRadius: 'var(--radius)' }}>
+                        <CardContent className="p-5">
+                            <HitMode compact={true} />
                         </CardContent>
                     </Card>
 

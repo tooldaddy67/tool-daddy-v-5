@@ -40,6 +40,7 @@ import {
     AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Lock, Bell, FileText, Trash2, HelpCircle, CloudOff, LayoutTemplate, Shield, LogOut, Database, ChevronRight, Heart, Share2, ExternalLink, MessageCircle, AlertCircle } from 'lucide-react';
+import { HitMode } from '../features/hitmode/HitMode';
 
 interface SettingsContentProps {
     isDialog?: boolean;
@@ -566,6 +567,16 @@ export function SettingsContent({ isDialog = false, onClose }: SettingsContentPr
                                 </div>
                             </div>
                         </div>
+
+                        {/* Hit / Knock Mode */}
+                        <div className="space-y-4 pt-4 border-t border-border/50">
+                            <div className="flex items-center gap-2 text-sm font-semibold opacity-70 uppercase tracking-wider text-primary">
+                                <Sparkles className="w-4 h-4" />
+                                <span>Experimental Integration</span>
+                            </div>
+                            <HitMode />
+                        </div>
+
                     </TabsContent>
 
                     {user && !user.isAnonymous && (

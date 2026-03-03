@@ -41,7 +41,8 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { Lock, Bell, FileText, Trash2, HelpCircle, CloudOff, LayoutTemplate, Shield, LogOut, Database, ChevronRight, Heart, Share2, ExternalLink, MessageCircle, Shirt } from 'lucide-react';
+import { Lock, Bell, FileText, Trash2, HelpCircle, CloudOff, LayoutTemplate, Shield, LogOut, Database, ChevronRight, Heart, Share2, ExternalLink, MessageCircle, Shirt, AlertCircle } from 'lucide-react';
+import { HitMode } from '../features/hitmode/HitMode';
 
 interface SettingsDialogProps {
     open: boolean;
@@ -524,6 +525,15 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                                     </div>
                                 </div>
                             </div>
+
+                            {/* Hit / Knock Mode */}
+                            <div className="space-y-4 pt-4 border-t border-border/50">
+                                <div className="flex items-center gap-2 text-sm font-semibold opacity-70 uppercase tracking-wider text-primary">
+                                    <Sparkles className="w-4 h-4" />
+                                    <span>Experimental Integration</span>
+                                </div>
+                                <HitMode />
+                            </div>
                         </TabsContent>
 
                         {user && !user.isAnonymous && (
@@ -819,7 +829,6 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                 </Tabs>
             </DialogContent>
 
-            {/* Password Re-auth Dialog */}
             <Dialog open={showReauthDialog} onOpenChange={setShowReauthDialog}>
                 <DialogContent className="sm:max-w-[400px] border-primary/20 bg-background/95 backdrop-blur-xl">
                     <DialogHeader>

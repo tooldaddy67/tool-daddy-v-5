@@ -42,7 +42,7 @@ export function middleware(request: NextRequest) {
         style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
         img-src 'self' blob: data: https://*.google-analytics.com https://*.googletagmanager.com https://*.google.com https://*.gstatic.com https://placehold.co https://images.unsplash.com https://picsum.photos https://api.qrserver.com https://img.icons8.com https://cdn.hashnode.com;
         font-src 'self' https://fonts.gstatic.com;
-        connect-src 'self' https://*.google-analytics.com https://*.googletagmanager.com https://*.analytics.google.com https://*.google.com https://*.gstatic.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://vitals.vercel-insights.com https://api.hashnode.com;
+        connect-src 'self' ws://127.0.0.1:8787 https://*.googleapis.com https://*.google-analytics.com https://*.googletagmanager.com https://*.analytics.google.com https://*.google.com https://*.gstatic.com https://vitals.vercel-insights.com https://api.hashnode.com;
         frame-src 'self' https://www.google.com https://td-v-5.vercel.app;
         media-src 'self' blob:;
         object-src 'none';
@@ -58,7 +58,7 @@ export function middleware(request: NextRequest) {
         'X-Frame-Options': 'SAMEORIGIN',
         'X-XSS-Protection': '1; mode=block',
         'Referrer-Policy': 'strict-origin-when-cross-origin',
-        'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
+        'Permissions-Policy': 'camera=(), microphone=(self), geolocation=()',
         'X-DNS-Prefetch-Control': 'on',
     };
 
