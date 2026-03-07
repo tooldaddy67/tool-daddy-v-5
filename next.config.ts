@@ -16,8 +16,6 @@ const nextConfig: NextConfig = {
 
   experimental: {
     optimizePackageImports: ['@radix-ui/react-*', 'lucide-react', 'framer-motion', 'date-fns', 'mathjs', 'lucide-react'],
-    // @ts-ignore - Required for cross-origin dev access (127.0.0.1)
-    allowedDevOrigins: ['127.0.0.1:3000', 'localhost:3000'],
   },
 
   images: {
