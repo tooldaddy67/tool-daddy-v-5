@@ -110,7 +110,7 @@ export const ZenBackground = () => {
             celestialGlow: 'rgba(255, 200, 150, 0.4)',
             hills: ['#8d6e63', '#6d4c41', '#4e342e'],
             grass: ['#4e342e', '#6d4c41', '#8d6e63'],
-            flowers: ['#f48fb1', '#ce93d8', '#ffcc80'],
+            flowers: ['#f48fb1', '#ce93d8', '#ffcc80', '#f8bbd0', '#e1bee7', '#ffe0b2'],
             trunk: '#5d4037',
             foliage: '#6d4c41'
         },
@@ -121,7 +121,7 @@ export const ZenBackground = () => {
             celestialGlow: 'rgba(255, 255, 0, 0.3)',
             hills: ['#43a047', '#2e7d32', '#1b5e20'],
             grass: ['#1b5e20', '#2e7d32', '#43a047'],
-            flowers: ['#e91e63', '#9c27b0', '#ffeb3b', '#ffffff'],
+            flowers: ['#e91e63', '#9c27b0', '#ffeb3b', '#ffffff', '#ff4081', '#7b1fa2', '#ffd600', '#f5f5f5', '#ff80ab'],
             trunk: '#5d4037',
             foliage: '#2e7d32'
         },
@@ -132,7 +132,7 @@ export const ZenBackground = () => {
             celestialGlow: 'rgba(255, 110, 0, 0.5)',
             hills: ['#bf360c', '#3e2723', '#212121'],
             grass: ['#3e2723', '#212121', '#4e342e'],
-            flowers: ['#ff5722', '#ff9800', '#f44336'],
+            flowers: ['#ff5722', '#ff9800', '#f44336', '#ff7043', '#ffab40', '#ef5350', '#ff3d00'],
             trunk: '#3e2723',
             foliage: '#5d4037'
         },
@@ -143,7 +143,7 @@ export const ZenBackground = () => {
             celestialGlow: 'rgba(200, 200, 255, 0.4)',
             hills: ['#1a237e', '#0d47a1', '#01579b'],
             grass: ['#01579b', '#000a2e', '#1a237e'],
-            flowers: ['#5c6bc0', '#3f51b5', '#283593'],
+            flowers: ['#5c6bc0', '#3f51b5', '#283593', '#7986cb', '#3949ab', '#1a237e', '#b3e5fc'],
             trunk: '#1a237e',
             foliage: '#0d47a1'
         }
@@ -203,15 +203,15 @@ export const ZenBackground = () => {
                 });
             }
 
-            // Flowers
+            // Flowers - Triple density for a lush meadow
             flowers.current = [];
-            const fCount = 15 + Math.floor(canvas.width / 150);
+            const fCount = 45 + Math.floor(canvas.width / 40);
             const fPalette = themeColors[zenTheme].flowers;
             for (let i = 0; i < fCount; i++) {
                 flowers.current.push({
                     x: Math.random() * canvas.width,
-                    y: canvas.height - 10 - Math.random() * 30,
-                    size: 2.5 + Math.random() * 3,
+                    y: canvas.height - 5 - Math.random() * 60, // Increased vertical spread
+                    size: 2.2 + Math.random() * 3.5,
                     petalColor: fPalette[Math.floor(Math.random() * fPalette.length)],
                     sway: Math.random() * Math.PI * 2
                 });
@@ -309,26 +309,46 @@ export const ZenBackground = () => {
 
             // Draw Flowers
             flowers.current.forEach(f => {
-                const sway = Math.sin(time * 0.8 + f.sway) * 8 + globalWind * 0.4;
+                const swayMultiplier = 1.0 + (f.size / 5);
+                const sway = Math.sin(time * 0.8 + f.sway) * 10 * swayMultiplier + globalWind * 0.4;
                 const fx = f.x + sway;
                 const fy = f.y;
 
-                ctx.strokeStyle = '#2e7d32';
+                // Stem
+                ctx.strokeStyle = zenTheme === 'night' ? '#1a237e' : '#2e7d32';
+                ctx.lineWidth = 1.2;
                 ctx.beginPath();
                 ctx.moveTo(f.x, canvas.height);
-                ctx.lineTo(fx, fy);
+                ctx.quadraticCurveTo(f.x, canvas.height - (canvas.height - fy) / 2, fx, fy);
                 ctx.stroke();
 
+                // Night glow for flowers
+                if (zenTheme === 'night') {
+                    ctx.save();
+                    ctx.shadowBlur = 15;
+                    ctx.shadowColor = f.petalColor;
+                    ctx.globalAlpha = 0.6;
+                }
+
                 ctx.fillStyle = f.petalColor;
-                for (let i = 0; i < 5; i++) {
-                    const angle = (i * (Math.PI * 2)) / 5 + time;
+                // Petals
+                const petalCount = 5 + (Math.floor(f.x) % 3); // Varying petal counts
+                for (let i = 0; i < petalCount; i++) {
+                    const angle = (i * (Math.PI * 2)) / petalCount + time * 0.5;
                     ctx.beginPath();
-                    ctx.arc(fx + Math.cos(angle) * f.size, fy + Math.sin(angle) * f.size, f.size * 0.8, 0, Math.PI * 2);
+                    // More elongated petals
+                    const petalX = fx + Math.cos(angle) * f.size;
+                    const petalY = fy + Math.sin(angle) * f.size;
+                    ctx.ellipse(petalX, petalY, f.size * 0.9, f.size * 0.5, angle, 0, Math.PI * 2);
                     ctx.fill();
                 }
-                ctx.fillStyle = '#fdd835';
+
+                if (zenTheme === 'night') ctx.restore();
+
+                // Center
+                ctx.fillStyle = zenTheme === 'night' ? '#fff9c4' : '#fdd835';
                 ctx.beginPath();
-                ctx.arc(fx, fy, f.size * 0.5, 0, Math.PI * 2);
+                ctx.arc(fx, fy, f.size * 0.4, 0, Math.PI * 2);
                 ctx.fill();
             });
         };
