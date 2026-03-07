@@ -89,7 +89,7 @@ export default function AppSidebar() {
 
   return (
     <Sidebar
-      className="border-r border-border/20 bg-background/95 transition-all duration-300"
+      className="border-r border-border/20 bg-transparent transition-all duration-300"
       collapsible="icon"
       variant="sidebar"
     >

@@ -417,8 +417,8 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                                             <ImageIcon className="w-3 h-3 text-primary" /> Background
                                         </Label>
                                         <div className="flex gap-1 bg-background/40 p-1 rounded-lg">
-                                            {(['dark', 'mesh', 'pulse'] as BGStyle[]).map((bg) => (
-                                                <Button key={bg} variant={settings.bgStyle === bg ? 'default' : 'ghost'} size="sm" className="flex-1 text-[10px] h-7 rounded-md capitalize" onClick={() => updateSettings({ bgStyle: bg })}>{bg}</Button>
+                                            {(['dark', 'mesh', 'pulse', 'idk-wtf'] as BGStyle[]).map((bg) => (
+                                                <Button key={bg} variant={settings.bgStyle === bg ? 'default' : 'ghost'} size="sm" className="flex-1 text-[10px] h-7 rounded-md capitalize" onClick={() => updateSettings({ bgStyle: bg })}>{bg.replace('-', ' ')}</Button>
                                             ))}
                                         </div>
                                     </div>

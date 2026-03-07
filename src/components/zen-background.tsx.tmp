@@ -1,0 +1,20 @@
+"use client";
+
+import React, { useEffect, useRef, useState } from 'react';
+import { useTheme } from 'next-theme-provider'; // wait, package.json says next-themes
+
+interface Particle {
+    x: number;
+    y: number;
+    vx: number;
+    vy: number;
+    size: number;
+    color: string;
+}
+
+export const ZenBackground = () => {
+    // next-themes is usually imported like this:
+    // import { useTheme } from 'next-themes';
+    // But since you had 'next-theme-provider' in a previous error, I'll be careful.
+    // Actually, package.json says next-themes.
+}

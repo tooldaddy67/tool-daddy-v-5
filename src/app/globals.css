@@ -133,17 +133,88 @@
   }
 
   body {
-    background-color: hsl(var(--background));
+    background-color: transparent;
     color: hsl(var(--foreground));
     overflow-x: hidden;
     touch-action: auto;
     -webkit-text-size-adjust: 100%;
   }
 
+  /* Fallback color if Zen Background fails or is disabled */
+  .dark body {
+    background-color: hsl(var(--background));
+  }
+
   /* Custom Scrollbar Styles */
   ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
+  }
+
+  /* Zen Mode Transparency Fix - Including cards and islands for glassy feel */
+  html:not(.dark).zen-active .mesh-bg,
+  html:not(.dark).zen-active main,
+  html:not(.dark).zen-active [data-sidebar="inset"],
+  html:not(.dark).zen-active .bg-background,
+  html:not(.dark).zen-active .bg-sidebar,
+  html:not(.dark).zen-active [data-sidebar="content"],
+  html:not(.dark).zen-active [data-sidebar="group"],
+  html:not(.dark).zen-active .group\/sidebar-wrapper,
+  html:not(.dark).zen-active [data-sidebar="sidebar"],
+  html:not(.dark).zen-active .bg-sidebar-accent {
+    background-color: transparent !important;
+  }
+
+  /* Glassy Cards in Zen Mode */
+  html:not(.dark).zen-active .bg-card,
+  html:not(.dark).zen-active .tool-island,
+  html:not(.dark).zen-active .glass-panel {
+    backdrop-filter: blur(20px) !important;
+    background: hsla(240, 10%, 100%, 0.1) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2) !important;
+  }
+
+  /* Theme-specific contrast for Zen Mode in Light Mode */
+
+  /* Shared Zen-active (Default behavior) */
+  .zen-active:not(.dark) {
+    --sidebar-primary: 0 0% 100%;
+    --sidebar-border: 240 5% 50%;
+  }
+
+  /* Night / Sunset / Dawn (Darker backgrounds) - White Text */
+  .zen-night:not(.dark),
+  .zen-sunset:not(.dark),
+  .zen-dawn:not(.dark) {
+    --foreground: 0 0% 100%;
+    --muted-foreground: 240 5% 85%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-accent: 240 5% 30%;
+  }
+
+  .zen-night:not(.dark) svg:not(.text-primary),
+  .zen-sunset:not(.dark) svg:not(.text-primary),
+  .zen-dawn:not(.dark) svg:not(.text-primary) {
+    color: rgba(255, 255, 255, 0.9) !important;
+  }
+
+  /* Day Theme (Bright sky) - Dark Text & Subtle Glass */
+  .zen-day:not(.dark) {
+    --foreground: 222.2 84% 4.9%;
+    --muted-foreground: 215 16% 47%;
+    --sidebar-foreground: 222.2 84% 4.9%;
+    --sidebar-accent: 210 40% 90%;
+  }
+
+  .zen-day:not(.dark) .bg-card,
+  .zen-day:not(.dark) .tool-island {
+    background: hsla(240, 10%, 100%, 0.4) !important;
+    /* Slightly more opaque for day */
+  }
+
+  .zen-day:not(.dark) svg:not(.text-primary) {
+    color: currentColor !important;
   }
 
   ::-webkit-scrollbar-track {
@@ -375,15 +446,18 @@
 
 /* ELITE MESH BACKGROUND */
 .mesh-bg {
-  background-color: hsl(var(--background));
+  background-color: transparent;
   background-image:
-    radial-gradient(at 0% 0%, hsla(var(--primary), 0.15) 0px, transparent 50%),
-    radial-gradient(at 100% 0%, hsla(var(--accent), 0.15) 0px, transparent 50%),
-    radial-gradient(at 100% 100%, hsla(var(--primary), 0.15) 0px, transparent 50%),
-    radial-gradient(at 0% 100%, hsla(var(--accent), 0.15) 0px, transparent 50%),
-    radial-gradient(at 50% 50%, hsla(var(--primary), 0.1) 0px, transparent 50%);
+    radial-gradient(at 0% 0%, hsla(var(--primary), 0.1) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, hsla(var(--accent), 0.1) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, hsla(var(--primary), 0.1) 0px, transparent 50%),
+    radial-gradient(at 0% 100%, hsla(var(--accent), 0.1) 0px, transparent 50%),
+    radial-gradient(at 50% 50%, hsla(var(--primary), 0.05) 0px, transparent 50%);
   background-size: 200% 200%;
-  /* Mesh animation removed to stay composited only and reduce main-worker load */
+}
+
+.dark .mesh-bg {
+  background-color: hsl(var(--background));
 }
 
 @keyframes mesh-advanced {

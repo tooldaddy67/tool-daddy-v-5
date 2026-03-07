@@ -71,7 +71,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       </head>
-      <body suppressHydrationWarning className="min-h-screen bg-background font-body antialiased">
+      <body suppressHydrationWarning className="min-h-screen font-body antialiased">
 
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
           <FirebaseClientProvider>
@@ -80,7 +80,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
                 <ClientOnlyExtras />
                 <SidebarProviderWrapper>
                   <AppSidebar />
-                  <main className="flex-1 flex flex-col min-h-screen w-full relative">
+                  <main className="flex-1 flex flex-col min-h-screen w-full relative z-10">
                     <PageHeader />
                     <script
                       type="application/ld+json"
